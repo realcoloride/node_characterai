@@ -91,6 +91,19 @@ class Client {
             return response.character;
         } else Error('Could not fetch character information.')
     }
+    async searchCharacters(characterName) {
+        if (characterName == undefined || typeof(characterName) != 'string') throw Error('Invalid arguments.')
+
+        const request = await fetch(`https://beta.character.ai/chat/characters/search/?query=${$characterName}`, {
+            headers:this.#guestHeaders
+        })
+        
+        if (request.status === 200) {
+            const response = await request.json()
+
+            return response;
+        } else Error('Could not search for characters.')
+    }
 
     // chat
     async createOrContinueChat(characterId) {
