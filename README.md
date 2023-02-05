@@ -31,7 +31,7 @@ npm install node_characterai
 
 Basic guest login and conversation message:
 ```js
-const CharacterAI = require('characterai');
+const CharacterAI = require('node_characterai');
 const characterAI = new CharacterAI();
 
 (async() => {
