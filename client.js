@@ -148,7 +148,7 @@ class Client {
 
             this.#isGuest = false;
             this.#authenticated = true;
-            this.#token = response.token;
+            this.#token = response.key;
 
             return response.token
         } else Error('Token is invalid')
