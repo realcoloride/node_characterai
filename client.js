@@ -79,10 +79,11 @@ class Client {
         } else Error('Failed fetching characters by category.')
     }
     async fetchCharacterInfo(characterId) {
+        if (!this.isAuthenticated()) throw Error('You must be authenticated to do this.');
         if (characterId == undefined || typeof(characterId) != 'string') throw Error('Invalid arguments.')
 
         const request = await fetch(`https://beta.character.ai/chat/character/info-cached/${characterId}/`, {
-            headers:this.#guestHeaders
+            headers:this.getHeaders()
         })
 
         if (request.status === 200) {
