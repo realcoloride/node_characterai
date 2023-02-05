@@ -94,14 +94,13 @@ class Client {
     }
     async searchCharacters(characterName) {
         if (!this.isAuthenticated()) throw Error('You must be authenticated to do this.');
-        if (!this.#isGuest) throw Error('Guest accounts cannot use the search feature.');
+        if (this.#isGuest) throw Error('Guest accounts cannot use the search feature.');
         if (characterName == undefined || typeof(characterName) != 'string') throw Error('Invalid arguments.')
 
         const request = await fetch(`https://beta.character.ai/chat/characters/search/?query=${characterName}`, {
             headers:this.getHeaders()
         })
         
-        console.log(await request.text())
         if (request.status === 200) {
             const response = await request.json()
 
