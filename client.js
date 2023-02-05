@@ -94,7 +94,7 @@ class Client {
     async searchCharacters(characterName) {
         if (characterName == undefined || typeof(characterName) != 'string') throw Error('Invalid arguments.')
 
-        const request = await fetch(`https://beta.character.ai/chat/characters/search/?query=${$characterName}`, {
+        const request = await fetch(`https://beta.character.ai/chat/characters/search/?query=${characterName}`, {
             headers:this.#guestHeaders
         })
         
