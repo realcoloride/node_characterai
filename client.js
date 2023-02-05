@@ -107,6 +107,18 @@ class Client {
             return response;
         } else Error('Could not search for characters.')
     }
+    async getRecentConversations() {
+        if (!this.isAuthenticated()) throw Error('You must be authenticated to do this.');
+        const request = await fetch(`https://beta.character.ai/chat/characters/recent/`, {
+            headers:this.getHeaders()
+        })
+
+        if (request.status === 200) {
+            const response = await request.json()
+
+            return response;
+        } else Error('Could not get recent conversations.')
+    }
 
     // chat
     async createOrContinueChat(characterId) {
