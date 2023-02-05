@@ -15,7 +15,7 @@ If you like this project, please check their [website](https://character.ai/).
 ## Features
 
 * Fully written in javascript and CommonJS 
-* 1 external dependency (uuid)
+* 2 external dependencies (uuid, node-fetch)
 * Asynchronous requests
 * Use conversations or use the API to fetch information
 * Easy to use
