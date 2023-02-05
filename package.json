@@ -1,6 +1,6 @@
 {
   "name": "node_characterai",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Unofficial Character AI wrapper for node.",
   "main": "index.js",
   "scripts": {
@@ -23,6 +23,10 @@
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/realcoloride/node_characterai/issues"
+  },
+  "dependencies": {
+    "node-fetch": "^3.3.0",
+    "uuid": "^9.0.0"
   },
   "homepage": "https://github.com/realcoloride/node_characterai#readme"
 }
