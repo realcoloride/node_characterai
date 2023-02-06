@@ -109,7 +109,6 @@ class Client {
     }
     async fetchLastConversations() {
         if (!this.isAuthenticated()) throw Error('You must be authenticated to do this.');
-        if (this.#isGuest) throw Error('Guest accounts cannot use the search feature.');
 
         const request = await fetch(`https://beta.character.ai/chat/characters/recent/`, {
             headers:this.getHeaders()
