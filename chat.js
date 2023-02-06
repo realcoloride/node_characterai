@@ -13,7 +13,7 @@ class Chat {
 
     async fetchHistory() {
         const client = this.client;
-        const request = await fetch(`https://beta.character.ai/chat/history/msgs/user/?history_external_id=${this.externalId}`, {
+        const request = await fetch(`https://beta.character.ai/chat/history/msgs/user/?history_external_id=${this.externalId}/`, {
             headers:client.getHeaders()
         })
 
