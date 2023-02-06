@@ -97,7 +97,7 @@ class Client {
         if (this.#isGuest) throw Error('Guest accounts cannot use the search feature.');
         if (characterName == undefined || typeof(characterName) != 'string') throw Error('Invalid arguments.')
 
-        const request = await fetch(`https://beta.character.ai/chat/characters/search/?query=${characterName}`, {
+        const request = await fetch(`https://beta.character.ai/chat/characters/search/?query=${characterName}/`, {
             headers:this.getHeaders()
         })
         
@@ -107,17 +107,19 @@ class Client {
             return response;
         } else Error('Could not search for characters.')
     }
-    async getRecentConversations() {
+    async fetchLastConversations() {
         if (!this.isAuthenticated()) throw Error('You must be authenticated to do this.');
+        if (this.#isGuest) throw Error('Guest accounts cannot use the search feature.');
+
         const request = await fetch(`https://beta.character.ai/chat/characters/recent/`, {
             headers:this.getHeaders()
         })
-
+        
         if (request.status === 200) {
             const response = await request.json()
 
             return response;
-        } else Error('Could not get recent conversations.')
+        } else Error('Could not search for characters.')
     }
 
     // chat
