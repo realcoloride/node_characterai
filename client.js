@@ -97,7 +97,7 @@ class Client {
         if (this.#isGuest) throw Error('Guest accounts cannot use the search feature.');
         if (characterName == undefined || typeof(characterName) != 'string') throw Error('Invalid arguments.')
 
-        const request = await fetch(`https://beta.character.ai/chat/characters/search/?query=${characterName}/`, {
+        const request = await fetch(`https://beta.character.ai/chat/characters/search/?query=${characterName}`, {
             headers:this.getHeaders()
         })
         
@@ -107,18 +107,17 @@ class Client {
             return response;
         } else Error('Could not search for characters.')
     }
-    async fetchLastConversations() {
+    async getRecentConversations() {
         if (!this.isAuthenticated()) throw Error('You must be authenticated to do this.');
-
         const request = await fetch(`https://beta.character.ai/chat/characters/recent/`, {
             headers:this.getHeaders()
         })
-        
+
         if (request.status === 200) {
             const response = await request.json()
 
             return response;
-        } else Error('Could not search for characters.')
+        } else Error('Could not get recent conversations.')
     }
 
     // chat
@@ -135,10 +134,10 @@ class Client {
             headers:this.getHeaders()
         })
 
-        if (request.status === 200) {
-            let response = await request.json()
+        if (request.status === 200 || request.status === 404) {
+            let response = await request.text()
             
-            if (response.status === "No Such History") { // Create a new chat
+            if (response === "No Such History" || response === "there is no history between user and character") { // Create a new chat
                 request = await fetch('https://beta.character.ai/chat/history/create/', {
                     body:JSON.stringify({
                         character_external_id: characterId,
@@ -193,6 +192,7 @@ class Client {
             }),
             headers: this.#guestHeaders
         })
+
         if (request.status === 200) {
             const response = await request.json()
             
