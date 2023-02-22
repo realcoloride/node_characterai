@@ -136,7 +136,6 @@ class Client {
 
         if (request.status === 200 || request.status === 404) {
             let response = await request.text()
-            console.log(response);
             
             if (response === "No Such History" || response === "there is no history between user and character") { // Create a new chat
                 request = await fetch('https://beta.character.ai/chat/history/create/', {
