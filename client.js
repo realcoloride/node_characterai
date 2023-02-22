@@ -136,6 +136,7 @@ class Client {
 
         if (request.status === 200 || request.status === 404) {
             let response = await request.text()
+            console.log(response);
             
             if (response === "No Such History" || response === "there is no history between user and character") { // Create a new chat
                 request = await fetch('https://beta.character.ai/chat/history/create/', {
@@ -149,6 +150,11 @@ class Client {
                 if (request.status === 200) response = await request.json()
                 else Error('Could not create a new chat.')
             } 
+
+            // If a text gets returned, we try to parse it to JSON!
+            try {
+                response = JSON.parse(response);
+            } catch (error) {}
 
             // Continue it 
             const continueBody = response;
@@ -179,7 +185,7 @@ class Client {
             this.#token = response.key;
 
             return response.token
-        } else Error('Token is invalid')
+        } else throw Error('Token is invalid')
     }
     async authenticateAsGuest() {
         if (this.isAuthenticated()) throw Error('Already authenticated');
