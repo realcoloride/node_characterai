@@ -43,6 +43,7 @@ const characterAI = new CharacterAI();
     const response = await chat.sendAndAwaitResponse('Hello discord mod!', true)
 
     console.log(response);
+    // use response.text to use it in a string.
 })();
 ```
 
@@ -73,6 +74,8 @@ The last part of the URL is the character ID:
 ![Character_ID](https://i.imgur.com/nd86fN4.png)
 
 ## Disclaimer
+❤️ This project is updated frequently, always check for the latest version for new features or bug fixes.
+🚀 If you have an issue or idea, let me know in the **Issues** tab.
 If you use this API, you also bound to the terms of usage of their website.
 
 (real)coloride - 2023, Licensed MIT.
