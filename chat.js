@@ -1,3 +1,5 @@
+const { Reply, Message, MessageHistory, OutgoingMessage } = require("node_characterai/message");
+
 class Chat {
     constructor(client, characterId, continueBody) {
         this.characterId = characterId;
@@ -12,6 +14,8 @@ class Chat {
     }
 
     async fetchHistory(pageNumber) {
+        if (!this.client.isAuthenticated()) throw Error('You must be authenticated to do this.');
+
         // page number is optional
         if (pageNumber) {
             if (typeof(pageNumber) != "number") throw Error("Invalid arguments");
@@ -27,37 +31,24 @@ class Chat {
 
         if (request.status === 200) {
             const response = await request.json()
+            const historyMessages = response.messages;
+            const messages = [];
 
-            return response;
+            for (let i = 0; i < historyMessages.length; i++) {
+                const message = historyMessages[i];
+
+                messages.push(new Message(this, message));
+            }
+
+            const hasMore = response.has_more;
+            const nextPage = response.next_page;
+            return new MessageHistory(this, messages, hasMore, nextPage);
         } else Error('Could not fetch the chat history.')
     }
-    async sendAndAwaitResponse(message, singleReply) {
-        const payload = {
-            history_external_id: this.externalId,
-            character_external_id: this.characterId,
-            text: message,
-            tgt: this.aiId,
-            ranking_method: 'random',
-            faux_chat: false,
-            staging: false,
-            model_server_address: null,
-            override_prefix: null,
-            override_rank: null,
-            rank_candidates: null,
-            filter_candidates: null,
-            prefix_limit: null,
-            prefix_token_limit: null,
-            livetune_coeff: null,
-            stream_params: null,
-            enable_tti: true,
-            initial_timeout: null,
-            insert_beginning: null,
-            translate_candidates: null,
-            stream_every_n_steps: 16,
-            chunks_to_pad: 8,
-            is_proactive: false,
-        };
+    async sendAndAwaitResponse(optionsOrMessage, singleReply) {
+        if (!this.client.isAuthenticated()) throw Error('You must be authenticated to do this.');
 
+        const payload = new OutgoingMessage(this, optionsOrMessage)
         const client = this.client;
 
         if (!client.isAuthenticated()) throw Error('You must be authenticated to do this.');
@@ -74,23 +65,32 @@ class Chat {
 
             for (const line of response.split('\n')) {
                 if (line.startsWith('{')) {
-                  replies.push(JSON.parse(line));
-                  continue;
+                    replies.push(JSON.parse(line));
+                    continue;
                 }
-          
+            
                 const start = line.indexOf(' {');
                 if (start < 0) continue;
                 replies.push(JSON.parse(line.slice(start - 1)));
-              }
-          
-              if (!singleReply) return replies;
-              else return replies.pop().replies.shift().text;
+                }
+                
+                const messages = [];
+
+                for (let i = 0; i < replies.length; i++) {
+                    const reply = replies[i];
+
+                    messages.push(new Reply(this, reply));
+                }
+
+                if (!singleReply) return messages;
+                else return messages.pop();
         } else throw Error('Failed sending message.')
     }
 
     // conversations
     async changeToConversationId(conversationExternalId, force = false) {
         if (typeof(conversationExternalId) != 'string' || typeof(force) != 'boolean') throw Error("Invalid arguments");
+        if (!this.client.isAuthenticated()) throw Error('You must be authenticated to do this.');
 
         // force means that we dont check if the conversation exists, may lead to errors
         let passing = false;
@@ -110,6 +110,7 @@ class Chat {
     }
     async getSavedConversations(amount = 50) {
         if (typeof(amount) != 'number') throw Error("Invalid arguments");
+        if (!this.client.isAuthenticated()) throw Error('You must be authenticated to do this.');
 
         const client = this.client;
         const request = await fetch(`https://beta.character.ai/chat/character/histories/`, {
@@ -129,7 +130,90 @@ class Chat {
         } else throw Error('Failed saving & creating new chat.')
     }
 
+    // messages
+    async getMessageById(messageId) {
+        if (typeof(messageId) != 'number') throw Error('Invalid arguments');
+        if (!this.client.isAuthenticated()) throw Error('You must be authenticated to do this.');
+
+        const history = await this.fetchHistory()
+        const historyMessages = history.messages;
+
+        for (let i = 0; i < historyMessages.length; i++) {
+            const message = historyMessages[i];
+            
+            if (message.id == messageId) return message;
+        }
+        return null;
+    }
+    async deleteMessage(messageId) {
+        if (typeof(messageId) != 'string') throw Error('Invalid arguments');
+        if (!this.client.isAuthenticated()) throw Error('You must be authenticated to do this.');
+        if (this.client.isGuest()) throw Error('Guest accounts cannot delete messsages.');
+
+        const client = this.client;
+        const request = await fetch(`https://beta.character.ai/chat/history/msgs/delete/`, {
+            headers:client.getHeaders(),
+            method:'POST',
+            body: JSON.stringify({
+                "history_id" : this.externalId,
+                "ids_to_delete" : [messageId],
+                "regenerating" : false
+            })
+        })
+
+        let passing = false;
+
+        if (request.status === 200) {
+            const response = await request.json();
+
+            if (response.status === 'OK') passing = true;
+        }
+
+        if (!passing) throw Error('Failed to delete the message.');
+    }
+    async deleteMessagesBulk(amount = 50) {
+        if (typeof(amount) != 'number') throw Error('Invalid arguments');
+        if (!this.client.isAuthenticated()) throw Error('You must be authenticated to do this.');
+        if (this.client.isGuest()) throw Error('Guest accounts cannot bulk delete messsages.');
+
+        let idsToDelete = [];
+
+        const history = await this.fetchHistory()
+        const historyMessages = history.messages;
+
+        for (let i = 0; i < amount-1; i++) {
+            const message = historyMessages[i];
+            
+            if (message) idsToDelete.push(message.id);
+        }
+
+        if (idsToDelete.length == 0) return;
+
+        const client = this.client;
+        const request = await fetch(`https://beta.character.ai/chat/history/msgs/delete/`, {
+            headers:client.getHeaders(),
+            method:'POST',
+            body: JSON.stringify({
+                "history_id" : this.externalId,
+                "ids_to_delete" : idsToDelete,
+                "regenerating" : false
+            })
+        })
+
+        let passing = false;
+
+        if (request.status === 200) {
+            const response = await request.json();
+
+            if (response.status === 'OK') passing = true;
+        }
+
+        if (!passing) throw Error('Failed to bulk delete messages.');
+    }
+
     async saveAndStartNewChat() {
+        if (!this.client.isAuthenticated()) throw Error('You must be authenticated to do this.');
+
         const client = this.client;
         const request = await fetch(`https://beta.character.ai/chat/history/create/`, {
             headers:client.getHeaders(),
