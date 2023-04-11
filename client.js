@@ -1,13 +1,17 @@
 const Chat = require('./chat')
 const { v4: uuidv4 } = require('uuid');
+const Parser = require('./parser')
+const Requester = require('./requester')
 
 class Client {
     #token = undefined;
     #isGuest = false;
     #authenticated = false;
     #guestHeaders = {
-        'Content-Type': 'application/json'
+        "content-type": "application/json",
+        "user-agent": 'CharacterAI/1.0.0 (iPhone; iOS 14.4.2; Scale/3.00)'
     }
+    requester = new Requester();
 
     constructor() {
         this.#token = undefined;
@@ -15,18 +19,18 @@ class Client {
 
     // api fetching
     async fetchCategories() {
-        const request = await fetch('https://beta.character.ai/chat/character/categories/')
+        const request = await this.requester.request('https://beta.character.ai/chat/character/categories/')
 
-        if (request.status === 200) return await request.json();
+        if (request.status() === 200) return await Parser.parseJSON(request);
         else throw Error('Failed to fetch categories');
     }
     async fetchUserConfig() {
-        const request = await fetch('https://beta.character.ai/chat/config/', {
+        const request = await this.requester.request('https://beta.character.ai/chat/config/', {
             headers:this.#guestHeaders
         })
         
-        if (request.status === 200) {
-            const response = await request.json()
+        if (request.status() === 200) {
+            const response = await Parser.parseJSON(request)
 
             return response;
         } else Error('Failed fetching user configuration.')
@@ -34,12 +38,12 @@ class Client {
     async fetchUser() {
         if (!this.isAuthenticated()) throw Error('You must be authenticated to do this.');
         
-        const request = await fetch('https://beta.character.ai/chat/user/', {
+        const request = await this.requester.request('https://beta.character.ai/chat/user/', {
             headers:this.getHeaders()
         })
 
-        if (request.status === 200) {
-            const response = await request.json()
+        if (request.status() === 200) {
+            const response = await Parser.parseJSON(request)
 
             return response;
         } else Error('Failed fetching user.')
@@ -47,12 +51,12 @@ class Client {
     async fetchFeaturedCharacters() {
         if (!this.isAuthenticated()) throw Error('You must be authenticated to do this.');
         
-        const request = await fetch('https://beta.character.ai/chat/characters/featured_v2/', {
+        const request = await this.requester.request('https://beta.character.ai/chat/characters/featured_v2/', {
             headers:this.getHeaders()
         })
 
-        if (request.status === 200) {
-            const response = await request.json()
+        if (request.status() === 200) {
+            const response = await Parser.parseJSON(request)
 
             return response;
         } else Error('Failed fetching featured characters.')
@@ -64,7 +68,7 @@ class Client {
             curated ? 'curated_categories' : 'categories'
         }/characters/`;
 
-        const request = await fetch(url, {
+        const request = await this.requester.request(url, {
             headers:this.#guestHeaders
         })
 
@@ -72,8 +76,8 @@ class Client {
         ? 'characters_by_curated_category'
         : 'characters_by_category';
       
-        if (request.status === 200) {
-            const response = await request.json()
+        if (request.status() === 200) {
+            const response = await Parser.parseJSON(request)
 
             return response[property]
         } else Error('Failed fetching characters by category.')
@@ -82,12 +86,12 @@ class Client {
         if (!this.isAuthenticated()) throw Error('You must be authenticated to do this.');
         if (characterId == undefined || typeof(characterId) != 'string') throw Error('Invalid arguments.')
 
-        const request = await fetch(`https://beta.character.ai/chat/character/info-cached/${characterId}/`, {
-            headers:this.getHeaders()
+        const request = await this.requester.request(`https://beta.character.ai/chat/character/info-cached/${characterId}/`, {
+            headers:this.getHeaders(),
         })
 
-        if (request.status === 200) {
-            const response = await request.json()
+        if (request.status() === 200) {
+            const response = await Parser.parseJSON(request)
 
             return response.character;
         } else Error('Could not fetch character information.')
@@ -97,24 +101,24 @@ class Client {
         if (this.#isGuest) throw Error('Guest accounts cannot use the search feature.');
         if (characterName == undefined || typeof(characterName) != 'string') throw Error('Invalid arguments.')
 
-        const request = await fetch(`https://beta.character.ai/chat/characters/search/?query=${characterName}`, {
+        const request = await this.requester.request(`https://beta.character.ai/chat/characters/search/?query=${characterName}`, {
             headers:this.getHeaders()
         })
         
-        if (request.status === 200) {
-            const response = await request.json()
+        if (request.status() === 200) {
+            const response = await Parser.parseJSON(request)
 
             return response;
         } else Error('Could not search for characters.')
     }
     async getRecentConversations() {
         if (!this.isAuthenticated()) throw Error('You must be authenticated to do this.');
-        const request = await fetch(`https://beta.character.ai/chat/characters/recent/`, {
+        const request = await this.requester.request(`https://beta.character.ai/chat/characters/recent/`, {
             headers:this.getHeaders()
         })
 
-        if (request.status === 200) {
-            const response = await request.json()
+        if (request.status() === 200) {
+            const response = await Parser.parseJSON(request)
 
             return response;
         } else Error('Could not get recent conversations.')
@@ -125,8 +129,8 @@ class Client {
         if (!this.isAuthenticated()) throw Error('You must be authenticated to do this.');
         if (characterId == undefined || typeof(characterId) != 'string' || typeof(externalId != null ? externalId : '') != 'string') throw Error('Invalid arguments.')
 
-        let request = await fetch('https://beta.character.ai/chat/history/continue/',  {
-            body:JSON.stringify({
+        let request = await this.requester.request('https://beta.character.ai/chat/history/continue/',  {
+            body:Parser.stringify({
                 character_external_id: characterId,
                 history_external_id: externalId,
             }),
@@ -134,19 +138,19 @@ class Client {
             headers:this.getHeaders()
         })
 
-        if (request.status === 200 || request.status === 404) {
+        if (request.status() === 200 || request.status() === 404) {
             let response = await request.text()
             
             if (response === "No Such History" || response === "there is no history between user and character") { // Create a new chat
-                request = await fetch('https://beta.character.ai/chat/history/create/', {
-                    body:JSON.stringify({
+                request = await this.requester.request('https://beta.character.ai/chat/history/create/', {
+                    body:Parser.stringify({
                         character_external_id: characterId,
                         history_external_id: null,
                     }),
                     method:'POST',
                     headers:this.getHeaders()
                 })
-                if (request.status === 200) response = await request.json()
+                if (request.status() === 200) response = await Parser.parseJSON(request)
                 else Error('Could not create a new chat.')
             } 
 
@@ -166,9 +170,11 @@ class Client {
         if (this.isAuthenticated()) throw Error('Already authenticated');
         if (!token || typeof(token) != 'string') throw Error('Specify a valid token');
 
-        const request = await fetch('https://beta.character.ai/dj-rest-auth/auth0/', {
+        await this.requester.initialize();
+
+        const request = await this.requester.request('https://beta.character.ai/dj-rest-auth/auth0/', {
             method:'POST',
-            body:JSON.stringify({
+            body:Parser.stringify({
                 access_token: token
             }),
             headers:{
@@ -176,8 +182,8 @@ class Client {
             }
         })
 
-        if (request.status === 200) {
-            const response = await request.json()
+        if (request.status() === 200 || request.status === 500) {
+            const response = await Parser.parseJSON(request)
 
             this.#isGuest = false;
             this.#authenticated = true;
@@ -188,23 +194,28 @@ class Client {
     }
     async authenticateAsGuest() {
         if (this.isAuthenticated()) throw Error('Already authenticated');
+        await this.requester.initialize();
+
         const uuid = uuidv4();
         
-        const request = await fetch('https://beta.character.ai/chat/auth/lazy/', {
+        const payload = JSON.stringify({
+            lazy_uuid: uuid
+        });
+
+        let request = await this.requester.request('https://beta.character.ai/chat/auth/lazy/', {
             method:'POST',
-            body:JSON.stringify({
-                lazy_uuid: uuid
-            }),
+            body:payload,
             headers: this.#guestHeaders
         })
 
-        if (request.status === 200) {
-            const response = await request.json()
+        if (request.status() === 200) {
+            const response = await Parser.parseJSON(request)
             
             if (response.success === true) {
                 this.#isGuest = true;
                 this.#authenticated = true;
                 this.#token = response.token;
+                this.uuid = uuid;
 
                 return response.token;
             } else throw Error('Registering failed');
@@ -234,6 +245,7 @@ class Client {
         return {
             authorization: `Token ${this.#token}`,
             'Content-Type': 'application/json',
+            //"user-agent": 'CharacterAI/1.0.0 (iPhone; iOS 14.4.2; Scale/3.00)'
             //'sec-ch-ua': `"Not_A Brand";v="99", "Google Chrome";v="109", "Chromium";v="109"`,
             //'sec-ch-ua-mobile': '?0'
             /*'sec-ch-ua-platform': "Windows",
