@@ -1,4 +1,5 @@
 const { Reply, Message, MessageHistory, OutgoingMessage } = require("node_characterai/message");
+const Parser = require('./parser');
 
 class Chat {
     constructor(client, characterId, continueBody) {
@@ -11,6 +12,7 @@ class Chat {
             (participant) => participant.is_human === false
         );
         this.aiId = ai.user.username;
+        this.requester = client.requester;
     }
 
     async fetchHistory(pageNumber) {
@@ -25,12 +27,12 @@ class Chat {
 
         const pageString = pageNumber ? `&page_num=${pageNumber}` : ''
 
-        const request = await fetch(`https://beta.character.ai/chat/history/msgs/user/?history_external_id=${this.externalId}${pageString}`, {
+        const request = await this.requester.request(`https://beta.character.ai/chat/history/msgs/user/?history_external_id=${this.externalId}${pageString}`, {
             headers:client.getHeaders()
         })
 
-        if (request.status === 200) {
-            const response = await request.json()
+        if (request.status() === 200) {
+            const response = await Parser.parseJSON(request)
             const historyMessages = response.messages;
             const messages = [];
 
@@ -53,37 +55,25 @@ class Chat {
 
         if (!client.isAuthenticated()) throw Error('You must be authenticated to do this.');
 
-        const request = await fetch('https://beta.character.ai/chat/streaming/', {
-            body:JSON.stringify(payload),
+        const request = await this.requester.request('https://beta.character.ai/chat/streaming/', {
+            body:Parser.stringify(payload),
             method:'POST',
-            headers:client.getHeaders()
-        })
+            headers:client.getHeaders(),
+            client:this.client
+        }, true)
 
-        if (request.status === 200) {
-            const response = await request.text()
-            const replies = [];
+        if (request.status() === 200) {
+            const response = await Parser.parseJSON(request);
+            const replies = response.replies;
 
-            for (const line of response.split('\n')) {
-                if (line.startsWith('{')) {
-                    replies.push(JSON.parse(line));
-                    continue;
-                }
+            const messages = []
+
+            for (let i = 0; i < replies.length; i++) {
+                messages.push(new Reply(this, response));
+            }
             
-                const start = line.indexOf(' {');
-                if (start < 0) continue;
-                replies.push(JSON.parse(line.slice(start - 1)));
-                }
-                
-                const messages = [];
-
-                for (let i = 0; i < replies.length; i++) {
-                    const reply = replies[i];
-
-                    messages.push(new Reply(this, reply));
-                }
-
-                if (!singleReply) return messages;
-                else return messages.pop();
+            if (!singleReply) return messages;
+            else return messages.pop();
         } else throw Error('Failed sending message.')
     }
 
@@ -113,17 +103,17 @@ class Chat {
         if (!this.client.isAuthenticated()) throw Error('You must be authenticated to do this.');
 
         const client = this.client;
-        const request = await fetch(`https://beta.character.ai/chat/character/histories/`, {
+        const request = await this.requester.request(`https://beta.character.ai/chat/character/histories/`, {
             headers:client.getHeaders(),
             method:'POST',
-            body: JSON.stringify({
+            body: Parser.stringify({
                 "external_id" : this.characterId,
                 "number" : amount
             })
         })
 
-        if (request.status === 200) {
-            const response = await request.json()
+        if (request.status() === 200) {
+            const response = await Parser.parseJSON(request)
             
             this.externalId = response.external_id;
             return response;
@@ -132,7 +122,7 @@ class Chat {
 
     // messages
     async getMessageById(messageId) {
-        if (typeof(messageId) != 'number') throw Error('Invalid arguments');
+        if (typeof(messageId) != 'string') throw Error('Invalid arguments - (Message ids are now strings)');
         if (!this.client.isAuthenticated()) throw Error('You must be authenticated to do this.');
 
         const history = await this.fetchHistory()
@@ -146,15 +136,15 @@ class Chat {
         return null;
     }
     async deleteMessage(messageId) {
-        if (typeof(messageId) != 'string') throw Error('Invalid arguments');
+        if (typeof(messageId) != 'string') throw Error('Invalid arguments - (Message ids are now strings)');
         if (!this.client.isAuthenticated()) throw Error('You must be authenticated to do this.');
         if (this.client.isGuest()) throw Error('Guest accounts cannot delete messsages.');
 
         const client = this.client;
-        const request = await fetch(`https://beta.character.ai/chat/history/msgs/delete/`, {
+        const request = await this.requester.request(`https://beta.character.ai/chat/history/msgs/delete/`, {
             headers:client.getHeaders(),
             method:'POST',
-            body: JSON.stringify({
+            body: Parser.stringify({
                 "history_id" : this.externalId,
                 "ids_to_delete" : [messageId],
                 "regenerating" : false
@@ -163,15 +153,54 @@ class Chat {
 
         let passing = false;
 
-        if (request.status === 200) {
-            const response = await request.json();
-
+        if (request.status() === 200) {
+            const response = await Parser.parseJSON(request);
+            
             if (response.status === 'OK') passing = true;
         }
 
         if (!passing) throw Error('Failed to delete the message.');
     }
-    async deleteMessagesBulk(amount = 50) {
+    async deleteMessages(messageIds) {
+        if (!this.client.isAuthenticated()) throw Error('You must be authenticated to do this.');
+        if (this.client.isGuest()) throw Error('Guest accounts cannot delete messsages.');
+
+        const messagesToDelete = [];
+
+        try {
+            for (let i = 0; i < messageIds.length; i++) {
+                const messageId = messageIds[i];
+
+                if (typeof(messageId) == "string") {
+                    messagesToDelete.push(messageId);
+                }
+            }
+        } catch (error) {
+            throw Error("Failed to delete messages.")
+        };
+
+        const client = this.client;
+        const request = await this.requester.request(`https://beta.character.ai/chat/history/msgs/delete/`, {
+            headers:client.getHeaders(),
+            method:'POST',
+            body: Parser.stringify({
+                "history_id" : this.externalId,
+                "ids_to_delete" : messagesToDelete,
+                "regenerating" : false
+            })
+        })
+
+        let passing = false;
+
+        if (request.status() === 200) {
+            const response = await Parser.parseJSON(request);
+            
+            if (response.status === 'OK') passing = true;
+        }
+
+        if (!passing) throw Error('Failed to delete messages.');
+    }
+    async deleteMessagesBulk(amount = 50, descending = false) {
         if (typeof(amount) != 'number') throw Error('Invalid arguments');
         if (!this.client.isAuthenticated()) throw Error('You must be authenticated to do this.');
         if (this.client.isGuest()) throw Error('Guest accounts cannot bulk delete messsages.');
@@ -181,7 +210,8 @@ class Chat {
         const history = await this.fetchHistory()
         const historyMessages = history.messages;
 
-        for (let i = 0; i < amount-1; i++) {
+        for (let i = 0; i < amount; i++) {
+            if (!descending) i = (amount - i);
             const message = historyMessages[i];
             
             if (message) idsToDelete.push(message.id);
@@ -190,20 +220,19 @@ class Chat {
         if (idsToDelete.length == 0) return;
 
         const client = this.client;
-        const request = await fetch(`https://beta.character.ai/chat/history/msgs/delete/`, {
+        const request = await this.requester.request(`https://beta.character.ai/chat/history/msgs/delete/`, {
             headers:client.getHeaders(),
             method:'POST',
-            body: JSON.stringify({
+            body: Parser.stringify({
                 "history_id" : this.externalId,
                 "ids_to_delete" : idsToDelete,
                 "regenerating" : false
             })
         })
-
         let passing = false;
 
-        if (request.status === 200) {
-            const response = await request.json();
+        if (request.status() === 200) {
+            const response = await Parser.parseJSON(request);
 
             if (response.status === 'OK') passing = true;
         }
@@ -215,16 +244,16 @@ class Chat {
         if (!this.client.isAuthenticated()) throw Error('You must be authenticated to do this.');
 
         const client = this.client;
-        const request = await fetch(`https://beta.character.ai/chat/history/create/`, {
+        const request = await this.requester.request(`https://beta.character.ai/chat/history/create/`, {
             headers:client.getHeaders(),
             method:'POST',
-            body: JSON.stringify({
+            body: Parser.stringify({
                 "character_external_id" : this.characterId
             })
         })
 
-        if (request.status === 200) {
-            const response = await request.json()
+        if (request.status() === 200) {
+            const response = await Parser.parseJSON(request)
             
             this.externalId = response.external_id;
             return response;
