@@ -14,12 +14,12 @@ If you like this project, please check their [website](https://character.ai/).
 
 ## Features
 
-* Fully written in javascript and CommonJS 
-* 2 external dependencies (uuid, node-fetch)
-* Asynchronous requests
-* Use conversations or use the API to fetch information
-* Easy to use
-* Guest & token login support
+* 👍 Fully written in Javascript and CommonJS (for max compatibility and ease of use)
+* ⌚ Asynchronous requests
+* 🗣️ Use conversations or use the API to fetch information
+* 🧸 Easy to use
+* 🔁 Active development
+* 👤 Guest & token login support
 
 ## Installation
 
@@ -73,9 +73,26 @@ For example, if you go to the chat page of the character `Test Character` you wi
 The last part of the URL is the character ID:
 ![Character_ID](https://i.imgur.com/nd86fN4.png)
 
-## Disclaimer
-❤️ This project is updated frequently, always check for the latest version for new features or bug fixes.
-🚀 If you have an issue or idea, let me know in the **Issues** tab.
-If you use this API, you also bound to the terms of usage of their website.
+## Troubleshooting
 
-(real)coloride - 2023, Licensed MIT.
+|**Problem**|Answer|
+|-------|------|
+|❌ **Token was invalid**|Make sure your token is actually valid and you copied your entire token (its pretty long).|
+|❓ **Fetch is not defined**|Upgrade to node 18 or higher (19 is better) or try installing `node-fetch`.|
+|👥 **`authenticateAsGuest()` doesn't work**|See issue [#14](https://github.com/realcoloride/node_characterai/issues/14).|
+|🦒 **Hit the max amount of messages?**|Sadly, guest accounts only have a limited amount of messages before they get limited and forced to login. See below for more info 👇|
+|🪐 **How to use an account to mass use the library?**|You can use **conversations**, a feature introduced in `1.0.0`, to assign to users and channels. **To reproduce a conversation, use OOC (out of character) to make the AI think you're with multiple people.** __See an example here:__ ![chrome_RDbmXXtFNl](https://user-images.githubusercontent.com/108619637/224778145-284dd89e-7960-499c-b0f0-0deca419c578.png)![chrome_BgF8crPvqC](https://user-images.githubusercontent.com/108619637/224778153-c2a42a26-c5f7-4148-9644-34353482833e.png) (Disclaimer: on some characters, their personality will make them ignore any OOC request).|
+|😮 **Why is a chrome window opening?**|This is because as of currently, the simple fetching is broken and I use puppeteer (a chromium browser control library) to go around cloudflare's restrictions.|
+|📣 **Is this official?**|No, this project is made by a fan of the website and is unofficial. *To support the developers, please check out [their website](https://beta.character.ai)*.|
+|😲 **Did something awesome with `node_characterai`?**|Please let me know!|
+|✉️ **Want to contact me?**|See my profile|
+|💡 **Have an idea?**|Open an issue in the [**Issues**](https://github.com/realcoloride/node_characterai/issues) tab|
+|➕ **Other issue?**|Open an issue in the [**Issues**](https://github.com/realcoloride/node_characterai/issues) tab|
+
+## Disclaimer
+##### ❤️ This project is updated frequently, **always check for the latest version for new features or bug fixes**.
+
+🚀 If you have an issue or idea, let me know in the [**Issues**](https://github.com/realcoloride/node_characterai/issues) tab.
+📜 If you use this API, you also bound to the terms of usage of their website.
+
+*(real)coloride - 2023, Licensed MIT.*
