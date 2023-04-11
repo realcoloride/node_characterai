@@ -80,14 +80,20 @@ class Message {
         if (this.deleted) throw Error('Message is already deleted');
 
         const chat = this.chat;
-        const previousMessage = this.getPreviousMessage();
 
         try {
-            await chat.deleteMessage(this.id);
-            if (deletePreviousToo) await chat.deleteMessage(previousMessage.id);
+            const messagesToDelete = [];
+            messagesToDelete.push(this.id);
 
+            if (deletePreviousToo) {
+                const previousMessage = await this.getPreviousMessage();
+                if (previousMessage != null && previousMessage.id != null && previousMessage.deleted != true)
+                    messagesToDelete.push(previousMessage.id);
+            }
+
+            await chat.deleteMessages(messagesToDelete);
             this.deleted = true;
-        } catch (error) {throw Error("Failed to delete message.");}
+        } catch (error) {throw Error("Failed to delete message." + error);}
     }
 
     // getters
@@ -104,7 +110,10 @@ class Reply {
     constructor(chat, options) {
         this.chat = chat;
 
-        const replyOptions = options.replies[0];
+        if (options.force_login == true) throw Error('Too many messages! (this might be because you use a guest account)');
+        if (options.abort == true) throw Error('Could not get a reply because it was aborted. This might be because the output was filtered (NSFW).')
+
+        const replyOptions = options.replies[0]; // todo fix if aborted
         this.text = replyOptions.text
         this.id = replyOptions.id
 
