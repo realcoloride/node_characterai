@@ -7,7 +7,7 @@ class Requester {
 
     #initialized = false;
     #hasDisplayed = false;
-    #headless = false; // BERWARE: HEADLESS IS SLOW!
+    #headless = true; // BERWARE: HEADLESS IS SLOW!
 
     constructor() {
         
@@ -34,6 +34,7 @@ class Requester {
                 '--disable-renderer-backgrounding',
                 '--override-plugin-power-saver-for-testing=never',
                 '--disable-extensions-http-throttling',
+                '--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.3'
             ]
         });
         this.browser = browser;

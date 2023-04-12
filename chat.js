@@ -122,7 +122,8 @@ class Chat {
 
     // messages
     async getMessageById(messageId) {
-        if (typeof(messageId) != 'string') throw Error('Invalid arguments - (Message ids are now strings)');
+        //if (typeof(messageId) != 'string') throw Error('Invalid arguments - (Message ids are now strings)');
+        messageId = messageId.toString();
         if (!this.client.isAuthenticated()) throw Error('You must be authenticated to do this.');
 
         const history = await this.fetchHistory()
