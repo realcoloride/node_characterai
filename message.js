@@ -4,7 +4,7 @@ class OutgoingMessage {
     constructor(chat, options) {
         function getValueOrDefault(value, fallback) {
             if (typeof(options) == 'string') return fallback;
-            else return options[value] || fallBack
+            else return options[value] || fallback
         }
 
         const payload = {
