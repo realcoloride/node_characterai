@@ -116,6 +116,7 @@ class Reply {
         const replyOptions = options.replies[0]; // todo fix if aborted
         this.text = replyOptions.text
         this.id = replyOptions.id
+        this.imageRelativePath = replyOptions.image_rel_path
 
         const srcCharacterDict = options.src_char;
         this.srcCharacterName = srcCharacterDict.participant.name
