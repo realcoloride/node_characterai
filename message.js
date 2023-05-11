@@ -32,7 +32,7 @@ class OutgoingMessage {
             stream_every_n_steps: getValueOrDefault("stream_every_n_steps", 16),
             chunks_to_pad: getValueOrDefault("chunks_to_pad", 8),
             is_proactive: getValueOrDefault("is_proactive", true),
-            // Image Stuff
+            // image generation
             image_rel_path: getValueOrDefault("image_rel_path", ""),
             image_description: getValueOrDefault("image_description", ""),
             image_description_type: getValueOrDefault("image_description_type", "AUTO_IMAGE_CAPTIONING"),
