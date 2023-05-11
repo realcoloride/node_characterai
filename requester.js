@@ -67,8 +67,6 @@ class Requester {
         const page = this.page;
 
         const method = options.method;
-        /*(options.method == 'POST' || options.method == undefined || options.method == null
-         ? 'POST' : 'GET');*/
 
         const body = (method == 'GET' ? {} : options.body);
         const headers = options.headers;
@@ -163,17 +161,18 @@ class Requester {
                 this.#hasDisplayed = true;
             }
 
+            // The end of this repeated 2 times, is it intentional? 
+            // Can it be in the same spot at the end to avoid code repetition?
             if (localFile) {
                 let dataUrl = fs.readFileSync(url, "base64");
                 response = await page.evaluate(
-                    async (heads, dataUrl) => {
+                    async (uploadHeaders, dataUrl) => {
                             var result = {
                                 code: 500
-                            }
+                            };
 
-                            // Taken from https://stackoverflow.com/questions/16245767/creating-a-blob-from-a-base64-string-in-javascript
                             const b64toBlob = (b64Data, contentType = '', sliceSize = 512) => {
-                                const byteCharacters = atob(b64Data);
+                                const byteCharacters = atob(b64Data); // <- Watch out, this is deprecated!
                                 const byteArrays = [];
 
                                 for (let offset = 0; offset < byteCharacters.length; offset += sliceSize) {
@@ -193,64 +192,67 @@ class Requester {
                                 });
                                 return blob;
                             }
+
                             const blob = b64toBlob(dataUrl.includes("base64,") ? dataUrl.split("base64,")[1] : dataUrl);
                             const file = new File([blob], "image");
                             const formData = new FormData();
                             formData.append("image", file);
 
-                            let head = heads;
+                            let head = uploadHeaders;
                             delete head["Content-Type"];
+                            // ^ Is this even being used?
 
-                            const resp = await fetch("https://beta.character.ai/chat/upload-image/", {
-                                headers: heads,
+                            const uploadResponse = await fetch("https://beta.character.ai/chat/upload-image/", {
+                                headers: uploadHeaders,
                                 method: "POST",
                                 body: formData
                             })
 
-                            if (resp.status == 200) {
+                            if (uploadResponse.status == 200) {
                                 result.code = 200;
-                                let respJson = await resp.json();
-                                result.response = respJson.value;
+
+                                let uploadResponseJSON = await uploadResponse.json();
+                                result.response = uploadResponseJSON.value;
                             }
 
                             return result;
                         },
-                        headers,
-                        dataUrl
+                        headers, dataUrl
                 );
             } else {
                 response = await page.evaluate(
-                    async (heads, url) => {
+                    async (uploadHeaders, url) => {
                             var result = {
                                 code: 500
-                            }
+                            };
 
-                            const resp = await fetch(url).then(resp => resp.blob()).then(async (blob) => {
+                            const uploadResponse = await fetch(url).then(uploadResponse => uploadResponse.blob()).then(async (blob) => {
                                 const file = new File([blob], "image");
                                 const formData = new FormData();
                                 formData.append("image", file);
 
-                                let head = heads;
+                                let head = uploadHeaders;
                                 delete head["Content-Type"];
+                                // ^ Is this even being used?
 
-                                const resp = await fetch("https://beta.character.ai/chat/upload-image/", {
-                                    headers: heads,
+                                const uploadResponse = await fetch("https://beta.character.ai/chat/upload-image/", {
+                                    headers: uploadHeaders,
                                     method: "POST",
                                     body: formData
                                 })
-                                return resp;
+                                return uploadResponse;
                             }).then()
 
-                            if (resp.status == 200) {
+                            if (uploadResponse.status == 200) {
                                 result.code = 200;
-                                let respJson = await resp.json();
-                                result.response = respJson.value;
+
+                                let uploadResponseJSON = await uploadResponse.json();
+                                result.response = uploadResponseJSON.value;
                             }
 
                             return result;
                         },
-                        headers,
-                        url
+                        headers, url
                 );
             }
 
