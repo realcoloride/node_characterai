@@ -84,7 +84,7 @@ Most of the Character.AI image features can be used like so:
 
 await chat.generateImage("dolphins swimming in green water")
 
-await chat.uploadImageFromLink("https://i.natgeofe.com/n/548467d8-c5f1-4551-9f58-6817a8d2c45e/NationalGeographic_2572187_2x3.jpg")
+await chat.uploadImageFromLink("https://www.example.com/image.jpg")
 // This is required if you want to use images from other websites
 
 await chat.uploadImageFromPath(path.join(__dirname,'./cat.jpg'))
