@@ -32,6 +32,11 @@ class OutgoingMessage {
             stream_every_n_steps: getValueOrDefault("stream_every_n_steps", 16),
             chunks_to_pad: getValueOrDefault("chunks_to_pad", 8),
             is_proactive: getValueOrDefault("is_proactive", true),
+            // Image Stuff
+            image_rel_path: getValueOrDefault("image_rel_path", ""),
+            image_description: getValueOrDefault("image_description", ""),
+            image_description_type: getValueOrDefault("image_description_type", "AUTO_IMAGE_CAPTIONING"),
+            image_origin_type: getValueOrDefault("image_origin_type", "UPLOADED"),
         }
 
         this.payload = payload;
@@ -116,6 +121,7 @@ class Reply {
         const replyOptions = options.replies[0]; // todo fix if aborted
         this.text = replyOptions.text
         this.id = replyOptions.id
+        this.imageRelativePath = replyOptions.image_rel_path
 
         const srcCharacterDict = options.src_char;
         this.srcCharacterName = srcCharacterDict.participant.name
