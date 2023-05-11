@@ -91,7 +91,6 @@ class Chat {
             return `https://characterai.io/i/400/static/user/${imgrequest.response}`;
         } else throw Error('Failed uploading image to cai.')
     }
-    
   	async uploadImageFromPath(imgPath) {
         if (!this.client.isAuthenticated()) throw Error('You must be authenticated to do this.');
 
@@ -105,7 +104,6 @@ class Chat {
             return `https://characterai.io/i/400/static/user/${imgrequest.response}`;
         } else throw Error('Failed uploading image to cai.')
     }
-    
     async generateImage(prompt) {
         if (!this.client.isAuthenticated()) throw Error('You must be authenticated to do this.');
 
