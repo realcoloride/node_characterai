@@ -77,6 +77,40 @@ class Chat {
         } else throw Error('Failed sending message.')
     }
 
+    // image gen (currently housed here because youd likely be using it alongside sendAndAwaitResponse) < Gato
+    async uploadImageFromLink(imgUrl) {
+        if (!this.client.isAuthenticated()) throw Error('You must be authenticated to do this.');
+
+        const client = this.client;
+
+        if (!client.isAuthenticated()) throw Error('You must be authenticated to do this.');
+
+        const imgrequest = await this.requester.imageUpload(imgUrl,client.getHeaders());
+
+        if (imgrequest.status() === 200) {
+            return `https://characterai.io/i/400/static/user/${imgrequest.response}`;
+        } else throw Error('Failed uploading image to cai.')
+    }
+    async generateImage(prompt) {
+        if (!this.client.isAuthenticated()) throw Error('You must be authenticated to do this.');
+
+        const client = this.client;
+
+        if (!client.isAuthenticated()) throw Error('You must be authenticated to do this.');
+
+        const request = await this.requester.request('https://beta.character.ai/chat/generate-image/', {
+            body:Parser.stringify({image_description:prompt}),
+            method:'POST',
+            headers:client.getHeaders(),
+            client:this.client
+        }, true)
+
+        if (request.status() === 200) {
+            const response = await Parser.parseJSON(request);
+            return response.image_rel_path;
+        } else throw Error('Failed generating image.')
+    }
+
     // conversations
     async changeToConversationId(conversationExternalId, force = false) {
         if (typeof(conversationExternalId) != 'string' || typeof(force) != 'boolean') throw Error("Invalid arguments");

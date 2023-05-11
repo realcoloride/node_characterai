@@ -7,10 +7,10 @@ class Requester {
 
     #initialized = false;
     #hasDisplayed = false;
-    #headless = true; // BERWARE: HEADLESS IS SLOW!
+    #headless = true; // BEWARE: HEADLESS IS SLOW!
 
     constructor() {
-        
+
     }
     isInitialized() {
         return this.#initialized;
@@ -54,7 +54,7 @@ class Requester {
         });
         await page.setJavaScriptEnabled(true);
         await page.setDefaultNavigationTimeout(0);
-    
+
         const userAgent = 'CharacterAI/1.0.0 (iPhone; iOS 14.4.2; Scale/3.00)';
         await page.setUserAgent(userAgent);
 
@@ -71,7 +71,7 @@ class Requester {
 
         const body = (method == 'GET' ? {} : options.body);
         const headers = options.headers;
-        
+
         let response
 
         try {
@@ -80,7 +80,7 @@ class Requester {
                 headers: headers,
                 body: body
             }
-            
+
             if (url.endsWith("/streaming/")) {
                 await page.setRequestInterception(false);
                 if (!this.#hasDisplayed) {
@@ -99,7 +99,7 @@ class Requester {
                         const responseText = matches[matches.length - 1];
 
                         let result = {
-                            code : 500,
+                            code: 500,
                         }
 
                         if (!matches) result = null;
@@ -113,24 +113,27 @@ class Requester {
                     payload,
                     url
                 );
-                
+
                 response.status = () => response.code // compatibilty reasons
                 response.text = () => response.response // compatibilty reasons
             } else {
+                if (url.includes("/beta.character.ai/")) {
+
+                }
                 await page.setRequestInterception(true);
                 let initialRequest = true;
-                
+
                 page.once('request', request => {
                     var data = {
                         'method': method,
                         'postData': body,
                         'headers': headers
                     };
-                    
+
                     if (request.isNavigationRequest() && !initialRequest) {
                         return request.abort();
                     }
-                    
+
                     try {
                         initialRequest = false;
                         request.continue(data);
@@ -138,14 +141,67 @@ class Requester {
                         console.log("[node_characterai] Puppeteer - Non fatal error: " + error);
                     }
                 });
-
                 response = await page.goto(url, { waitUntil: 'networkidle2' });
-                
             }
         } catch (error) {
             console.log("[node_characterai] Puppeteer - " + error)
         }
-        
+
+        return response;
+    }
+
+    async imageUpload(url, headers) {
+        const page = this.page;
+
+        let response
+
+        try {
+            await page.setRequestInterception(false);
+            if (!this.#hasDisplayed) {
+                console.log("[node_characterai] Puppeteer - Eval-fetching is an experimental feature and may be slower. Please report any issues on github")
+                this.#hasDisplayed = true;
+            }
+
+            response = await page.evaluate(
+                async (heads, url) => {
+                    var result = {
+                        code: 500
+                    }
+
+                    const resp = await fetch(url).then(resp=>resp.blob()).then(async (blob) => {
+                        const file = new File([blob], "image");
+                        const fd = new FormData();
+                        fd.append("image", file);
+
+                        let head = heads;
+                        delete head["Content-Type"];
+
+                        const resp = await fetch("https://beta.character.ai/chat/upload-image/",{
+                            headers:heads,
+                            method:"POST",
+                            body: fd
+                        })
+                        return resp;
+                    }).then()
+
+                    if(resp.status == 200){
+                        result.code = 200;
+                        let respJson = await resp.json();
+                        result.response = respJson.value;
+                    }
+
+                    return result;
+                },
+                headers,
+                url
+            );
+
+            response.status = () => response.code // compatibilty reasons
+            response.body = () => response.response // compatibilty reasons
+        } catch (error) {
+            console.log("[node_characterai] Puppeteer - " + error)
+        }
+
         return response;
     }
 }
