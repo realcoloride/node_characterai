@@ -73,6 +73,27 @@ For example, if you go to the chat page of the character `Test Character` you wi
 The last part of the URL is the character ID:
 ![Character_ID](https://i.imgur.com/nd86fN4.png)
 
+## Image Functions
+
+Character.AI has the ability to generate and interpret images on the spot. Some users may want to use these features.
+
+Most of the Character.AI image features can be used like so:
+
+```js
+await chat.generateImage("dolphins swimming in green water")
+// returns: URL as string
+
+await chat.uploadImageFromLink("https://i.natgeofe.com/n/548467d8-c5f1-4551-9f58-6817a8d2c45e/NationalGeographic_2572187_2x3.jpg")
+// returns: URL as string
+// required if you want to use images from other websites
+
+await chat.uploadImageFromPath(path.join(__dirname,'./cat.jpg'))
+// returns: URL as a string
+
+await chat.sendAndAwaitResponse({text:"What is in this image?",image_rel_path:${imageUrl}}, true)
+// replace imageUrl with one of the urls obtained above and the character will be able to recognize the image in their response
+```
+
 ## Troubleshooting
 
 |**Problem**|Answer|
