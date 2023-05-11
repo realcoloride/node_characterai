@@ -85,7 +85,20 @@ class Chat {
 
         if (!client.isAuthenticated()) throw Error('You must be authenticated to do this.');
 
-        const imgrequest = await this.requester.imageUpload(imgUrl,client.getHeaders());
+        const imgrequest = await this.requester.imageUpload(imgUrl,client.getHeaders(),false);
+
+        if (imgrequest.status() === 200) {
+            return `https://characterai.io/i/400/static/user/${imgrequest.response}`;
+        } else throw Error('Failed uploading image to cai.')
+    }
+  	async uploadImageFromPath(imgPath) {
+        if (!this.client.isAuthenticated()) throw Error('You must be authenticated to do this.');
+
+        const client = this.client;
+
+        if (!client.isAuthenticated()) throw Error('You must be authenticated to do this.');
+
+        const imgrequest = await this.requester.imageUpload(imgPath,client.getHeaders(),true);
 
         if (imgrequest.status() === 200) {
             return `https://characterai.io/i/400/static/user/${imgrequest.response}`;
