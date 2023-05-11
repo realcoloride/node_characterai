@@ -1,5 +1,6 @@
 const puppeteer = require('puppeteer-extra');
 const StealthPlugin = require('puppeteer-extra-plugin-stealth')
+const fs = require('fs');
 
 class Requester {
     browser = undefined;
@@ -149,8 +150,8 @@ class Requester {
 
         return response;
     }
-
-    async imageUpload(url, headers) {
+    
+    async imageUpload(url, headers, localFile = false) {
         const page = this.page;
 
         let response
@@ -162,39 +163,96 @@ class Requester {
                 this.#hasDisplayed = true;
             }
 
-            response = await page.evaluate(
-                async (heads, url) => {
-                    var result = {
-                        code: 500
-                    }
+            if (localFile) {
+                let dataUrl = fs.readFileSync(url, "base64");
+                response = await page.evaluate(
+                    async (heads, dataUrl) => {
+                            var result = {
+                                code: 500
+                            }
 
-                    const resp = await fetch(url).then(resp=>resp.blob()).then(async (blob) => {
-                        const file = new File([blob], "image");
-                        const fd = new FormData();
-                        fd.append("image", file);
+                            // Taken from https://stackoverflow.com/questions/16245767/creating-a-blob-from-a-base64-string-in-javascript
+                            const b64toBlob = (b64Data, contentType = '', sliceSize = 512) => {
+                                const byteCharacters = atob(b64Data);
+                                const byteArrays = [];
 
-                        let head = heads;
-                        delete head["Content-Type"];
+                                for (let offset = 0; offset < byteCharacters.length; offset += sliceSize) {
+                                    const slice = byteCharacters.slice(offset, offset + sliceSize);
 
-                        const resp = await fetch("https://beta.character.ai/chat/upload-image/",{
-                            headers:heads,
-                            method:"POST",
-                            body: fd
-                        })
-                        return resp;
-                    }).then()
+                                    const byteNumbers = new Array(slice.length);
+                                    for (let i = 0; i < slice.length; i++) {
+                                        byteNumbers[i] = slice.charCodeAt(i);
+                                    }
 
-                    if(resp.status == 200){
-                        result.code = 200;
-                        let respJson = await resp.json();
-                        result.response = respJson.value;
-                    }
+                                    const byteArray = new Uint8Array(byteNumbers);
+                                    byteArrays.push(byteArray);
+                                }
 
-                    return result;
-                },
-                headers,
-                url
-            );
+                                const blob = new Blob(byteArrays, {
+                                    type: contentType
+                                });
+                                return blob;
+                            }
+                            const blob = b64toBlob(dataUrl.includes("base64,") ? dataUrl.split("base64,")[1] : dataUrl);
+                            const file = new File([blob], "image");
+                            const formData = new FormData();
+                            formData.append("image", file);
+
+                            let head = heads;
+                            delete head["Content-Type"];
+
+                            const resp = await fetch("https://beta.character.ai/chat/upload-image/", {
+                                headers: heads,
+                                method: "POST",
+                                body: formData
+                            })
+
+                            if (resp.status == 200) {
+                                result.code = 200;
+                                let respJson = await resp.json();
+                                result.response = respJson.value;
+                            }
+
+                            return result;
+                        },
+                        headers,
+                        dataUrl
+                );
+            } else {
+                response = await page.evaluate(
+                    async (heads, url) => {
+                            var result = {
+                                code: 500
+                            }
+
+                            const resp = await fetch(url).then(resp => resp.blob()).then(async (blob) => {
+                                const file = new File([blob], "image");
+                                const formData = new FormData();
+                                formData.append("image", file);
+
+                                let head = heads;
+                                delete head["Content-Type"];
+
+                                const resp = await fetch("https://beta.character.ai/chat/upload-image/", {
+                                    headers: heads,
+                                    method: "POST",
+                                    body: formData
+                                })
+                                return resp;
+                            }).then()
+
+                            if (resp.status == 200) {
+                                result.code = 200;
+                                let respJson = await resp.json();
+                                result.response = respJson.value;
+                            }
+
+                            return result;
+                        },
+                        headers,
+                        url
+                );
+            }
 
             response.status = () => response.code // compatibilty reasons
             response.body = () => response.response // compatibilty reasons
