@@ -81,8 +81,6 @@ class Chat {
     // image interaction
     async uploadImage(content) {
         if (!this.client.isAuthenticated()) throw Error('You must be authenticated to do this.');
-
-        const type = typeof(content);
         /*
             Content Types:
 
@@ -100,8 +98,6 @@ class Chat {
         } catch (error) {
             throw Error("Content is invalid or not an image");
         }
-
-        if (contentType == "unknown") throw Error("Invalid arguments");
         if (!buffer) throw Error("Invalid content");
 
         const client = this.client;
