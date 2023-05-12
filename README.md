@@ -76,9 +76,9 @@ The last part of the URL is the character ID:
 ## Image Interactions
 ### WARNING: This part is currently under construction and is not available to the latest build (1.1.3). If you wish to use it, use the files of the code source directly. otherwise just skip this part.
 
-Character.AI has the ability to generate and interpret images in a conversation. Some characters base this concept into special characters, or maybe use it for recognizing images, or to interact with a character and give it more details on something, the possibilities are endless.
+🖼️ Character AI has the ability to generate and interpret images in a conversation. Some characters base this concept into special characters, or maybe use it for recognizing images, or to interact with a character and give it more details on something: *the possibilities are endless*.
 
-Most of the Character.AI image features can be used like so:
+💁 Most of the Character AI image features can be used like so:
 
 ```js
 // Most of these functions will return you an URL.
