@@ -48,7 +48,7 @@ const characterAI = new CharacterAI();
 ```
 
 Interacting with images:
-### WARNING: This part is currently under construction and is not available to the latest build (1.1.3). If you wish to use it, use the files of the code source directly. otherwise just skip this part.
+#### WARNING: This part is currently under construction and is not available to the latest build (1.1.3). If you wish to use it, use the files of the code source directly. otherwise just skip this part.
 
 🖼️ Character AI has the ability to generate and interpret images in a conversation. Some characters base this concept into special characters, or maybe use it for recognizing images, or to interact with a character and give it more details on something: *the possibilities are endless*.
 
