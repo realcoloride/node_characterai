@@ -47,6 +47,27 @@ const characterAI = new CharacterAI();
 })();
 ```
 
+Interacting with images:
+### WARNING: This part is currently under construction and is not available to the latest build (1.1.3). If you wish to use it, use the files of the code source directly. otherwise just skip this part.
+
+🖼️ Character AI has the ability to generate and interpret images in a conversation. Some characters base this concept into special characters, or maybe use it for recognizing images, or to interact with a character and give it more details on something: *the possibilities are endless*.
+
+💁 Most of the Character AI image features can be used like so:
+
+```js
+// Most of these functions will return you an URL.
+
+await chat.generateImage("dolphins swimming in green water")
+
+// You can upload images from links, to a file path to a buffer and so on.
+await chat.uploadImage("https://www.example.com/image.jpg")
+await chat.uploadImage(path.join(__dirname, './cat.jpg'))
+
+await chat.sendAndAwaitResponse({text: "What is in this image?", image_rel_path: ${imageUrl}}, true)
+// Including the image relative path is necessary to upload an image.
+```
+*Props to @creepycats for the base implementation of image features*
+
 ## Using an Access Token
 
 Some parts of the API, like managing a conversation requires for you to be logged in using an `accessToken`.
@@ -72,27 +93,6 @@ For example, if you go to the chat page of the character `Test Character` you wi
 
 The last part of the URL is the character ID:
 ![Character_ID](https://i.imgur.com/nd86fN4.png)
-
-## Image Interactions
-### WARNING: This part is currently under construction and is not available to the latest build (1.1.3). If you wish to use it, use the files of the code source directly. otherwise just skip this part.
-
-🖼️ Character AI has the ability to generate and interpret images in a conversation. Some characters base this concept into special characters, or maybe use it for recognizing images, or to interact with a character and give it more details on something: *the possibilities are endless*.
-
-💁 Most of the Character AI image features can be used like so:
-
-```js
-// Most of these functions will return you an URL.
-
-await chat.generateImage("dolphins swimming in green water")
-
-// You can upload images from links, to a file path to a buffer and so on.
-await chat.uploadImage("https://www.example.com/image.jpg")
-await chat.uploadImage(path.join(__dirname, './cat.jpg'))
-
-await chat.sendAndAwaitResponse({text: "What is in this image?", image_rel_path: ${imageUrl}}, true)
-// Including the image relative path is necessary to upload an image.
-```
-*Props to @creepycats for implementing most of this stuff out*
 
 ## Troubleshooting
 
