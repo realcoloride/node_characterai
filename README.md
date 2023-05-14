@@ -85,12 +85,11 @@ The last part of the URL is the character ID:
 
 await chat.generateImage("dolphins swimming in green water")
 
-await chat.uploadImageFromLink("https://www.example.com/image.jpg")
-// This is required if you want to use images from other websites
+// You can upload images from links, to a file path to a buffer and so on.
+await chat.uploadImage("https://www.example.com/image.jpg")
+await chat.uploadImage(path.join(__dirname, './cat.jpg'))
 
-await chat.uploadImageFromPath(path.join(__dirname, './cat.jpg'))
-
-await chat.sendAndAwaitResponse({text:"What is in this image?", image_rel_path:${imageUrl}}, true)
+await chat.sendAndAwaitResponse({text: "What is in this image?", image_rel_path: ${imageUrl}}, true)
 // Including the image relative path is necessary to upload an image.
 ```
 *Props to @creepycats for implementing most of this stuff out*
