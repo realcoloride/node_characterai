@@ -26,6 +26,7 @@
   },
   "dependencies": {
     "cloudflare-scraper": "^2.0.0",
+    "jimp": "^0.22.8",
     "json-bigint": "^1.0.0",
     "node-fetch": "^3.3.0",
     "puppeteer": "^19.7.5",
