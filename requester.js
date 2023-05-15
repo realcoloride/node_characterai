@@ -90,8 +90,9 @@ class Requester {
 			console.log(`In Waiting Room: ${minute} Minutes`);
 			let minutes = minute * 60000;
 			await delay(minutes);
+			return console.log("Done, Redirect To Authentication");
 		}
-		return console.log("Done, Redirect To Authentication");
+		return;
 	}
 
 	async request(url, options) {
