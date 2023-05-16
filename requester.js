@@ -66,6 +66,7 @@ class Requester {
 		function delay(ms) {
 			return new Promise((resolve) => setTimeout(resolve, ms));
 		}
+
 		const page = this.page;
 		await page.goto("https://beta.character.ai/");
 
@@ -79,20 +80,20 @@ class Requester {
 				const matches = h2Text.match(regex);
 				if (matches) {
 					return matches[0];
-				} else {
-					return;
 				}
 			} catch (e) {
 				return;
 			}
 		});
+
 		if (minute) {
 			console.log(`In Waiting Room: ${minute} Minutes`);
 			let minutes = minute * 60000;
 			await delay(minutes);
-			return console.log("Done, Redirect To Authentication");
+			console.log("Done, Redirect To Authentication");
+		} else {
+			return;
 		}
-		return;
 	}
 
 	async request(url, options) {
