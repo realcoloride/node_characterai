@@ -218,7 +218,6 @@ class Client {
 			throw Error("Specify a valid token");
 
 		await this.requester.initialize();
-		await this.requester.awaitInWaitingRoom();
 
 		const request = await this.requester.request(
 			"https://beta.character.ai/dj-rest-auth/auth0/",
@@ -246,7 +245,6 @@ class Client {
 	async authenticateAsGuest() {
 		if (this.isAuthenticated()) throw Error("Already authenticated");
 		await this.requester.initialize();
-		await this.requester.awaitInWaitingRoom();
 
 		const uuid = uuidv4();
 
