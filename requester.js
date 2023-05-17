@@ -60,14 +60,11 @@ class Requester {
 		await page.setUserAgent(userAgent);
 
 		console.log("[node_characterai] Puppeteer - Done with setup");
-	}
 
-	async awaitInWaitingRoom() {
 		function delay(ms) {
 			return new Promise((resolve) => setTimeout(resolve, ms));
 		}
 
-		const page = this.page;
 		await page.goto("https://beta.character.ai/");
 
 		const minute = await page.evaluate(() => {
@@ -87,10 +84,14 @@ class Requester {
 		});
 
 		if (minute) {
-			console.log(`In Waiting Room: ${minute} Minutes`);
+			console.log(
+				`[node_characterai] Puppeteer - Currently in waiting room. Time left: ${minute}`
+			);
 			let minutes = minute * 60000;
 			await delay(minutes);
-			console.log("Done, Redirect To Authentication");
+			console.log(
+				"[node_characterai] Puppeteer - Done. Redirect To Authentication"
+			);
 		} else {
 			return;
 		}
