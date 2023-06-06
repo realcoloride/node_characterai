@@ -54,6 +54,7 @@ class Requester {
                                 clearInterval(interval);
                                 resolve();
                             }
+                            pass = true;
                         };
                     }
 
