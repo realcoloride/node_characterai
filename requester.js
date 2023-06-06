@@ -19,6 +19,54 @@ class Requester {
         return this.#initialized;
     }
 
+    async waitForWaitingRoom(page) {
+        if (!this.usePlus) {
+            return new Promise(async(resolve) => {
+                try {
+                    let interval;
+                    let pass = true;
+                    await page.goto("https://beta.character.ai");
+                    
+                    const minute = 1000 * 60; // Update every minute
+
+                    // Keep waiting until false
+                    async function check() {
+                        if (pass) {
+                            pass = false;
+
+                            const waitingRoomTimeLeft = await page.evaluate(async() => {
+                                try {
+                                    const contentContainer = document.querySelector(".content-container");
+                                    const sections = contentContainer.querySelectorAll("section")
+                                    const h2Element = sections[i].querySelector("h2");
+                                    const h2Text = h2Element.innerText;
+                                    const regex = /\d+/g;
+                                    const matches = h2Text.match(regex);
+        
+                                    if (matches) return matches[0];
+                                } catch (error) {return};
+                            }, minute);
+                            
+                            const waiting = (waitingRoomTimeLeft != null);
+                            if (waiting) {
+                                console.log(`[node_characterai] Puppeteer - Currently in cloudflare's waiting room. Time left: ${waitingRoomTimeLeft}`);
+                            } else {
+                                clearInterval(interval);
+                                resolve();
+                            }
+                        };
+                    }
+
+                    interval = setInterval(check, minute);
+                    await check();
+                } catch (error) {
+                    console.log(`[node_characterai] Puppeteer - There was a fatal error while checking for cloudflare's waiting room.`);
+                    console.log(error);
+                }
+            });
+        }
+    }
+
     async initialize() {
         if (!this.isInitialized());
 
@@ -61,6 +109,8 @@ class Requester {
 
         const userAgent = 'CharacterAI/1.0.0 (iPhone; iOS 14.4.2; Scale/3.00)';
         await page.setUserAgent(userAgent);
+
+        await this.waitForWaitingRoom(page);
 
         console.log("[node_characterai] Puppeteer - Done with setup");
 
