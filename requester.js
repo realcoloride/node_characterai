@@ -1,6 +1,5 @@
 const puppeteer = require('puppeteer-extra');
 const StealthPlugin = require('puppeteer-extra-plugin-stealth')
-const fs = require('fs');
 
 class Requester {
     browser = undefined;
@@ -8,7 +7,8 @@ class Requester {
 
     #initialized = false;
     #hasDisplayed = false;
-    #headless = true; // BEWARE: HEADLESS IS SLOW!
+    #headless = 'new';
+    puppeteerPath = undefined;
 
     constructor() {
 
@@ -36,7 +36,8 @@ class Requester {
                 '--override-plugin-power-saver-for-testing=never',
                 '--disable-extensions-http-throttling',
                 '--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.3'
-            ]
+            ],
+            executablePath: this.puppeteerPath || null
         });
         this.browser = browser;
 
