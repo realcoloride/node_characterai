@@ -9,6 +9,8 @@ class Requester {
     #hasDisplayed = false;
     #headless = 'new';
     puppeteerPath = undefined;
+    
+    usePlus = false;
 
     constructor() {
 
@@ -73,6 +75,8 @@ class Requester {
         const headers = options.headers;
 
         let response
+
+        if (this.usePlus) url.replace('beta.character.ai', 'plus.character.ai');
 
         try {
             const payload = {
