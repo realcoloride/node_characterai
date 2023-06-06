@@ -117,9 +117,6 @@ class Requester {
                 response.status = () => response.code // compatibilty reasons
                 response.text = () => response.response // compatibilty reasons
             } else {
-                if (url.includes("/beta.character.ai/")) {
-
-                }
                 await page.setRequestInterception(true);
                 let initialRequest = true;
 
