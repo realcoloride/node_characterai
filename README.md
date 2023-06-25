@@ -47,28 +47,6 @@ const characterAI = new CharacterAI();
 })();
 ```
 
-#### ⚠️ WARNING: This part is currently under construction and is not available to the latest build (1.1.3). If you wish to use it, use the files of the code source directly. otherwise just skip this part.
-
-Interacting with images:
-
-🖼️ Character AI has the ability to generate and interpret images in a conversation. Some characters base this concept into special characters, or maybe use it for recognizing images, or to interact with a character and give it more details on something: *the possibilities are endless*.
-
-💁 Most of the Character AI image features can be used like so:
-
-```js
-// Most of these functions will return you an URL.
-
-await chat.generateImage("dolphins swimming in green water")
-
-// You can upload images from links, to a file path to a buffer and so on.
-await chat.uploadImage("https://www.example.com/image.jpg")
-await chat.uploadImage(path.join(__dirname, './cat.jpg'))
-
-await chat.sendAndAwaitResponse({text: "What is in this image?", image_rel_path: ${imageUrl}}, true)
-// Including the image relative path is necessary to upload an image.
-```
-*Props to @creepycats for the base implementation of image features*
-
 ## Using an Access Token
 
 Some parts of the API, like managing a conversation requires for you to be logged in using an `accessToken`.
@@ -95,6 +73,28 @@ For example, if you go to the chat page of the character `Test Character` you wi
 The last part of the URL is the character ID:
 ![Character_ID](https://i.imgur.com/nd86fN4.png)
 
+## Image Interactions
+### WARNING: This part is currently experimental, if you encounter any problem, open an [**Issue**](https://github.com/realcoloride/node_characterai/issues).
+
+🖼️ Character AI has the ability to generate and interpret images in a conversation. Some characters base this concept into special characters, or maybe use it for recognizing images, or to interact with a character and give it more details on something: *the possibilities are endless*.
+
+💁 Most of the Character AI image features can be used like so:
+
+```js
+// Most of these functions will return you an URL.
+
+await chat.generateImage("dolphins swimming in green water")
+
+await chat.uploadImageFromLink("https://www.example.com/image.jpg")
+// This is required if you want to use images from other websites
+
+await chat.uploadImageFromPath(path.join(__dirname, './cat.jpg'))
+
+await chat.sendAndAwaitResponse({text:"What is in this image?", image_rel_path:${imageUrl}}, true)
+// Including the image relative path is necessary to upload an image.
+```
+*Props to @creepycats for implementing most of this stuff out*
+
 ## Troubleshooting
 
 |**Problem**|Answer|
@@ -105,6 +105,8 @@ The last part of the URL is the character ID:
 |🦒 **Hit the max amount of messages?**|Sadly, guest accounts only have a limited amount of messages before they get limited and forced to login. See below for more info 👇|
 |🪐 **How to use an account to mass use the library?**|You can use **conversations**, a feature introduced in `1.0.0`, to assign to users and channels. **To reproduce a conversation, use OOC (out of character) to make the AI think you're with multiple people.** __See an example here:__ ![chrome_RDbmXXtFNl](https://user-images.githubusercontent.com/108619637/224778145-284dd89e-7960-499c-b0f0-0deca419c578.png)![chrome_BgF8crPvqC](https://user-images.githubusercontent.com/108619637/224778153-c2a42a26-c5f7-4148-9644-34353482833e.png) (Disclaimer: on some characters, their personality will make them ignore any OOC request).|
 |😮 **Why is a chrome window opening?**|This is because as of currently, the simple fetching is broken and I use puppeteer (a chromium browser control library) to go around cloudflare's restrictions.|
+|⚠️ **How do I change the puppeteer path?**|In the CharacterAI class, you can access the requester and define the puppeteerPath variable (IMPORTANT: do it before you authenticate!)|
+|💳 **I am a member of cai+, how do I use it?**|Same as for the puppeteer's path, just change .usePlus property from the requester to ping from cai+'s domain.|
 |📣 **Is this official?**|No, this project is made by a fan of the website and is unofficial. *To support the developers, please check out [their website](https://beta.character.ai)*.|
 |😲 **Did something awesome with `node_characterai`?**|Please let me know!|
 |✉️ **Want to contact me?**|See my profile|
