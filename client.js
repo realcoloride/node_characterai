@@ -226,6 +226,7 @@ class Client {
             this.#authenticated = false;
             this.#isGuest = false;
             this.#token = undefined;
+            this.requester.uninitialize();
         }
     }
 
