@@ -70,6 +70,11 @@ class Requester {
 
     async initialize() {
         if (!this.isInitialized());
+        
+        // Handle chromium tabs cleanup
+        process.on('exit', () => {
+            this.uninitialize();
+        });
 
         console.log("[node_characterai] Puppeteer - This is an experimental feature. Please report any issues on github.");
 
@@ -249,6 +254,13 @@ class Requester {
         }
 
         return response;
+    }
+
+    async uninitialize() {
+        // Handle chromium tabs cleanup
+        try {
+            this.browser.close();
+        } catch {}
     }
 }
 
