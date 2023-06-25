@@ -196,17 +196,34 @@ class Client {
         if (this.isAuthenticated()) throw Error('Already authenticated');
         await this.requester.initialize();
 
-        const uuid = uuidv4();
-        
-        const payload = JSON.stringify({
-            lazy_uuid: uuid
-        });
+        let generating = false;
+        let request;
 
-        let request = await this.requester.request('https://beta.character.ai/chat/auth/lazy/', {
-            method:'POST',
-            body:payload,
-            headers: this.#guestHeaders
-        })
+        let uuid = uuidv4();
+
+        // This is experimental but forces authentication 
+        for (let i = 0; i < 20; i++) {
+            generating = true;
+          
+            uuid = uuidv4();
+            const payload = JSON.stringify({
+                lazy_uuid: uuid,
+            });
+          
+            const baseRequest = await Promise.race([
+                this.requester.request('https://beta.character.ai/chat/auth/lazy/', {
+                    method: 'POST',
+                    body: payload,
+                    headers: this.#guestHeaders,
+                }),
+                new Promise(resolve => setTimeout(() => resolve(null), 2000))
+            ]);
+          
+            request = baseRequest;
+            generating = false;
+          
+            if (request) break;
+        }
 
         if (request.status() === 200) {
             const response = await Parser.parseJSON(request)
