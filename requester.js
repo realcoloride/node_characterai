@@ -7,7 +7,7 @@ class Requester {
 
     #initialized = false;
     #hasDisplayed = false;
-    #headless = 'new';
+    #headless = "new";
     puppeteerPath = undefined;
     
     usePlus = false;
@@ -201,7 +201,10 @@ class Requester {
                 response = await page.goto(url, { waitUntil: 'networkidle2' });
             }
         } catch (error) {
-            console.log("[node_characterai] Puppeteer - " + error)
+            const authenticating = (url == "https://beta.character.ai/chat/auth/lazy/")
+            
+            if (!authenticating) // Temporary fix
+                console.log("[node_characterai] Puppeteer - " + error);
         }
 
         return response;
