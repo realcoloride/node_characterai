@@ -119,7 +119,6 @@ class Requester {
         await this.waitForWaitingRoom(page);
 
         console.log("[node_characterai] Puppeteer - Done with setup");
-
     }
 
     async request(url, options) {
