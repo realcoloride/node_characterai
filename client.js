@@ -182,7 +182,7 @@ class Client {
             }
         })
 
-        if (request.status() === 200 || request.status === 500) {
+        if (request.status() === 200) {
             const response = await Parser.parseJSON(request)
 
             this.#isGuest = false;
