@@ -100,6 +100,12 @@ class Requester {
         let page = await browser.pages();
         page = page[0];
         this.page = page;
+
+        // Special thanks to @Parking-Master for this fix
+        const client = await page.target().createCDPSession();
+        await client.send('Network.clearBrowserCookies');
+        await client.send('Network.clearBrowserCache');
+
         await page.setRequestInterception(false);
 
         page.setViewport({
