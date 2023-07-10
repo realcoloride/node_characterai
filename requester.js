@@ -9,7 +9,18 @@ class Requester {
     #hasDisplayed = false;
     #headless = "new";
     puppeteerPath = undefined;
-    
+    puppeteerArgs = [
+        '--fast-start',
+        '--disable-extensions',
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--no-gpu',
+        '--disable-background-timer-throttling',
+        '--disable-renderer-backgrounding',
+        '--override-plugin-power-saver-for-testing=never',
+        '--disable-extensions-http-throttling',
+        '--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.3'
+    ];
     usePlus = false;
 
     constructor() {
@@ -81,18 +92,7 @@ class Requester {
         puppeteer.use(StealthPlugin())
         const browser = await puppeteer.launch({
             headless: this.#headless,
-            args: [
-                '--fast-start',
-                '--disable-extensions',
-                '--no-sandbox',
-                '--disable-setuid-sandbox',
-                '--no-gpu',
-                '--disable-background-timer-throttling',
-                '--disable-renderer-backgrounding',
-                '--override-plugin-power-saver-for-testing=never',
-                '--disable-extensions-http-throttling',
-                '--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.3'
-            ],
+            args: this.puppeteerArgs,
             executablePath: this.puppeteerPath || null
         });
         this.browser = browser;
