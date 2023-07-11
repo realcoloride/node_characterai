@@ -118,6 +118,7 @@ class Requester {
         });
         await page.setJavaScriptEnabled(true);
         await page.setDefaultNavigationTimeout(0);
+        await page.setDefaultTimeout(0);
 
         const userAgent = 'CharacterAI/1.0.0 (iPhone; iOS 14.4.2; Scale/3.00)';
         await page.setUserAgent(userAgent);
