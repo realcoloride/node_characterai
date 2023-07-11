@@ -21,6 +21,7 @@ class Requester {
         '--disable-extensions-http-throttling',
         '--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.3'
     ];
+    timeOut = 0;
     usePlus = false;
 
     constructor() {
@@ -93,6 +94,7 @@ class Requester {
         const browser = await puppeteer.launch({
             headless: this.#headless,
             args: this.puppeteerArgs,
+            protocolTimeout: this.timeOut || 0,
             executablePath: this.puppeteerPath || null
         });
         this.browser = browser;
