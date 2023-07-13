@@ -100,18 +100,42 @@ await chat.sendAndAwaitResponse({text:"What is in this image?", image_rel_path:$
 |**Problem**|Answer|
 |-------|------|
 |❌ **Token was invalid**|Make sure your token is actually valid and you copied your entire token (its pretty long).|
-|❓ **Fetch is not defined**|Upgrade to node 18 or higher (19 is better) or try installing `node-fetch`.|
+|😮 **Why are chromium processes opening?**|This is because as of currently, the simple fetching is broken and I use puppeteer (a chromium browser control library) to go around cloudflare's restrictions.|
 |👥 **`authenticateAsGuest()` doesn't work**|See issue [#14](https://github.com/realcoloride/node_characterai/issues/14).|
 |🦒 **Hit the max amount of messages?**|Sadly, guest accounts only have a limited amount of messages before they get limited and forced to login. See below for more info 👇|
 |🪐 **How to use an account to mass use the library?**|You can use **conversations**, a feature introduced in `1.0.0`, to assign to users and channels. **To reproduce a conversation, use OOC (out of character) to make the AI think you're with multiple people.** __See an example here:__ ![chrome_RDbmXXtFNl](https://user-images.githubusercontent.com/108619637/224778145-284dd89e-7960-499c-b0f0-0deca419c578.png)![chrome_BgF8crPvqC](https://user-images.githubusercontent.com/108619637/224778153-c2a42a26-c5f7-4148-9644-34353482833e.png) (Disclaimer: on some characters, their personality will make them ignore any OOC request).|
-|😮 **Why is a chrome window opening?**|This is because as of currently, the simple fetching is broken and I use puppeteer (a chromium browser control library) to go around cloudflare's restrictions.|
-|⚠️ **How do I change the puppeteer path?**|In the CharacterAI class, you can access the requester and define the puppeteerPath variable (IMPORTANT: do it before you authenticate!)|
-|💳 **I am a member of cai+, how do I use it?**|Same as for the puppeteer's path, just change .usePlus property from the requester to ping from cai+'s domain.|
 |📣 **Is this official?**|No, this project is made by a fan of the website and is unofficial. *To support the developers, please check out [their website](https://beta.character.ai)*.|
 |😲 **Did something awesome with `node_characterai`?**|Please let me know!|
 |✉️ **Want to contact me?**|See my profile|
 |💡 **Have an idea?**|Open an issue in the [**Issues**](https://github.com/realcoloride/node_characterai/issues) tab|
 |➕ **Other issue?**|Open an issue in the [**Issues**](https://github.com/realcoloride/node_characterai/issues) tab|
+
+## In-depth troubleshooting
+#### **🤚 Before you scroll, please know that:**
+* In the `Client` class, you can access the `Requester` class and define puppeteer or other variables related to how CharacterAI will work using `characterAI.requester.(property)`. *Also, anything here is subject to change, so make sure to update the package frequently.*
+
+### 💳 About CharacterAI+
+#### **"I am a member of cai+, how do I use it?"**
+
+Change the property `.usePlus` from the requester and if needed, change `.forceWaitingRoom`.
+
+### 🧭 About Puppeteer
+Around a few months ago, the package only required the `node-fetch` module to run. The package was made using simple API requests. *However, over time, CharacterAI started fighting against scrapping and bots, which also made it almost impossible for anyone to use this package.*
+
+**This is where in versions 1.1 and higher, puppeteer is used (which uses a browser) to make requests with the API.**
+
+### ⚙️ How to change Puppeteer settings
+ **👉 IMPORTANT: do the changes before you initialize your client!**
+
+In the CharacterAI class, you can access the requester and define the `.puppeteerPath` variable or other arguments, and the properties include *(and are subject to change in future versions)*:
+```js
+puppeteerPath, // Chromium executables path
+puppeteerLaunchArgs, // Browser launch arguments
+puppeteerNoDefaultTimeout, // Toggle default timeout
+puppeteerProtocolTimeout // Change the protocol timeout
+```
+💡 I recommend that you **frequently** update this package for bug fixes and new additions.
+
 
 ## Disclaimer
 ##### ❤️ This project is updated frequently, **always check for the latest version for new features or bug fixes**.
