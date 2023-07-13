@@ -7,10 +7,26 @@ class Requester {
 
     #initialized = false;
     #hasDisplayed = false;
+
     #headless = "new";
     puppeteerPath = undefined;
-    
+    puppeteerLaunchArgs = [
+        '--fast-start',
+        '--disable-extensions',
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--no-gpu',
+        '--disable-background-timer-throttling',
+        '--disable-renderer-backgrounding',
+        '--override-plugin-power-saver-for-testing=never',
+        '--disable-extensions-http-throttling',
+        '--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.3'
+    ];
+    puppeteerNoDefaultTimeout = false;
+    puppeteerProtocolTimeout = 0;
+
     usePlus = false;
+    forceWaitingRoom = false;
 
     constructor() {
 
@@ -20,7 +36,8 @@ class Requester {
     }
 
     async waitForWaitingRoom(page) {
-        if (!this.usePlus) {
+        // Enable force waiting room to ensure you check for waiting room even on cai+.
+        if (!this.usePlus || (this.usePlus && this.forceWaitingRoom)) {
             return new Promise(async(resolve) => {
                 try {
                     let interval;
@@ -37,7 +54,7 @@ class Requester {
                             const waitingRoomTimeLeft = await page.evaluate(async() => {
                                 try {
                                     const contentContainer = document.querySelector(".content-container");
-                                    const sections = contentContainer.querySelectorAll("section")
+                                    const sections = contentContainer.querySelectorAll("section");
                                     const h2Element = sections[i].querySelector("h2");
                                     const h2Text = h2Element.innerText;
                                     const regex = /\d+/g;
@@ -78,21 +95,11 @@ class Requester {
 
         console.log("[node_characterai] Puppeteer - This is an experimental feature. Please report any issues on github.");
 
-        puppeteer.use(StealthPlugin())
+        puppeteer.use(StealthPlugin());
         const browser = await puppeteer.launch({
             headless: this.#headless,
-            args: [
-                '--fast-start',
-                '--disable-extensions',
-                '--no-sandbox',
-                '--disable-setuid-sandbox',
-                '--no-gpu',
-                '--disable-background-timer-throttling',
-                '--disable-renderer-backgrounding',
-                '--override-plugin-power-saver-for-testing=never',
-                '--disable-extensions-http-throttling',
-                '--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.3'
-            ],
+            args: this.puppeteerLaunchArgs,
+            protocolTimeout: this.puppeteerProtocolTimeout || 0, // Props to monckey100
             executablePath: this.puppeteerPath || null
         });
         this.browser = browser;
@@ -118,6 +125,7 @@ class Requester {
         });
         await page.setJavaScriptEnabled(true);
         await page.setDefaultNavigationTimeout(0);
+        if (this.puppeteerNoDefaultTimeout) await page.setDefaultTimeout(0); // Props to monckey100
 
         const userAgent = 'CharacterAI/1.0.0 (iPhone; iOS 14.4.2; Scale/3.00)';
         await page.setUserAgent(userAgent);
@@ -137,7 +145,8 @@ class Requester {
 
         let response
 
-        if (this.usePlus) url.replace('beta.character.ai', 'plus.character.ai');
+        if (this.usePlus) // Props to @Kaidesa
+            url = url.replace('beta.character.ai', 'plus.character.ai');
 
         try {
             const payload = {
