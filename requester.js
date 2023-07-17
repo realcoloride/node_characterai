@@ -109,6 +109,8 @@ class Requester {
         this.page = page;
 
         // Special thanks to @Parking-Master for this fix
+        page.deleteCookie();
+        
         const client = await page.target().createCDPSession();
         await client.send('Network.clearBrowserCookies');
         await client.send('Network.clearBrowserCache');
