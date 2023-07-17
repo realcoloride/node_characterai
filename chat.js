@@ -1,4 +1,4 @@
-const { Reply, Message, MessageHistory, OutgoingMessage } = require("node_characterai/message");
+const { Reply, Message, MessageHistory, OutgoingMessage } = require("./message");
 const Parser = require('./parser');
 const jimp = require('jimp');
 
