@@ -1,6 +1,6 @@
 {
   "name": "node_characterai",
-  "version": "1.1.6",
+  "version": "1.1.8",
   "description": "Unofficial Character AI wrapper for node.",
   "main": "index.js",
   "scripts": {
@@ -27,7 +27,7 @@
   "dependencies": {
     "jimp": "^0.22.8",
     "json-bigint": "^1.0.0",
-    "node_characterai": "^1.1.4",
+    "node_characterai": "^1.1.7",
     "node-fetch": "^3.3.0",
     "puppeteer": "^19.7.5",
     "puppeteer-extra": "^3.3.6",
