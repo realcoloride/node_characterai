@@ -132,6 +132,9 @@ class Requester {
         const userAgent = 'CharacterAI/1.0.0 (iPhone; iOS 14.4.2; Scale/3.00)';
         await page.setUserAgent(userAgent);
 
+        await page.goto(`https://${(this.usePlus ? "plus" : "beta")}.character.ai`);
+        await page.evaluate(() => localStorage.clear());
+
         await this.waitForWaitingRoom(page);
 
         console.log("[node_characterai] Puppeteer - Done with setup");
