@@ -55,7 +55,7 @@ class Requester {
                                 try {
                                     const contentContainer = document.querySelector(".content-container");
                                     const sections = contentContainer.querySelectorAll("section");
-                                    const h2Element = sections[i].querySelector("h2");
+                                    const h2Element = sections[1].querySelector("h2");
                                     const h2Text = h2Element.innerText;
                                     const regex = /\d+/g;
                                     const matches = h2Text.match(regex);
