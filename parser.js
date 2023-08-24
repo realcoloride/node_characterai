@@ -1,4 +1,4 @@
-var JSONbig = require('json-bigint');
+var JSONbig = require("json-bigint");
 
 class Parser {
     static async parseJSON(response) {
