@@ -1,6 +1,6 @@
 {
   "name": "node_characterai",
-  "version": "1.1.9",
+  "version": "1.2.0",
   "description": "Unofficial Character AI wrapper for node.",
   "main": "index.js",
   "scripts": {
@@ -16,7 +16,7 @@
     "api",
     "ai",
     "node",
-    "character",
+    "characterai",
     "js"
   ],
   "author": "realcoloride",
