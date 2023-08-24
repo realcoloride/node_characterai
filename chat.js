@@ -8,9 +8,7 @@ class Chat {
 
         this.client = client;
 
-        const ai = continueBody.participants.find(
-            (participant) => participant.is_human === false
-        );
+        const ai = continueBody.participants.find((participant) => participant.is_human === false);
         this.aiId = ai.user.username;
         this.requester = client.requester;
     }
