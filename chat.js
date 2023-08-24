@@ -1,6 +1,5 @@
-const { Reply, Message, MessageHistory, OutgoingMessage } = require("./message");
+const { Reply, Message, MessageHistory, OutgoingMessage } = require("./message.js");
 const Parser = require('./parser');
-const jimp = require('jimp');
 
 class Chat {
     constructor(client, characterId, continueBody) {
@@ -78,45 +77,41 @@ class Chat {
         } else throw Error('Failed sending message.')
     }
     
-    // image interaction
-    async uploadImage(content) {
+    // image generation
+    async uploadImageFromLink(imageUrl) {
         if (!this.client.isAuthenticated()) throw Error('You must be authenticated to do this.');
-        /*
-            Content Types:
-
-            * Image URL
-            * File Path
-            * Buffer
-            * ReadableStream
-        */
-
-        let buffer;
-
-        try {
-            const image = await jimp.read(content);
-            buffer = image.getBase64('image/png');
-        } catch (error) {
-            throw Error("Content is invalid or not an image");
-        }
-        if (!buffer) throw Error("Invalid content");
 
         const client = this.client;
 
-        const error = () => {throw Error('Failed uploading image.');}
-        try {
-            const request = this.requester.uploadBuffer(buffer, client);
+        if (!client.isAuthenticated()) throw Error('You must be authenticated to do this.');
+        if (typeof(imageUrl) != "string") throw Error("Invalid arguments");
 
-            if (request.status() === 200) {
-                return `https://characterai.io/i/400/static/user/${request.response}`;
-            } else error();
-        } catch (error) { error(); }
+        const request = await this.requester.imageUpload(imageUrl, client.getHeaders(), false);
+
+        if (request.status() === 200) {
+            return `https://characterai.io/i/400/static/user/${request.response}`;
+        } else throw Error('Failed uploading image from link.')
     }
+  	async uploadImageFromPath(imagePath) {
+        if (!this.client.isAuthenticated()) throw Error('You must be authenticated to do this.');
 
-    // todo
+        const client = this.client;
+
+        if (!client.isAuthenticated()) throw Error('You must be authenticated to do this.');
+        if (typeof(imagePath) != "string") throw Error("Invalid arguments");
+
+        const request = await this.requester.imageUpload(imagePath, client.getHeaders(), true);
+
+        if (request.status() === 200) {
+            return `https://characterai.io/i/400/static/user/${request.response}`;
+        } else throw Error('Failed uploading image from path.')
+    }
     async generateImage(prompt) {
         if (!this.client.isAuthenticated()) throw Error('You must be authenticated to do this.');
 
         const client = this.client;
+
+        if (!client.isAuthenticated()) throw Error('You must be authenticated to do this.');
         if (typeof(prompt) != "string") throw Error("Invalid arguments");
 
         const request = await this.requester.request('https://beta.character.ai/chat/generate-image/', {
@@ -317,4 +312,4 @@ class Chat {
     }
 }
 
-module.exports = Chat
+module.exports = Chat;
