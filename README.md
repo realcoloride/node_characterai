@@ -89,21 +89,26 @@ The last part of the URL is the character ID:
 💁 Most of the Character AI image features can be used like so:
 
 ```javascript
-// Most of these functions will return you a URL
+// Most of these functions will return you a URL to the image
 
 await chat.generateImage("dolphins swimming in green water");
 
-// This is required if you want to use images from other websites
-await chat.uploadImageFromLink("https://www.example.com/image.jpg");
+// If no mime type is specified, the script will automatically detect it
+await chat.uploadImage("https://www.example.com/image.jpg", "image/jpeg");
 
-await chat.uploadImageFromPath(path.join(__dirname, "./cat.jpg"));
+await chat.uploadImage("./photos/image.jpg");
+
+// Other supported types are Buffers, Readable Streams, File Paths, and URLs
+
+await chat.uploadImage(imageBuffer, "image/png");
 
 await chat.sendAndAwaitResponse({
   text: "What is in this image?", {
     image_rel_path: "https://www.example.com/coffee.jpg"
   }
 }, true);
-// Including the image relative path is necessary to upload an image.
+
+// Including the image relative path is necessary to upload an image
 ```
 *Props to @creepycats for implementing most of this stuff out*
 
