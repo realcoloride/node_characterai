@@ -1,5 +1,6 @@
 const { Reply, Message, MessageHistory, OutgoingMessage } = require("./message");
 const Parser = require("./parser.js");
+const mime = require("mime");
 
 class Chat {
     constructor(client, characterId, continueBody) {
