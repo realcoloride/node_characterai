@@ -1,4 +1,4 @@
-const { Reply, Message, MessageHistory, OutgoingMessage } = require("node_characterai/message");
+const { Reply, Message, MessageHistory, OutgoingMessage } = require("./message");
 const Parser = require("./parser.js");
 
 class Chat {
@@ -76,7 +76,7 @@ class Chat {
     }
     
     // Image generation
-    async uploadImage(content) {
+    async uploadImage(content, mimeType = null) {
         if (!this.client.isAuthenticated()) throw Error("You must be authenticated to do this.");
         
         /*
@@ -91,8 +91,17 @@ class Chat {
         let buffer;
 
         try {
+            // Auto detection for mime type
+            if (!mimeType) {
+                try {
+                    url = new URL(content).pathname;
+                    contentType = mime.getType(url);
+                } catch (error) {}
+                if (fs.existsSync(content) mimeType = mime.getType(content);
+            }
+            
             const image = await jimp.read(content);
-            buffer = image.getBase64("image/png");
+            buffer = image.getBase64(mimeType || "image/png");
         } catch (error) {
             throw Error("Content is invalid or not an image");
         }
