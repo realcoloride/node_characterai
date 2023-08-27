@@ -54,7 +54,7 @@ const characterAI = new CharacterAI();
 
 ## Using an Access Token
 
-Some parts of the API, like managing a conversation, requires you to be logged in using  your Access Token.
+Some parts of the API, like managing a conversation, requires you to be logged in using your Access Token.
 
 To get it, you can open your browser, go to the [character.ai website](https://character.ai) in `localStorage`.
 
