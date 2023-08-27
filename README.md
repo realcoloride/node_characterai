@@ -56,13 +56,13 @@ const characterAI = new CharacterAI();
 
 Some parts of the API, like managing a conversation, requires you to be logged in using your Access Token.
 
-To get it, you can open your browser, go to the [character.ai website](https://character.ai) in `localStorage`.
+To get it, you can open your browser, go to the [Character.AI website](https://character.ai) in `localStorage`.
 
 To do so:
 1. Open the Character.AI website in your browser (https://beta.character.ai)
 2. Open the developer tools (<kbd>F12</kbd>, <kbd>Ctrl+J</kbd>, or <kbd>Cmd+J</kbd>)
 3. Go to the `Application` tab
-4. Go to the `Storage` section and click on `Local Storage`.
+4. Go to the `Storage` section and click on `Local Storage`
 5. Look for the `@@auth0spajs@@::dyD3gE281MqgISG7FuIXYhL2WEknqZzv::https://auth0.character.ai/::openid profile email offline_access` key
 6. Open the body with the arrows and copy the access token
 
@@ -89,7 +89,7 @@ The last part of the URL is the character ID:
 💁 Most of the Character AI image features can be used like so:
 
 ```javascript
-// Most of these functions will return you a URL to the image
+// Most of these functions will return you an URL to the image
 
 await chat.generateImage("dolphins swimming in green water");
 
