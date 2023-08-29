@@ -9,7 +9,7 @@ class Client {
     #authenticated = false;
     #guestHeaders = {
         "content-type": "application/json",
-        "user-agent": "CharacterAI/1.0.0 (iPhone; iOS 14.4.2; Scale/3.00)"
+        "user-agent": "CharacterAI/1.0.0 (iPhone; iOS 14.4.2; Scale/3." + Math.random().toFixed(1).split(".")[1] + ")"
     }
     requester = new Requester();
 
