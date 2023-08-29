@@ -99,7 +99,7 @@ class Chat {
                     url = new URL(content).pathname;
                     contentType = mime.getType(url);
                 } catch (error) {}
-                if (fs.existsSync(content) mimeType = mime.getType(content);
+                if (fs.existsSync(content)) mimeType = mime.getType(content);
             }
             
             const image = await jimp.read(content);
