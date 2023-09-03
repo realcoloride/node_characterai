@@ -67,7 +67,7 @@ class Requester {
 
                             const waiting = (waitingRoomTimeLeft != null);
                             if (waiting) {
-                                console.log("[node_characterai] Puppeteer - Currently in cloudflare's waiting room. Time left: " + waitingRoomTimeLeft);
+                                console.log(`[node_characterai] Puppeteer - Currently in cloudflare's waiting room. Time left: ${waitingRoomTimeLeft}`);
                             } else {
                                 resolve();
                                 clearInterval(interval);
