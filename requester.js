@@ -50,7 +50,7 @@ class Requester {
                         if (pass) {
                             pass = false;
 
-                            const waitingRoomTimeLeft = await page.evaluate(async () => {
+                            const waitingRoomTimeLeft = await page.evaluate(async() => {
                                 try {
                                     const contentContainer = document.querySelector(".content-container");
                                     const sections = contentContainer.querySelectorAll("section");
