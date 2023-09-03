@@ -116,7 +116,7 @@ class Reply {
         this.chat = chat;
 
         if (options.force_login == true) throw Error("Too many messages! (this might be because you use a guest account)");
-        if (options.abort == true) throw Error("Could not get a reply because it was aborted. This might be because the output was filtered (NSFW).");
+        if (options.abort == true) throw Error("Could not get the full reply because it was aborted. This happens often when the output was filtered for violent or explicit content.");
 
         const replyOptions = options.replies[0];
         this.text = replyOptions.text
