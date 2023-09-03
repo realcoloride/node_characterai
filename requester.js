@@ -3,7 +3,7 @@ const StealthPlugin = require("puppeteer-extra-plugin-stealth")
 const fs = require("fs");
 
 let chromiumPath = process.platform === "linux" ? "/usr/bin/chromium-browser" : null;
-if (chromiumPath && !fs.existsSync(chromiumPath)) console.log("[node_character] Puppeteer - Warning: Chromium path for puppeteer could not be located. If the script does not work properly, you may need to specify a path to the chromium binary file.");
+if (chromiumPath && !fs.existsSync(chromiumPath)) console.log("[node_characterai] Puppeteer - Warning: the specified Chromium path for puppeteer could not be located. If the script does not work properly, you may need to specify a path to the Chromium binary file/executable.");
 
 class Requester {
     browser = undefined;
