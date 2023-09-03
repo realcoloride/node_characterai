@@ -1,7 +1,7 @@
-const Chat = require("./chat.js");
+const Chat = require("./chat");
 const uuidv4 = require("uuid").uuidv4;
-const Parser = require("./parser.js");
-const Requester = require("./requester.js");
+const Parser = require("./parser");
+const Requester = require("./requester");
 
 class Client {
     #token = undefined;
