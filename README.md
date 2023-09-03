@@ -36,10 +36,10 @@ const CharacterAI = require("node_characterai");
 const characterAI = new CharacterAI();
 
 (async () => {
-  // First authenticate via token or guest
+  // Authenticating as a guest (use `.authenticateWithToken()` to use an account)
   await characterAI.authenticateAsGuest();
 
-  // Then place your character's id here
+  // Place your character's id here
   const characterId = "8_1NyR8w1dOXmI1uWaieQcd147hecbdIK7CeEAIrdJw";
 
   const chat = await characterAI.createOrContinueChat(characterId);
@@ -48,13 +48,13 @@ const characterAI = new CharacterAI();
   const response = await chat.sendAndAwaitResponse("Hello discord mod!", true);
 
   console.log(response);
-  // `response.text` returns the reply as a raw string
+  // Use `response.text` to use it as a string
 })();
 ```
 
 ## Using an Access Token
 
-Some parts of the API, like managing a conversation, requires you to be logged in using your Access Token.
+Some parts of the API, like managing a conversation, requires you to be logged in using an `accessToken`.
 
 To get it, you can open your browser, go to the [Character.AI website](https://character.ai) in `localStorage`.
 
@@ -70,7 +70,7 @@ To do so:
 
 When using the package, you can:
 * Login as guest using `authenticateAsGuest()` - *for mass usage or testing purposes*
-* Login with your account or a token using `authenticateWithToken()` - *for extra features and messaging*
+* Login with your account or a token using `authenticateWithToken()` - *for full features and unlimited messaging*
 
 ## Finding your character's ID
 
@@ -93,7 +93,7 @@ The last part of the URL is the character ID:
 
 await chat.generateImage("dolphins swimming in green water");
 
-// If no mime type is specified, the script will automatically detect it
+// If no mime type (file extension) is specified, the script will automatically detect it
 await chat.uploadImage("https://www.example.com/image.jpg", "image/jpeg");
 
 await chat.uploadImage("./photos/image.jpg");
@@ -102,11 +102,7 @@ await chat.uploadImage("./photos/image.jpg");
 
 await chat.uploadImage(imageBuffer, "image/png");
 
-await chat.sendAndAwaitResponse({
-  text: "What is in this image?", {
-    image_rel_path: "https://www.example.com/coffee.jpg"
-  }
-}, true);
+await chat.sendAndAwaitResponse({ text: "What is in this image?", { image_rel_path: "https://www.example.com/coffee.jpg" } }, true);
 
 // Including the image relative path is necessary to upload an image
 ```
@@ -147,7 +143,7 @@ Around a few months ago, the package only required the `node-fetch` module to ru
 
 *However, over time, Cloudflare started fighting against scraping and bots, which also made it almost impossible for anyone to use this package.*
 
-**This is where in versions 1.1 and higher, puppeteer is used (which uses a fake chromium emulator) to make requests with the API.**
+**This is where in versions 1.1 and higher, puppeteer is used (which uses a chromium browser) to make requests with the API.**
 
 ### ⚙️ How to change Puppeteer settings
  **👉 IMPORTANT: do the changes before you initialize your client!**
@@ -156,19 +152,15 @@ In the CharacterAI class, you can access the requester and define the `.puppetee
 ```javascript
 // Chromium executable path (in some linux distrobutions, /usr/bin/chromium)
 puppeteerPath;
-
 // Default arguments for when the browser launches
 puppeteerLaunchArgs;
-
 // Boolean representing the default timeout (default is 30000ms)
 puppeteerNoDefaultTimeout;
-
 // Number representing the default protocol timeout
 puppeteerProtocolTimeout;
 ```
 
-💡 It's recommended that you **frequently** update this package for bug fixes and new additions.
-
+💡 I recommend that you frequently update this package for bug fixes and new additions.
 
 ## Disclaimer
 ##### ❤️ This project is updated frequently, **always check for the latest version for new features or bug fixes**.
