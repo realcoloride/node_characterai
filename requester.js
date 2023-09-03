@@ -182,8 +182,8 @@ class Requester {
                     return result;
                 }, payload, url);
 
-                response.status = () => response.code;
-                response.text = () => response.response;
+                response.status = () => response.code; // compatibilty reasons
+                response.text = () => response.response; // compatibilty reasons
             } else {
                 await page.setRequestInterception(true);
                 let initialRequest = true;
@@ -322,8 +322,8 @@ class Requester {
                 );
             }
 
-            response.status = () => response.code // compatibilty reasons
-            response.body = () => response.response // compatibilty reasons
+            response.status = () => response.code; // compatibilty reasons
+            response.body = () => response.response; // compatibilty reasons
         } catch (error) {
             console.log("[node_characterai] Puppeteer - " + error)
         }
