@@ -155,7 +155,7 @@ class Requester {
                 body: body
             }
 
-            if (url.endsWith("/streaming/")) {
+            if (url.endsWith("/")) {
                 await page.setRequestInterception(false);
                 if (!this.#hasDisplayed) {
                     console.log("[node_characterai] Puppeteer - Eval-fetching is an experimental feature and may be slower. Please report any issues on github")
