@@ -1,5 +1,5 @@
 const { Reply, Message, MessageHistory, OutgoingMessage } = require("./message");
-const Parser = require("./parser.js");
+const Parser = require("./parser");
 const jimp = require("jimp");
 const mime = require("mime");
 
