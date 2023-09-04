@@ -160,7 +160,7 @@ puppeteerNoDefaultTimeout;
 puppeteerProtocolTimeout;
 ```
 
-💡 I recommend that you frequently update this package for bug fixes and new additions.
+💡 I recommend that you __frequently__ update this package for bug fixes and new additions.
 
 ## Disclaimer
 ##### ❤️ This project is updated frequently, **always check for the latest version for new features or bug fixes**.
