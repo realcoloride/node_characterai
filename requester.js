@@ -132,7 +132,7 @@ class Requester {
         await page.goto("https://" + (this.usePlus ? "plus" : "beta") + ".character.ai");
         await page.evaluate(() => localStorage.clear());
 
-        // If there is not waiting room, the script will continue anyway
+        // If there is no waiting room, the script will continue anyway
         await this.waitForWaitingRoom(page);
 
         console.log("[node_characterai] Puppeteer - Done with setup");
@@ -146,7 +146,7 @@ class Requester {
         const body = (method == "GET" ? {} : options.body);
         const headers = options.headers;
 
-        let response
+        let response;
 
         try {
             const payload = {
@@ -161,6 +161,8 @@ class Requester {
                     console.log("[node_characterai] Puppeteer - Eval-fetching is an experimental feature and may be slower. Please report any issues on github")
                     this.#hasDisplayed = true;
                 }
+
+                if (url.endsWith("/streaming/")) return;
 
                 // Bless @roogue & @drizzle-mizzle for the code here!
                 response = await page.evaluate(async (payload, url) => {
