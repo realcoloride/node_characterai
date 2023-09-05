@@ -1,5 +1,5 @@
 const Chat = require("./chat");
-const uuidv4 = require("uuid").uuidv4;
+const uuidv4 = require("uuid").v4;
 const Parser = require("./parser");
 const Requester = require("./requester");
 
