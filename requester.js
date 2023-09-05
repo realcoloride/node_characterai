@@ -155,15 +155,13 @@ class Requester {
                 body: body
             }
 
-            if (url.endsWith("/")) {
-                await page.setRequestInterception(false);
-                if (!this.#hasDisplayed) {
-                    console.log("[node_characterai] Puppeteer - Eval-fetching is an experimental feature and may be slower. Please report any issues on github")
-                    this.#hasDisplayed = true;
-                }
+            await page.setRequestInterception(false);
+            if (!this.#hasDisplayed) {
+                console.log("[node_characterai] Puppeteer - Eval-fetching is an experimental feature and may be slower. Please report any issues on github")
+                this.#hasDisplayed = true;
+            }
 
-                if (url.endsWith("/streaming/")) return;
-
+            if (url.endsWith("/streaming/")) {
                 // Bless @roogue & @drizzle-mizzle for the code here!
                 response = await page.evaluate(async (payload, url) => {
                     const response = await fetch(url, payload);
