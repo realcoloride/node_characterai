@@ -25,6 +25,7 @@
     "url": "https://github.com/realcoloride/node_characterai/issues"
   },
   "dependencies": {
+    "mime": "^3.0.0",
     "jimp": "^0.22.8",
     "json-bigint": "^1.0.0",
     "node_characterai": "^1.2.0",
