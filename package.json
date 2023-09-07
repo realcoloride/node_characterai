@@ -28,7 +28,6 @@
     "mime": "^3.0.0",
     "jimp": "^0.22.8",
     "json-bigint": "^1.0.0",
-    "node_characterai": "^1.2.0",
     "node-fetch": "^3.3.0",
     "puppeteer": "^19.7.5",
     "puppeteer-extra": "^3.3.6",
