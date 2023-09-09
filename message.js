@@ -1,9 +1,9 @@
-const util = require('util');
+const util = require("util");
 
 class OutgoingMessage {
     constructor(chat, options) {
         function getValueOrDefault(value, fallback) {
-            if (typeof(options) == 'string') return fallback;
+            if (typeof(options) == "string") return fallback;
             else return options[value] || fallback
         }
 
@@ -12,7 +12,7 @@ class OutgoingMessage {
             character_external_id: chat.characterId,
             text: getValueOrDefault("text", options),
             tgt: chat.aiId,
-            ranking_method: getValueOrDefault("ranking_method", 'random'),
+            ranking_method: getValueOrDefault("ranking_method", "random"),
             faux_chat: getValueOrDefault("faux_chat", false),
             staging: getValueOrDefault("staging", false),
             model_server_address: getValueOrDefault("model_server_address", null),
@@ -32,7 +32,7 @@ class OutgoingMessage {
             stream_every_n_steps: getValueOrDefault("stream_every_n_steps", 16),
             chunks_to_pad: getValueOrDefault("chunks_to_pad", 8),
             is_proactive: getValueOrDefault("is_proactive", true),
-            // image generation
+            // Image generation
             image_rel_path: getValueOrDefault("image_rel_path", ""),
             image_description: getValueOrDefault("image_description", ""),
             image_description_type: getValueOrDefault("image_description_type", "AUTO_IMAGE_CAPTIONING"),
@@ -42,7 +42,7 @@ class OutgoingMessage {
         this.payload = payload;
         return this.payload;
     }
-}
+};
 
 class Message {
     constructor(chat, options) {
@@ -68,7 +68,7 @@ class Message {
     async getPreviousMessage() {
         const chat = this.chat;
 
-        const history = await chat.fetchHistory()
+        const history = await chat.fetchHistory();
         const historyMessages = history.messages;
 
         let message = null;
@@ -81,8 +81,8 @@ class Message {
     }
 
     async delete(deletePreviousToo = false) {
-        if (typeof(deletePreviousToo) != 'boolean') throw Error('Invalid arguments');
-        if (this.deleted) throw Error('Message is already deleted');
+        if (typeof(deletePreviousToo) != "boolean") throw Error("Invalid arguments");
+        if (this.deleted) throw Error("Message is already deleted");
 
         const chat = this.chat;
 
@@ -92,7 +92,7 @@ class Message {
 
             if (deletePreviousToo) {
                 const previousMessage = await this.getPreviousMessage();
-                if (previousMessage != null && previousMessage.id != null && previousMessage.deleted != true)
+                if (previousMessage != null && previousMessage.id != null && previousMessage.deleted != true);
                     messagesToDelete.push(previousMessage.id);
             }
 
@@ -101,7 +101,7 @@ class Message {
         } catch (error) {throw Error("Failed to delete message." + error);}
     }
 
-    // getters
+    // Getters
     getAvatarLink() {
         return `https://characterai.io/i/80/static/avatars/uploaded/${this.srcCharacterAvatarFileName}`;
     }
@@ -109,16 +109,16 @@ class Message {
     returnMessage() {
         return this.text;
     }
-}
+};
 
 class Reply {
     constructor(chat, options) {
         this.chat = chat;
 
-        if (options.force_login == true) throw Error('Too many messages! (this might be because you use a guest account)');
-        if (options.abort == true) throw Error('Could not get a reply because it was aborted. This might be because the output was filtered (NSFW).')
+        if (options.force_login == true) throw Error("Too many messages! (this might be because you use a guest account)");
+        if (options.abort == true) throw Error("Could not get the full reply because it was aborted. This happens often when the output was filtered for violent or explicit content.");
 
-        const replyOptions = options.replies[0]; // todo fix if aborted
+        const replyOptions = options.replies[0];
         this.text = replyOptions.text
         this.id = replyOptions.id
         this.imageRelativePath = replyOptions.image_rel_path
@@ -138,7 +138,7 @@ class Reply {
     [util.inspect.custom](depth, opts) {
         return this.text;
     }
-}
+};
 
 class MessageHistory {
     constructor(chat, messages, hasMore, nextPage) {
@@ -147,6 +147,6 @@ class MessageHistory {
         this.hasMore = hasMore;
         this.nextPage = nextPage;
     }
-}
+};
 
-module.exports = { OutgoingMessage, Reply, Message, MessageHistory }
+module.exports = { OutgoingMessage, Reply, Message, MessageHistory };
