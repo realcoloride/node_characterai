@@ -26,6 +26,9 @@ class Requester {
         "--disable-extensions-http-throttling",
         "--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.3"
     ];
+    puppeteerIgnoreDefaultArgs = [
+        "--mute-audio"
+    ];
     puppeteerNoDefaultTimeout = false;
     puppeteerProtocolTimeout = 0;
     usePlus = false;
@@ -100,7 +103,8 @@ class Requester {
             headless: this.#headless,
             args: this.puppeteerLaunchArgs,
             protocolTimeout: this.puppeteerProtocolTimeout || 0, // Props to monckey100
-            executablePath: this.puppeteerPath || null
+            executablePath: this.puppeteerPath || null,
+            ignoreDefaultArgs: this.puppeteerIgnoreDefaultArgs
         });
         this.browser = browser;
 

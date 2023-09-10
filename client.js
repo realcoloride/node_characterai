@@ -2,6 +2,7 @@ const Chat = require("./chat");
 const uuidv4 = require("uuid").v4;
 const Parser = require("./parser");
 const Requester = require("./requester");
+const AudioPlayer = require("./audio-player");
 
 class Client {
     #token = undefined;
@@ -164,7 +165,7 @@ class Client {
     }
 
     // Fetch speech from text using provided voice id
-    async fetchTTS(voiceId, toSpeak)
+    async fetchTTS(voiceId, toSpeak, playAudio = false)
     {
         if (!this.isAuthenticated()) throw Error("You must be authenticated to do this.");
         if (voiceId == undefined || typeof(voiceId) != "number" || toSpeak == undefined || typeof(toSpeak) != "string") throw Error("Invalid arguments.");
@@ -175,7 +176,9 @@ class Client {
 
         if (request.status() === 200) {
             const response = await Parser.parseJSON(request);
-            return response.speech;
+            const speechBase64 = response.speech;
+            if(playAudio) AudioPlayer.playAudio(this.requester.page, speechBase64)
+            return speechBase64;
         } else Error("Could not fetch speech");
     }
 
