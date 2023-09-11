@@ -341,7 +341,7 @@ class Requester {
             await this.page.evaluate(`new Audio("data:audio/wav;base64,${base64}").play()`);
         } catch(error)
         {
-            throw Error("Could not play audio in browser.");
+            throw Error("Could not play audio in browser: "  + error);
         }
     }
 
