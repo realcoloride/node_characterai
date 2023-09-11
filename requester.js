@@ -335,6 +335,16 @@ class Requester {
         return response;
     }
 
+    async playAudioInBrowser(base64) {
+        try
+        {
+            await this.page.evaluate(`new Audio("data:audio/wav;base64,${base64}").play()`);
+        } catch(error)
+        {
+            throw Error("Could not play audio in browser.");
+        }
+    }
+
     async uninitialize() {
         // Handle chromium tabs cleanup
         try {
