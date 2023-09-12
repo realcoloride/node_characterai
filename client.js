@@ -164,8 +164,7 @@ class Client {
     }
 
     // Fetch speech from text using provided voice id
-    async fetchTTS(voiceId, toSpeak)
-    {
+    async fetchTTS(voiceId, toSpeak) {
         if (!this.isAuthenticated()) throw Error("You must be authenticated to do this.");
         if (voiceId == undefined || typeof(voiceId) != "number" || toSpeak == undefined || typeof(toSpeak) != "string") throw Error("Invalid arguments.");
 
