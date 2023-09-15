@@ -113,7 +113,7 @@ await chat.sendAndAwaitResponse({ text: "What is in this image?", { image_rel_pa
 |**Problem**|Answer|
 |-------|------|
 |❌ **Token was invalid**|Make sure your token is actually valid and you copied your entire token (its pretty long).|
-|⚠️ **The specified Chromium path for puppeteer could not be located**|On most systems, puppeteer will automatically locate Chromium. But on linux, the path has to be specified manually. This warning occurs if `node_characterai` could not locate Chromium on linux (*/usr/bin/chromium-browser*), and if puppeteer cannot locate it automatically, your script will fail.|
+|⚠️ **The specified Chromium path for puppeteer could not be located**|On most systems, puppeteer will automatically locate Chromium. But on certain distrobutions, the path has to be specified manually. This warning occurs if `node_characterai` could not locate Chromium on linux (*/usr/bin/chromium-browser*), and will error if puppeteer cannot locate it automatically.|
 |😮 **Why are chromium processes opening?**|This is because as of currently, the simple fetching is broken and I use puppeteer (a chromium browser control library) to go around cloudflare's restrictions.|
 |👥 **`authenticateAsGuest()` doesn't work**|See issue [#14](https://github.com/realcoloride/node_characterai/issues/14).|
 |🦒 **Hit the max amount of messages?**|Sadly, guest accounts only have a limited amount of messages before they get limited and forced to login. See below for more info 👇|
@@ -147,7 +147,7 @@ Around a few months ago, the package only required the `node-fetch` module to ru
 **This is where in versions 1.1 and higher, puppeteer is used (which uses a chromium browser) to make requests with the API.**
 
 ### ⚙️ How to change Puppeteer settings
- **👉 IMPORTANT: do the changes before you initialize your client!**
+ **👉 IMPORTANT: do the changes *before* you initialize your client!**
 
 In the CharacterAI class, you can access the requester and define the `.puppeteerPath` variable or other arguments, and the properties include *(and are subject to change in future versions)*:
 ```javascript
@@ -162,6 +162,19 @@ puppeteerProtocolTimeout;
 ```
 
 💡 I recommend that you __frequently__ update this package for bug fixes and new additions.
+
+##### Specifying Chromium's path
+🐧 For linux users, if your puppeteer doesn't automatically detect the path to Chromium, you will need to specify it manually.
+
+To do this, you just need to set `puppeteerPath` to your Chromium path:
+```javascript
+characterAI.puppeteerPath = "/path/to/chromium-browser";
+```
+
+On Linux, you can use the `which` command to find where Chromium is installed:
+```bash
+$ which chromium-browser # or whatever command you use to launch chrome
+```
 
 ## Disclaimer
 ##### ❤️ This project is updated frequently, **always check for the latest version for new features or bug fixes**.
