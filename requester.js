@@ -26,9 +26,6 @@ class Requester {
         "--disable-extensions-http-throttling",
         "--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.3"
     ];
-    puppeteerIgnoreDefaultArgs = [
-        "--mute-audio"
-    ];
     puppeteerNoDefaultTimeout = false;
     puppeteerProtocolTimeout = 0;
     usePlus = false;
@@ -103,8 +100,7 @@ class Requester {
             headless: this.#headless,
             args: this.puppeteerLaunchArgs,
             protocolTimeout: this.puppeteerProtocolTimeout || 0, // Props to monckey100
-            executablePath: this.puppeteerPath || null,
-            ignoreDefaultArgs: this.puppeteerIgnoreDefaultArgs
+            executablePath: this.puppeteerPath || null
         });
         this.browser = browser;
 
@@ -333,16 +329,6 @@ class Requester {
         }
 
         return response;
-    }
-
-    async playAudioInBrowser(base64) {
-        try
-        {
-            await this.page.evaluate(`new Audio("data:audio/wav;base64,${base64}").play()`);
-        } catch(error)
-        {
-            throw Error("Could not play audio in browser: "  + error);
-        }
     }
 
     async uninitialize() {

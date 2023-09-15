@@ -167,7 +167,7 @@ class Client {
     async fetchTTS(voiceId, toSpeak)
     {
         if (!this.isAuthenticated()) throw Error("You must be authenticated to do this.");
-        if (voiceId == undefined || typeof(voiceId) != "number" || toSpeak == undefined || typeof(toSpeak) != "string") throw Error("Invalid arguments.");
+        if (!voiceId || !toSpeak || typeof(voiceId) != "number" || typeof(toSpeak) != "string") throw Error("Invalid arguments.");
 
         let request = await this.requester.request(`https://beta.character.ai/chat/character/preview-voice/?voice_id=${voiceId}&to_speak=${toSpeak}`, {
             headers: this.getHeaders()
@@ -175,6 +175,7 @@ class Client {
 
         if (request.status() === 200) {
             const response = await Parser.parseJSON(request);
+            
             return response.speech;
         } else Error("Could not fetch speech");
     }
