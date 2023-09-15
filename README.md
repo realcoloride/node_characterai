@@ -113,7 +113,7 @@ await chat.sendAndAwaitResponse({ text: "What is in this image?", { image_rel_pa
 |**Problem**|Answer|
 |-------|------|
 |❌ **Token was invalid**|Make sure your token is actually valid and you copied your entire token (its pretty long).|
-|⚠️ **The specified Chromium path for puppeteer could not be located**|On most systems, puppeteer will automatically locate Chromium. But on certain distrobutions, the path has to be specified manually. This warning occurs if `node_characterai` could not locate Chromium on linux (*/usr/bin/chromium-browser*), and will error if puppeteer cannot locate it automatically.|
+|⚠️ **The specified Chromium path for puppeteer could not be located**|On most systems, puppeteer will automatically locate Chromium. But on certain distrobutions, the path has to be specified manually. This warning occurs if `node_characterai` could not locate Chromium on linux (*/usr/bin/chromium-browser*), and will error if puppeteer cannot locate it automatically. See [this](#specifying-chromiums-path) for a fix.|
 |😮 **Why are chromium processes opening?**|This is because as of currently, the simple fetching is broken and I use puppeteer (a chromium browser control library) to go around cloudflare's restrictions.|
 |👥 **`authenticateAsGuest()` doesn't work**|See issue [#14](https://github.com/realcoloride/node_characterai/issues/14).|
 |🦒 **Hit the max amount of messages?**|Sadly, guest accounts only have a limited amount of messages before they get limited and forced to login. See below for more info 👇|
