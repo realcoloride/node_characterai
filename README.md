@@ -161,8 +161,6 @@ puppeteerNoDefaultTimeout;
 puppeteerProtocolTimeout;
 ```
 
-💡 I recommend that you __frequently__ update this package for bug fixes and new additions.
-
 ##### Specifying Chromium's path
 🐧 For linux users, if your puppeteer doesn't automatically detect the path to Chromium, you will need to specify it manually.
 
@@ -175,6 +173,8 @@ On Linux, you can use the `which` command to find where Chromium is installed:
 ```bash
 $ which chromium-browser # or whatever command you use to launch chrome
 ```
+
+💡 I recommend that you __frequently__ update this package for bug fixes and new additions.
 
 ## Disclaimer
 ##### ❤️ This project is updated frequently, **always check for the latest version for new features or bug fixes**.
