@@ -151,7 +151,7 @@ Around a few months ago, the package only required the `node-fetch` module to ru
 
 In the CharacterAI class, you can access the requester and define the `.puppeteerPath` variable or other arguments, and the properties include *(and are subject to change in future versions)*:
 ```javascript
-// Chromium executable path (in some linux distributions, /usr/bin/chromium)
+// Chromium executable path (in some linux distributions, /usr/bin/chromium-browser)
 puppeteerPath;
 // Default arguments for when the browser launches
 puppeteerLaunchArgs;
