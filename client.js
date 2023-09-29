@@ -179,20 +179,20 @@ class Client {
         } else Error("Could not fetch speech");
     }
 
-        // Fetch character voices
-        async fetchVoices() {
-            if (!this.isAuthenticated()) throw Error("You must be authenticated to do this.");
-    
-            let request = await this.requester.request("https://beta.character.ai/chat/character/voices", {
-                headers: this.getHeaders()
-            });
-    
-            if (request.status() === 200) {
-                const response = await Parser.parseJSON(request);
-                
-                return response.speech;
-            } else Error("Could not fetch voices");
-        }
+    // Fetch character voices
+    async fetchVoices() {
+        if (!this.isAuthenticated()) throw Error("You must be authenticated to do this.");
+
+        let request = await this.requester.request("https://beta.character.ai/chat/character/voices/", {
+            headers: this.getHeaders()
+        });
+
+        if (request.status() === 200) {
+            const response = await Parser.parseJSON(request);
+            
+            return response.voices;
+        } else Error("Could not fetch voices");
+    }
 
     // authentification
     async authenticateWithToken(token) {
