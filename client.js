@@ -180,7 +180,7 @@ class Client {
     }
 
     // Fetch character voices
-    async fetchVoices() {
+    async fetchTTSVoices() {
         if (!this.isAuthenticated()) throw Error("You must be authenticated to do this.");
 
         let request = await this.requester.request("https://beta.character.ai/chat/character/voices/", {
