@@ -83,10 +83,16 @@ class Client {
     async fetchCharacterInfo(characterId) {
         if (!this.isAuthenticated()) throw Error("You must be authenticated to do this.");
         if (characterId == undefined || typeof(characterId) != "string") throw Error("Invalid arguments.");
-
-        const request = await this.requester.request(`https://beta.character.ai/chat/character/info-cached/${characterId}/`, {
+        
+        const request = await this.requester.request(`https://beta.character.ai/chat/character/info/`, {
             headers: this.getHeaders(),
+            body: Parser.stringify({
+                external_id: characterId
+            }),
+            method: "POST"
         });
+        
+        console.log(request);
 
         if (request.status() === 200) {
             const response = await Parser.parseJSON(request);
