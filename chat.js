@@ -97,7 +97,7 @@ class Chat {
             if (!mimeType) {
                 try {
                     url = new URL(content).pathname;
-                    contentType = mime.getType(url);
+                    mimeType = mime.getType(url);
                 } catch (error) {}
                 if (fs.existsSync(content)) mimeType = mime.getType(content);
             }
