@@ -60,7 +60,7 @@ To get it, you can open your browser, go to the [Character.AI website](https://c
 
 To do so:
 1. Open the Character.AI website in your browser (https://beta.character.ai)
-2. Open the developer tools (<kbd>F12</kbd>, <kbd>Ctrl+J</kbd>, or <kbd>Cmd+J</kbd>)
+2. Open the developer tools (<kbd>F12</kbd>, <kbd>Ctrl+Shift+I</kbd>, or <kbd>Cmd+J</kbd>)
 3. Go to the `Application` tab
 4. Go to the `Storage` section and click on `Local Storage`
 5. Look for the `@@auth0spajs@@::dyD3gE281MqgISG7FuIXYhL2WEknqZzv::https://auth0.character.ai/::openid profile email offline_access` key
