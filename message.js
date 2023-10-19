@@ -103,7 +103,7 @@ class Message {
 
     // Getters
     getAvatarLink() {
-        return `https://characterai.io/i/80/static/avatars/uploaded/${this.srcCharacterAvatarFileName}`;
+        return `https://characterai.io/i/400/static/avatars/uploaded/${this.srcCharacterAvatarFileName}`;
     }
 
     returnMessage() {
