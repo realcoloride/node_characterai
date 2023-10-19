@@ -3,569 +3,455 @@ const uuidv4 = require("uuid").v4;
 const Parser = require("./parser");
 const Requester = require("./requester");
 
-/**
- * Represents a client for interacting with the Character AI API.
- * @class
- * @memberof module:node_characterai
- */
 class Client {
-	#token = undefined;
-	#isGuest = false;
-	#authenticated = false;
-	#guestHeaders = {
-		"content-type": "application/json",
-		"user-agent":
-			"CharacterAI/1.0.0 (iPhone; iOS 14.4.2; Scale/3." +
-			Math.random().toFixed(1).split(".")[1] +
-			")",
-	};
-	requester = new Requester();
+    #token = undefined;
+    #isGuest = false;
+    #authenticated = false;
+    #guestHeaders = {
+        "content-type": "application/json",
+        "user-agent": "CharacterAI/1.0.0 (iPhone; iOS 14.4.2; Scale/3." + Math.random().toFixed(1).split(".")[1] + ")"
+    }
+    requester = new Requester();
 
-	constructor() {
-		this.#token = undefined;
-	}
+    constructor() {
+        this.#token = undefined;
+    }
 
-	/**
-	 * Fetches the categories of characters from the Character AI API.
-	 * @async
-	 * @function fetchCategories
-	 * @memberof module:node_characterai/client
-	 * @returns {Promise<Array>} A promise that resolves to an array of character categories.
-	 * @throws {Error} If the request fails or the response status is not 200.
-	 */
-	async fetchCategories() {
-		const request = await this.requester.request(
-			"https://beta.character.ai/chat/character/categories/"
-		);
+    // api fetching
+    async fetchCategories() {
+        const request = await this.requester.request("https://beta.character.ai/chat/character/categories/");
 
-		if (request.status() === 200) return await Parser.parseJSON(request);
-		else throw Error("Failed to fetch categories");
-	}
+        if (request.status() === 200) return await Parser.parseJSON(request);
+        else throw Error("Failed to fetch categories");
+    }
+    async fetchUserConfig() {
+        const request = await this.requester.request("https://beta.character.ai/chat/config/", {
+            headers: this.#guestHeaders
+        });
 
-	/**
-	 * Fetches user configuration from the Character AI chat API.
-	 * @async
-	 * @returns {Promise<Object>} The user configuration object.
-	 * @throws {Error} If the request to fetch user configuration fails.
-	 */
-	async fetchUserConfig() {
-		const request = await this.requester.request(
-			"https://beta.character.ai/chat/config/",
-			{
-				headers: this.#guestHeaders,
-			}
-		);
+        if (request.status() === 200) {
+            const response = await Parser.parseJSON(request);
 
-		if (request.status() === 200) {
-			const response = await Parser.parseJSON(request);
+            return response;
+        } else Error("Failed fetching user configuration.");
+    }
+    async fetchUser() {
+        if (!this.isAuthenticated()) throw Error("You must be authenticated to do this.");
 
-			return response;
-		} else Error("Failed fetching user configuration.");
-	}
+        const request = await this.requester.request("https://beta.character.ai/chat/user/", {
+            headers: this.getHeaders()
+        });
 
-	/**
-	 * Fetches the authenticated user's information from the Character AI API.
-	 * @async
-	 * @function fetchUser
-	 * @memberof module:node_characterai/client
-	 * @throws {Error} If the user is not authenticated or if the API request fails.
-	 * @returns {Promise<Object>} The user's information.
-	 */
-	async fetchUser() {
-		if (!this.isAuthenticated())
-			throw Error("You must be authenticated to do this.");
+        if (request.status() === 200) {
+            const response = await Parser.parseJSON(request);
 
-		const request = await this.requester.request(
-			"https://beta.character.ai/chat/user/",
-			{
-				headers: this.getHeaders(),
-			}
-		);
+            return response;
+        } else Error("Failed fetching user.");
+    }
+    async fetchFeaturedCharacters() {
+        if (!this.isAuthenticated()) throw Error("You must be authenticated to do this.");
 
-		if (request.status() === 200) {
-			const response = await Parser.parseJSON(request);
+        const request = await this.requester.request("https://beta.character.ai/chat/characters/featured_v2/", {
+            headers: this.getHeaders()
+        });
 
-			return response;
-		} else Error("Failed fetching user.");
-	}
+        if (request.status() === 200) {
+            const response = await Parser.parseJSON(request);
 
-	/**
-	 * Fetches the featured characters from the Character AI API.
-	 * @async
-	 * @throws {Error} If the user is not authenticated or if the request fails.
-	 * @returns {Promise<Object>} The response object containing the featured characters.
-	 */
-	async fetchFeaturedCharacters() {
-		if (!this.isAuthenticated())
-			throw Error("You must be authenticated to do this.");
+            return response;
+        } else Error("Failed fetching featured characters.");
+    }
+    async fetchCharactersByCategory(curated = false) {
+        if (curated == undefined || typeof(curated) != "boolean") throw Error("Invalid arguments.");
 
-		const request = await this.requester.request(
-			"https://beta.character.ai/chat/characters/featured_v2/",
-			{
-				headers: this.getHeaders(),
-			}
-		);
+        const url = `https://beta.character.ai/chat/${
+            curated ? "curated_categories" : "categories"
+        }/characters/`;
 
-		if (request.status() === 200) {
-			const response = await Parser.parseJSON(request);
+        const request = await this.requester.request(url, {
+            headers: this.#guestHeaders
+        });
 
-			return response;
-		} else Error("Failed fetching featured characters.");
-	}
+        const property = curated ? "characters_by_curated_category" : "characters_by_category";
 
-	/**
-	 * Fetches characters by category from the Character AI API.
-	 * @async
-	 * @param {boolean} [curated=false] - Whether to fetch curated characters or not.
-	 * @throws {Error} Invalid arguments.
-	 * @throws {Error} Failed fetching characters by category.
-	 * @returns {Promise<Array>} An array of characters.
-	 */
-	async fetchCharactersByCategory(curated = false) {
-		if (curated == undefined || typeof curated != "boolean")
-			throw Error("Invalid arguments.");
+        if (request.status() === 200) {
+            const response = await Parser.parseJSON(request);
 
-		const url = `https://beta.character.ai/chat/${
-			curated ? "curated_categories" : "categories"
-		}/characters/`;
+            return response[property]
+        } else Error("Failed fetching characters by category.");
+    }
+    // trending characters
+    async fetchTrendingCharacters() {
+        const request = await this.requester.request("https://beta.character.ai/chat/characters/trending/", {
+            headers: this.getHeaders()
+        });
 
-		const request = await this.requester.request(url, {
-			headers: this.#guestHeaders,
+        if (request.status() === 200) {
+            const response = await Parser.parseJSON(request);
+
+            return response;
+        } else Error("Failed fetching trending characters.");
+    }
+    // recommended characters
+    async fetchRecommendedCharacters() {
+        const request = await this.requester.request("https://beta.character.ai/chat/characters/recommended/", {
+            headers: this.getHeaders()
+        });
+
+        if (request.status() === 200) { 
+            const response = await Parser.parseJSON(request);
+
+            return response;
+        } else Error("Failed fetching recommended characters.");
+    }
+    // user created characters
+    async fetchUserCreatedCharacters() {
+        if (!this.isAuthenticated()) throw Error("You must be authenticated to do this.");
+
+        const request = await this.requester.request("https://beta.character.ai/chat/characters/?scope=user", {
+            headers: this.getHeaders()
+        });
+
+        if (request.status() === 200) {
+            const response = await Parser.parseJSON(request);
+
+            return response;
+        } else Error("Failed fetching user created characters.");
+    }   
+    async fetchCharacterInfo(characterId) {
+        if (!this.isAuthenticated()) throw Error("You must be authenticated to do this.");
+        if (characterId == undefined || typeof(characterId) != "string") throw Error("Invalid arguments.");
+        
+        const request = await this.requester.request(`https://beta.character.ai/chat/character/info/`, {
+            headers: this.getHeaders(),
+            body: Parser.stringify({
+                external_id: characterId
+            }),
+            method: "POST"
+        });
+        
+        console.log(request);
+
+        if (request.status() === 200) {
+            const response = await Parser.parseJSON(request);
+
+            return response.character;
+        } else Error("Could not fetch character information.");
+    }
+    async searchCharacters(characterName) {
+        if (!this.isAuthenticated()) throw Error("You must be authenticated to do this.");
+        if (this.#isGuest) throw Error("Guest accounts cannot use the search feature.");
+        if (characterName == undefined || typeof(characterName) != "string") throw Error("Invalid arguments.");
+
+        const request = await this.requester.request(`https://beta.character.ai/chat/characters/search/?query=${characterName}`, {
+            headers: this.getHeaders()
+        });
+
+        if (request.status() === 200) {
+            const response = await Parser.parseJSON(request);
+
+            return response;
+        } else Error("Could not search for characters.");
+    }
+    async getRecentConversations() {
+        if (!this.isAuthenticated()) throw Error("You must be authenticated to do this.");
+        const request = await this.requester.request(`https://beta.character.ai/chat/characters/recent/`, {
+            headers: this.getHeaders()
+        });
+
+        if (request.status() === 200) {
+            const response = await Parser.parseJSON(request);
+
+            return response;
+        } else Error("Could not get recent conversations.");
+    }
+
+    // chat
+    async createOrContinueChat(characterId, externalId = null) {
+        if (!this.isAuthenticated()) throw Error("You must be authenticated to do this.");
+        if (characterId == undefined || typeof(characterId) != "string" || typeof(externalId != null ? externalId : "") != "string") throw Error("Invalid arguments.");
+
+        let request = await this.requester.request("https://beta.character.ai/chat/history/continue/",    {
+            body: Parser.stringify({
+                character_external_id: characterId,
+                history_external_id: externalId,
+            }),
+            method: "POST",
+            headers: this.getHeaders()
+        });
+
+        if (request.status() === 200 || request.status() === 404) {
+            let response = await request.text();
+
+            if (response === "No Such History" || response === "there is no history between user and character") { // Create a new chat
+                request = await this.requester.request("https://beta.character.ai/chat/history/create/", {
+                    body: Parser.stringify({
+                        character_external_id: characterId,
+                        history_external_id: null,
+                    }),
+                    method: "POST",
+                    headers: this.getHeaders()
+                });
+                if (request.status() === 200) response = await Parser.parseJSON(request);
+                else Error("Could not create a new chat.");
+            }
+
+            // If a text gets returned, we try to parse it to JSON!
+            try {
+                response = JSON.parse(response);
+            } catch (error) {}
+
+            // Continue it
+            const continueBody = response;
+            return new Chat(this, characterId, continueBody);
+        } else Error("Could not create or resume a chat.");
+    }
+
+	// Create new character
+    async createNewCharacter(options) {
+        if (!this.isAuthenticated()) throw Error("You must be authenticated to do this.");
+        if (options == undefined || typeof(options) != "object") throw Error("Invalid arguments.");
+        
+        let defaultOptions = {
+            categories: [],
+            copyable: false,
+            definition: "",
+            avatar_rel_path: "",
+            img_gen_enabled: false,
+            base_img_prompt: "",
+            strip_img_prompt_from_msg: false,
+            voice_id: "",
+        };
+
+        let {
+            title,
+            greeting,
+            description,
+            name,
+            visibility,
+        } = options;
+
+        if (title == undefined || typeof(title) != "string") {
+            throw Error("title must be a string");
+        }
+        if (greeting == undefined || typeof(greeting) != "string") {
+            throw Error("greeting must be a string");
+        }
+        if (description == undefined || typeof(description) != "string") {
+            throw Error("description must be a string");
+        }
+        if (name == undefined || typeof(name) != "string") {
+            throw Error("name must be a string");
+        }
+        if (visibility == undefined || typeof(visibility) != "string") {
+            throw Error("visibility must be a string");
+        }
+
+		visibility = visibility.toUpperCase();
+
+		if (visibility != "PUBLIC" && visibility != "PRIVATE") throw Error("visibility must be either PUBLIC or PRIVATE");
+
+		let optionsToUse = {
+			title,
+			greeting,
+			description,
+			name,
+			visibility,
+			...defaultOptions,
+		};
+
+		const request = await this.requester.request("https://beta.character.ai/chat/character/create/", {
+			body: Parser.stringify(optionsToUse),
+			method: "POST",
+			headers: this.getHeaders()
 		});
 
-		const property = curated
-			? "characters_by_curated_category"
-			: "characters_by_category";
-
-		if (request.status() === 200) {
-			const response = await Parser.parseJSON(request);
-
-			return response[property];
-		} else Error("Failed fetching characters by category.");
-	}
-
-	/**
-	 * Fetches character information from the Character AI API.
-	 * @async
-	 * @param {string} characterId - The ID of the character to fetch information for.
-	 * @throws {Error} If the user is not authenticated or if the arguments are invalid.
-	 * @returns {Promise<Object>} A Promise that resolves to the character information.
-	 */
-	async fetchCharacterInfo(characterId) {
-		if (!this.isAuthenticated())
-			throw Error("You must be authenticated to do this.");
-		if (characterId == undefined || typeof characterId != "string")
-			throw Error("Invalid arguments.");
-
-		const request = await this.requester.request(
-			`https://beta.character.ai/chat/character/info/`,
-			{
-				headers: this.getHeaders(),
-				body: Parser.stringify({
-					external_id: characterId,
-				}),
-				method: "POST",
-			}
-		);
-
-		console.log(request);
-
-		if (request.status() === 200) {
-			const response = await Parser.parseJSON(request);
-
-			return response.character;
-		} else Error("Could not fetch character information.");
-	}
-
-	/**
-	 * Searches for characters by name.
-	 * @async
-	 * @param {string} characterName - The name of the character to search for.
-	 * @returns {Promise<Object>} - A promise that resolves with the search results.
-	 * @throws {Error} - If the user is not authenticated, is a guest account, or if the arguments are invalid.
-	 */
-	async searchCharacters(characterName) {
-		if (!this.isAuthenticated())
-			throw Error("You must be authenticated to do this.");
-		if (this.#isGuest) throw Error("Guest accounts cannot use the search feature.");
-		if (characterName == undefined || typeof characterName != "string")
-			throw Error("Invalid arguments.");
-
-		const request = await this.requester.request(
-			`https://beta.character.ai/chat/characters/search/?query=${characterName}`,
-			{
-				headers: this.getHeaders(),
-			}
-		);
-
 		if (request.status() === 200) {
 			const response = await Parser.parseJSON(request);
 
 			return response;
-		} else Error("Could not search for characters.");
+		} else Error("Could not create a new character.");
 	}
+    // Fetch speech from text using provided voice id
+    async fetchTTS(voiceId, toSpeak) {
+        if (!this.isAuthenticated()) throw Error("You must be authenticated to do this.");
+        if (!voiceId || !toSpeak || typeof(voiceId) != "number" || typeof(toSpeak) != "string") throw Error("Invalid arguments.");
 
-	/**
-	 * Retrieves recent conversations from the Character AI API.
-	 * @async
-	 * @function
-	 * @throws {Error} If user is not authenticated or if recent conversations could not be retrieved.
-	 * @returns {Promise<Object>} A Promise that resolves with the recent conversations data.
-	 */
-	async getRecentConversations() {
-		if (!this.isAuthenticated())
-			throw Error("You must be authenticated to do this.");
-		const request = await this.requester.request(
-			`https://beta.character.ai/chat/characters/recent/`,
-			{
-				headers: this.getHeaders(),
-			}
-		);
+        let request = await this.requester.request(`https://beta.character.ai/chat/character/preview-voice/?voice_id=${voiceId}&to_speak=${toSpeak}`, {
+            headers: this.getHeaders()
+        });
 
-		if (request.status() === 200) {
-			const response = await Parser.parseJSON(request);
+        if (request.status() === 200) {
+            const response = await Parser.parseJSON(request);
+            
+            return response.speech;
+        } else Error("Could not fetch speech");
+    }
 
-			return response;
-		} else Error("Could not get recent conversations.");
-	}
+    // Fetch character voices
+    async fetchTTSVoices() {
+        if (!this.isAuthenticated()) throw Error("You must be authenticated to do this.");
 
-	/**
-	 * Creates a new chat or continues an existing one with the given character ID and history external ID.
-	 * @async
-	 * @param {string} characterId - The ID of the character to chat with.
-	 * @param {string|null} [externalId=null] - The external ID of the chat history to continue. If null, a new chat history will be created.
-	 * @returns {Promise<Chat>} A Promise that resolves with a new Chat instance.
-	 * @throws {Error} If the user is not authenticated, or if the arguments are invalid, or if the chat could not be created or resumed.
-	 */
-	async createOrContinueChat(characterId, externalId = null) {
-		if (!this.isAuthenticated())
-			throw Error("You must be authenticated to do this.");
-		if (
-			characterId == undefined ||
-			typeof characterId != "string" ||
-			typeof (externalId != null ? externalId : "") != "string"
-		)
-			throw Error("Invalid arguments.");
+        let request = await this.requester.request("https://beta.character.ai/chat/character/voices/", {
+            headers: this.getHeaders()
+        });
 
-		let request = await this.requester.request(
-			"https://beta.character.ai/chat/history/continue/",
-			{
-				body: Parser.stringify({
-					character_external_id: characterId,
-					history_external_id: externalId,
-				}),
-				method: "POST",
-				headers: this.getHeaders(),
-			}
-		);
+        if (request.status() === 200) {
+            const response = await Parser.parseJSON(request);
+            
+            return response.voices;
+        } else Error("Could not fetch voices");
+    }
 
-		if (request.status() === 200 || request.status() === 404) {
-			let response = await request.text();
+    // authentification
+    async authenticateWithToken(token) {
+        if (this.isAuthenticated()) throw Error("Already authenticated");
+        if (!token || typeof(token) != "string") throw Error("Specify a valid token");
 
-			if (
-				response === "No Such History" ||
-				response === "there is no history between user and character"
-			) {
-				// Create a new chat
-				request = await this.requester.request(
-					"https://beta.character.ai/chat/history/create/",
-					{
-						body: Parser.stringify({
-							character_external_id: characterId,
-							history_external_id: null,
-						}),
-						method: "POST",
-						headers: this.getHeaders(),
-					}
-				);
-				if (request.status() === 200) response = await Parser.parseJSON(request);
-				else Error("Could not create a new chat.");
-			}
+        await this.requester.initialize();
 
-			// If a text gets returned, we try to parse it to JSON!
-			try {
-				response = JSON.parse(response);
-			} catch (error) {}
+        const request = await this.requester.request("https://beta.character.ai/dj-rest-auth/auth0/", {
+            method: "POST",
+            body: Parser.stringify({
+                access_token: token
+            }),
+            headers: {
+                "Content-Type": "application/json",
+            }
+        });
+        if (request.status() === 200) {
+            const response = await Parser.parseJSON(request);
 
-			// Continue it
-			const continueBody = response;
-			return new Chat(this, characterId, continueBody);
-		} else Error("Could not create or resume a chat.");
-	}
+            this.#isGuest = false;
+            this.#authenticated = true;
+            this.#token = response.key;
 
-	/**
-	 * Creates a new character with the given options.
-	 * @async
-	 * @param {Object} opts - The options for the new character.
-	 * @param {string} opts.title - The title of the character.
-	 * @param {string} opts.name - The name of the character.
-	 * @param {string} opts.description - The description of the character.
-	 * @param {string} opts.greeting - The greeting of the character.
-	 * @param {string} opts.visibility - The visibility of the character. Must be one of "PRIVATE", "PUBLIC", or "UNLISTED".
-	 * @returns {Object} A Promise that resolves with the response from the API.
-	 * @throws {Error} If the user is not authenticated, or if any required arguments are missing or invalid.
-	 */
-	async createNewCharacter(opts) {
-		if (!this.isAuthenticated())
-			throw Error("You must be authenticated to do this.");
+            return response.token
+        } else throw Error("Authentication token is invalid");
+    }
+    async authenticateAsGuest() {
+        if (this.isAuthenticated()) throw Error("Already authenticated");
+        console.log("[node_characterai] Puppeteer - Warning: Guest users can only send up to 10 messages.");
+        await this.requester.initialize();
 
-		let { title, name, description, greeting, visibility } = opts;
-		if (!title || !name || !description || !greeting || !visibility)
-			throw Error("Missing arguments");
-		if (
-			typeof title != "string" ||
-			typeof name != "string" ||
-			typeof description != "string" ||
-			typeof greeting != "string" ||
-			typeof visibility != "string"
-		)
-			throw Error("Invalid arguments.");
+        let generating = false;
+        let request;
 
-		visibility = visibility.trim().toUpperCase();
-		if (
-			visibility != "PRIVATE" &&
-			visibility != "PUBLIC" &&
-			visibility != "UNLISTED"
-		)
-			throw Error(
-				`Invalid visibility. Must be one of "PRIVATE", "PUBLIC", or "UNLISTED".`
-			);
-		const options = {
-			title,
-			name,
-			description,
-			greeting,
-			visibility,
-			identifier: "id:" + uuidv4(),
-			// TODO: Add these options
-			categories: [],
-			copyable: false,
-			definition: "",
-			avatar_rel_path: "",
-			img_gen_enabled: false,
-			base_img_prompt: "",
-			strip_img_prompt_from_msg: false,
-			voice_id: "",
-		};
-		const request = await this.requester.request(
-			"https://beta.character.ai/chat/character/create/",
-			{
-				body: Parser.stringify(options),
-				method: "POST",
-				headers: this.getHeaders(),
-			}
-		);
+        let uuid = uuidv4();
 
-		if (request.status() === 200) {
-			const response = await Parser.parseJSON(request);
-			return response;
-		} else Error("Could not create character.");
-	}
+        // This is experimental but forces authentication
+        for (let i = 0; i < 20; i++) {
+            generating = true;
 
-	/**
-	 * Fetches text-to-speech audio from Character AI API.
-	 * @async
-	 * @param {number} voiceId - The ID of the voice to use for the audio.
-	 * @param {string} toSpeak - The text to convert to speech.
-	 * @returns {Promise<string>} - The audio file as a base64-encoded string.
-	 * @throws {Error} - If user is not authenticated or if invalid arguments are provided.
-	 */
-	async fetchTTS(voiceId, toSpeak) {
-		if (!this.isAuthenticated())
-			throw Error("You must be authenticated to do this.");
-		if (
-			!voiceId ||
-			!toSpeak ||
-			typeof voiceId != "number" ||
-			typeof toSpeak != "string"
-		)
-			throw Error("Invalid arguments.");
+            uuid = uuidv4();
+            const payload = JSON.stringify({
+                lazy_uuid: uuid,
+            });
 
-		let request = await this.requester.request(
-			`https://beta.character.ai/chat/character/preview-voice/?voice_id=${voiceId}&to_speak=${toSpeak}`,
-			{
-				headers: this.getHeaders(),
-			}
-		);
+            const baseRequest = await Promise.race([
+                this.requester.request("https://beta.character.ai/chat/auth/lazy/", {
+                    method: "POST",
+                    body: payload,
+                    headers: this.#guestHeaders,
+                }),
+                new Promise(resolve => setTimeout(() => resolve(null), 2000))
+            ]);
 
-		if (request.status() === 200) {
-			const response = await Parser.parseJSON(request);
+            request = baseRequest;
+            generating = false;
 
-			return response.speech;
-		} else Error("Could not fetch speech");
-	}
+            if (request) break;
+        }
 
-	/**
-	 * Fetches the available TTS voices from the Character AI API.
-	 * @async
-	 * @returns {Promise<Array>} An array of available TTS voices.
-	 * @throws {Error} If the user is not authenticated or if the voices could not be fetched.
-	 */
-	async fetchTTSVoices() {
-		if (!this.isAuthenticated())
-			throw Error("You must be authenticated to do this.");
+        if (request.status() === 200) {
+            const response = await Parser.parseJSON(request);
 
-		let request = await this.requester.request(
-			"https://beta.character.ai/chat/character/voices/",
-			{
-				headers: this.getHeaders(),
-			}
-		);
+            if (response.success === true) {
+                this.#isGuest = true;
+                this.#authenticated = true;
+                this.#token = response.token;
+                this.uuid = uuid;
 
-		if (request.status() === 200) {
-			const response = await Parser.parseJSON(request);
+                return response.token;
+            } else throw Error("Registering failed");
+        } else throw Error("Failed to fetch a lazy token");
+    }
 
-			return response.voices;
-		} else Error("Could not fetch voices");
-	}
+    // Update user details
+    // for changing user profile picture, need uploadImage function; endpoint "/chat/avatar/upload/"
+    async updateUserDetails(options) {
+        if (!this.isAuthenticated()) throw Error("You must be authenticated to do this.");
+        if (options == undefined || typeof(options) != "object") throw Error("Invalid arguments.");
 
-	/**
-	 * Authenticates the client with the provided token.
-	 * @async
-	 * @function authenticateWithToken
-	 * @memberof module:node_characterai/client
-	 * @instance
-	 * @throws {Error} If the client is already authenticated or if the token is invalid.
-	 * @param {string} token - The access token to use for authentication.
-	 * @returns {Promise<string>} The authentication token.
-	 */
-	async authenticateWithToken(token) {
-		if (this.isAuthenticated()) throw Error("Already authenticated");
-		if (!token || typeof token != "string") throw Error("Specify a valid token");
+        let {
+            username,
+            name,
+        } = options;
 
-		await this.requester.initialize();
+        let _user = await this.fetchUser();
 
-		const request = await this.requester.request(
-			"https://beta.character.ai/dj-rest-auth/auth0/",
-			{
-				method: "POST",
-				body: Parser.stringify({
-					access_token: token,
-				}),
-				headers: {
-					"Content-Type": "application/json",
-				},
-			}
-		);
-		if (request.status() === 200) {
-			const response = await Parser.parseJSON(request);
+        if (username == undefined || typeof(username) != "string") {
+            username = _user.user.user.username;
+        }
+        if (name == undefined || typeof(name) != "string") {
+            name = _user.user.name;
+        }
 
-			this.#isGuest = false;
-			this.#authenticated = true;
-			this.#token = response.key;
+        let _options = {
+            username,
+            name,
+            avatar_type: "UPLOADED",
+            avatar_rel_path: "",
+        }
+        const request = await this.requester.request("https://beta.character.ai/chat/user/update/", {
+            body: Parser.stringify({
+                ..._options
+            }),
+            method: "POST",
+            headers: this.getHeaders()
+        });
 
-			return response.token;
-		} else throw Error("Authentication token is invalid");
-	}
+        if (request.status() === 200) {
+            const response = await Parser.parseJSON(request);
 
-	/**
-	 * Authenticates the user as a guest and returns a token.
-	 * Guest users can only send up to 10 messages.
-	 * @throws {Error} If the user is already authenticated, registering fails, or fetching a lazy token fails.
-	 * @returns {Promise<string>} The token for the authenticated guest user.
-	 */
-	async authenticateAsGuest() {
-		if (this.isAuthenticated()) throw Error("Already authenticated");
-		console.log(
-			"[node_characterai] Puppeteer - Warning: Guest users can only send up to 10 messages."
-		);
-		await this.requester.initialize();
+            return response;
+        } else Error("Could not update user details.");
+    }
 
-		let generating = false;
-		let request;
+    unauthenticate() {
+        if (this.isAuthenticated()) {
+            this.#authenticated = false;
+            this.#isGuest = false;
+            this.#token = undefined;
+            this.requester.uninitialize();
+        }
+    }
 
-		let uuid = uuidv4();
+    // getters
+    getToken() {
+        return this.#token;
+    }
+    isGuest() {
+        return this.#isGuest;
+    }
+    isAuthenticated() {
+        return (this.#authenticated);
+    }
 
-		// This is experimental but forces authentication
-		for (let i = 0; i < 20; i++) {
-			generating = true;
-
-			uuid = uuidv4();
-			const payload = JSON.stringify({
-				lazy_uuid: uuid,
-			});
-
-			const baseRequest = await Promise.race([
-				this.requester.request("https://beta.character.ai/chat/auth/lazy/", {
-					method: "POST",
-					body: payload,
-					headers: this.#guestHeaders,
-				}),
-				new Promise((resolve) => setTimeout(() => resolve(null), 2000)),
-			]);
-
-			request = baseRequest;
-			generating = false;
-
-			if (request) break;
-		}
-
-		if (request.status() === 200) {
-			const response = await Parser.parseJSON(request);
-
-			if (response.success === true) {
-				this.#isGuest = true;
-				this.#authenticated = true;
-				this.#token = response.token;
-				this.uuid = uuid;
-
-				return response.token;
-			} else throw Error("Registering failed");
-		} else throw Error("Failed to fetch a lazy token");
-	}
-
-	/**
-	 * Unauthenticates the client by resetting the authentication status, token, and requester.
-	 * @returns {void}
-	 */
-	unauthenticate() {
-		if (this.isAuthenticated()) {
-			this.#authenticated = false;
-			this.#isGuest = false;
-			this.#token = undefined;
-			this.requester.uninitialize();
-		}
-	}
-
-	/**
-	 * Returns the token associated with the client.
-	 * @returns {string} The token associated with the client.
-	 */
-	getToken() {
-		return this.#token;
-	}
-	/**
-	 * Returns whether the client is a guest or not.
-	 * @returns {boolean} - True if the client is a guest, false otherwise.
-	 */
-	isGuest() {
-		return this.#isGuest;
-	}
-	/**
-	 * Checks if the client is authenticated.
-	 * @returns {boolean} Returns true if the client is authenticated, false otherwise.
-	 */
-	isAuthenticated() {
-		return this.#authenticated;
-	}
-
-	/**
-	 * Returns the headers object with authorization token and content type.
-	 * @returns {Object} The headers object.
-	 */
-	getHeaders() {
-		return {
-			authorization: `Token ${this.#token}`,
-			"Content-Type": "application/json",
-			// "user-agent": "CharacterAI/1.0.0 (iPhone; iOS 14.4.2; Scale/3.00)",
-			// "sec-ch-ua": `"Not_A Brand";v="99", "Google Chrome";v="109", "Chromium";v="109"`,
-			// "sec-ch-ua-mobile": "?0",
-			// "sec-ch-ua-platform": "Windows",
-			// "sec-fetch-dest": "empty",
-			// "sec-fetch-mode": "cors",
-			// "sec-fetch-site": "same-origin"
-		};
-	}
-}
+    // headers
+    getHeaders() {
+        return {
+            authorization: `Token ${this.#token}`,
+            "Content-Type": "application/json",
+            // "user-agent": "CharacterAI/1.0.0 (iPhone; iOS 14.4.2; Scale/3.00)",
+            // "sec-ch-ua": `"Not_A Brand";v="99", "Google Chrome";v="109", "Chromium";v="109"`,
+            // "sec-ch-ua-mobile": "?0",
+            // "sec-ch-ua-platform": "Windows",
+            // "sec-fetch-dest": "empty",
+            // "sec-fetch-mode": "cors",
+            // "sec-fetch-site": "same-origin"
+        };
+    }
+};
 
 module.exports = Client;
