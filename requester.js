@@ -139,6 +139,8 @@ class Requester {
     }
 
     async request(url, options) {
+        url = this.usePlus ? url.replace("beta", "plus") : url;
+
         const page = this.page;
 
         const method = options.method;
