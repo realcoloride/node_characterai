@@ -90,21 +90,17 @@ The last part of the URL is the character ID:
 
 ```javascript
 // Most of these functions will return you an URL to the image
-
 await chat.generateImage("dolphins swimming in green water");
 
 // If no mime type (file extension) is specified, the script will automatically detect it
 await chat.uploadImage("https://www.example.com/image.jpg", "image/jpeg");
-
 await chat.uploadImage("./photos/image.jpg");
 
 // Other supported types are Buffers, Readable Streams, File Paths, and URLs
-
 await chat.uploadImage(imageBuffer, "image/png");
 
-await chat.sendAndAwaitResponse({ text: "What is in this image?", { image_rel_path: "https://www.example.com/coffee.jpg" } }, true);
-
 // Including the image relative path is necessary to upload an image
+await chat.sendAndAwaitResponse({ text: "What is in this image?", { image_rel_path: "https://www.example.com/coffee.jpg" } }, true);
 ```
 *Props to @creepycats for implementing most of this stuff out*
 
