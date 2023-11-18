@@ -56,6 +56,9 @@ const characterAI = new CharacterAI();
 
 Some parts of the API, like managing a conversation, requires you to be logged in using an `accessToken`.
 
+> [!IMPORTANT]  
+> For mobile devices, please refer to this [section](#Getting-Access-Token-on-Mobile-Devices)
+ 
 To get it, you can open your browser, go to the [Character.AI website](https://character.ai) in `localStorage`.
 
 To do so:
@@ -80,6 +83,15 @@ For example, if you go to the chat page of the character `Discord Moderator` you
 
 The last part of the URL is the character ID:
 ![Character_ID](https://i.imgur.com/nd86fN4.png)
+
+
+## Getting Access Token on Mobile Devices
+1. Open the Character.AI website in your browser (https://beta.character.ai)
+2. Make sure you are logged into your account
+3. On the URL bar type `java` and paste this text `script:(function() { const c = Object.keys(window.localStorage).map(e=>{if(e.startsWith("@@")) return e}).filter(Boolean); if(!c.length) return alert("You need to login first!");document.documentElement.innerHTML = JSON.parse(window.localStorage[c]).body.access_token })()` 
+4. After doing that you should have your entire page cahnged into your access token
+5. just copy that token
+6. Tada! Now you have your access token
 
 ## Image Interactions
 ### WARNING: This part is currently experimental, if you encounter any problem, open an [**Issue**](https://github.com/realcoloride/node_characterai/issues).
