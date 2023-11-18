@@ -58,7 +58,12 @@ Some parts of the API, like managing a conversation, requires you to be logged i
 
 To get it, you can open your browser, go to the [Character.AI website](https://character.ai) in `localStorage`.
 
-To do so:
+---
+### ⚠️ WARNING: DO NOT share your access token to anyone you do not trust or if you do not know what you're doing. 
+#### _Anyone with your access token could have access to your account without your consent. Do this at your own risk._
+---
+
+### On PC:
 1. Open the Character.AI website in your browser (https://beta.character.ai)
 2. Open the developer tools (<kbd>F12</kbd>, <kbd>Ctrl+Shift+I</kbd>, or <kbd>Cmd+J</kbd>)
 3. Go to the `Application` tab
@@ -67,6 +72,18 @@ To do so:
 6. Open the body with the arrows and copy the access token
 
 ![Access_Token](https://i.imgur.com/09Q9mLe.png)
+
+### On Mobile:
+
+1. Open the Character.AI website in your browser (https://beta.character.ai)
+2. Open the URL bar, write `javascript:` (case sensitive) and paste the following:
+```javascript
+(function() { const c = Object.keys(window.localStorage).map( e => { if ( e.startsWith("@@") ) return e }).filter(Boolean); if (!c.length) return alert("You need to login first!"); var at = JSON.parse(window.localStorage[c]).body.access_token; document.documentElement.innerHTML = `Here is your access token:\n<input value=${at}><br/><strong>Do not share this to anyone unless you know what you are doing! This is your personal access token. If stolen or asked by someone you don't trust, they could access your account without your consent; if so, please close the page immediately.</strong></br><button id="copy" onclick="navigator.clipboard.writeText('${at}'); alert('Copied to clipboard!')">Copy to clipboard</button><button onclick="window.location.reload();">Refresh the page</button>`; at = null; })()
+```
+3. The following page should appear:
+![image](https://github.com/realcoloride/node_characterai/assets/108619637/28f1f176-df43-430b-9605-e989a1b8414d)
+4. Click copy to clipboard to copy your access token to your clipboard.
+---
 
 When using the package, you can:
 * Login as guest using `authenticateAsGuest()` - *for mass usage or testing purposes*
