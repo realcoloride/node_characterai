@@ -129,7 +129,7 @@ class Requester {
         const client = await page.target().createCDPSession();
         await client.send("Network.clearBrowserCookies");
         await client.send("Network.clearBrowserCache");
-        await page.goto("https://" + (this.usePlus ? "plus" : "beta") + ".character.ai");
+        await page.goto("https://beta.character.ai/favicon.ico");
         await page.evaluate(() => localStorage.clear());
 
         // If there is no waiting room, the script will continue anyway
@@ -215,116 +215,79 @@ class Requester {
         return response;
     }
 
-    async imageUpload(url, headers, localFile = false) {
+    async uploadImage(options, buffer) {
+        const url = "https://beta.character.ai/chat/upload-image/";
         const page = this.page;
 
-        let response
+        const method = options.method;
+        const headers = options.headers;
+        const mime = options.mime;
+
+        let response;
 
         try {
+            const payload = {
+                method: method,
+                headers: headers,
+                body: buffer
+            }
+
             await page.setRequestInterception(false);
             if (!this.#hasDisplayed) {
-                console.log("[node_characterai] Puppeteer - Eval-fetching is an experimental feature and may be slower. Please report any issues on github")
+                console.log("[node_characterai] Puppeteer - Image-uploading is an experimental feature and may have bugs. Please report any issues on github")
                 this.#hasDisplayed = true;
             }
 
-            // The end of this repeated 2 times, is it intentional?
-            // Can it be in the same spot at the end to avoid code repetition?
-            if (localFile) {
-                let dataUrl = fs.readFileSync(url, "base64");
-                response = await page.evaluate(
-                    async (uploadHeaders, dataUrl) => {
-                            var result = {
-                                code: 500
-                            };
+            response = await page.evaluate(async (payload, url, mime) => {
+                const formData = new FormData();
+                
+                console.log(mime);
+                const b64 = payload.body;
+                // converted from b64 to blob
+                const b64toBlob = (b64Data, contentType='', sliceSize=512) => {
+                    const byteCharacters = atob(b64Data);
+                    const byteArrays = [];
+                
+                    for (let offset = 0; offset < byteCharacters.length; offset += sliceSize) {
+                        const slice = byteCharacters.slice(offset, offset + sliceSize);
+                    
+                        const byteNumbers = new Array(slice.length);
+                        for (let i = 0; i < slice.length; i++) {
+                            byteNumbers[i] = slice.charCodeAt(i);
+                        }
+                    
+                        const byteArray = new Uint8Array(byteNumbers);
+                        byteArrays.push(byteArray);
+                    }
+                    
+                    const blob = new Blob(byteArrays, {type: contentType});
+                    return blob;
+                }
+                const blob = b64toBlob(b64.includes("base64,") ? b64.split("base64,")[1] : b64);
+                const file = new File([blob], "image", { type: mime });
 
-                            const b64toBlob = (b64Data, contentType = "", sliceSize = 512) => {
-                                const byteCharacters = atob(b64Data); // <- Watch out, this is deprecated!
-                                const byteArrays = [];
+                formData.append("image", file);
+                delete payload.headers['Content-Type'];
+                payload.body = formData;
 
-                                for (let offset = 0; offset < byteCharacters.length; offset += sliceSize) {
-                                    const slice = byteCharacters.slice(offset, offset + sliceSize);
+                const response = await fetch(url, payload);
 
-                                    const byteNumbers = new Array(slice.length);
-                                    for (let i = 0; i < slice.length; i++) {
-                                        byteNumbers[i] = slice.charCodeAt(i);
-                                    }
+                const data = await response.text();
 
-                                    const byteArray = new Uint8Array(byteNumbers);
-                                    byteArrays.push(byteArray);
-                                }
+                let result = {
+                    code: 500
+                };
 
-                                const blob = new Blob(byteArrays, {
-                                    type: contentType
-                                });
-                                return blob;
-                            }
+                result.code = 200;
+                result.response = data;
 
-                            const blob = b64toBlob(dataUrl.includes("base64,") ? dataUrl.split("base64,")[1] : dataUrl);
-                            const file = new File([blob], "image");
-                            const formData = new FormData();
-                            formData.append("image", file);
-
-                            let head = uploadHeaders;
-                            delete head["Content-Type"];
-                            // ^ Is this even being used?
-
-                            const uploadResponse = await fetch("https://beta.character.ai/chat/upload-image/", {
-                                headers: uploadHeaders,
-                                method: "POST",
-                                body: formData
-                            })
-
-                            if (uploadResponse.status == 200) {
-                                result.code = 200;
-
-                                let uploadResponseJSON = await uploadResponse.json();
-                                result.response = uploadResponseJSON.value;
-                            }
-
-                            return result;
-                        },
-                        headers, dataUrl
-                );
-            } else {
-                response = await page.evaluate(
-                    async (uploadHeaders, url) => {
-                            var result = {
-                                code: 500
-                            };
-
-                            const uploadResponse = await fetch(url).then(uploadResponse => uploadResponse.blob()).then(async (blob) => {
-                                const file = new File([blob], "image");
-                                const formData = new FormData();
-                                formData.append("image", file);
-
-                                let head = uploadHeaders;
-                                delete head["Content-Type"];
-                                // ^ Is this even being used?
-
-                                const uploadResponse = await fetch("https://beta.character.ai/chat/upload-image/", {
-                                    headers: uploadHeaders,
-                                    method: "POST",
-                                    body: formData
-                                })
-                                return uploadResponse;
-                            }).then()
-
-                            if (uploadResponse.status == 200) {
-                                result.code = 200;
-
-                                let uploadResponseJSON = await uploadResponse.json();
-                                result.response = uploadResponseJSON.value;
-                            }
-
-                            return result;
-                        },
-                        headers, url
-                );
-            }
+                return result;
+            }, payload, url, mime);
 
             response.status = () => response.code; // compatibilty reasons
-            response.body = () => response.response; // compatibilty reasons
+            response.text = () => response.response; // compatibilty reasons
         } catch (error) {
+            console.log(error);
             console.log("[node_characterai] Puppeteer - " + error)
         }
 
