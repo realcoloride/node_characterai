@@ -1,7 +1,6 @@
 const { Reply, Message, MessageHistory, OutgoingMessage } = require("./message");
 const Parser = require("./parser");
 const jimp = require("jimp");
-const mime = require("mime");
 
 class Chat {
     constructor(client, characterId, continueBody) {
@@ -77,8 +76,9 @@ class Chat {
         } else throw Error("Failed sending message.")
     }
     
-    // Image generation
-    async uploadImage(content, mimeType = null) {
+    // Image generation & uploading
+
+    async uploadImage(content) {
         if (!this.client.isAuthenticated()) throw Error("You must be authenticated to do this.");
         
         /*
@@ -89,40 +89,27 @@ class Chat {
             * Buffer
             * ReadableStream
         */
-        
-        let buffer;
 
-        try {
-            // Auto detection for mime type
-            if (!mimeType) {
-                try {
-                    url = new URL(content).pathname;
-                    mimeType = mime.getType(url);
-                } catch (error) {}
-                if (fs.existsSync(content)) mimeType = mime.getType(content);
-            }
-            
-            const image = await jimp.read(content);
-            buffer = image.getBase64(mimeType || "image/png");
-        } catch (error) {
-            throw Error("Content is invalid or not an image");
-        }
+        const image = await jimp.read(content);
+        const mime = image.getMIME();
+        const buffer = await image.getBase64Async(mime);
+
         if (!buffer) throw Error("Invalid content");
-
+        
         const client = this.client;
+        const request = await this.requester.uploadImage({
+            method: "POST",
+            headers: client.getHeaders(true),
+            client: this.client,
+            mime
+        }, buffer);
+        const response = await Parser.parseJSON(request);
+        
+        if (request.status() === 200 && response.status == "OK") {
+            const relativePath = response.value;
 
-        const error = () => {
-            throw Error("Failed uploading image.");
-        };
-        try {
-            const request = this.requester.uploadBuffer(buffer, client);
-            
-            if (request.status() === 200) {
-                return `https://characterai.io/i/400/static/user/${request.response}`;
-            } else error();
-        } catch (error) {
-          error();
-        }
+            return `https://characterai.io/i/400/static/user/${relativePath}`;
+        } else throw Error(`Failed uploading image: ${response.error || response.detail}`);
     }
     async generateImage(prompt) {
         if (!this.client.isAuthenticated()) throw Error("You must be authenticated to do this.");
