@@ -117,7 +117,12 @@ await chat.uploadImage("./photos/image.jpg");
 await chat.uploadImage(imageBuffer, "image/png");
 
 // Including the image relative path is necessary to upload an image
-await chat.sendAndAwaitResponse({ text: "What is in this image?", { image_rel_path: "https://www.example.com/coffee.jpg" } }, true);
+await chat.sendAndAwaitResponse({
+  text: "What is in this image?",
+  image_rel_path: "https://www.example.com/coffee.jpg",
+  image_description: "This is coffee.",
+  image_description_type: "HUMAN" // Set this if you are manually saying what the AI is looking at
+}, true);
 ```
 *Props to @creepycats for implementing most of this stuff out*
 
