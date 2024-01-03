@@ -121,7 +121,7 @@ class Requester {
         await page.setJavaScriptEnabled(true);
         await page.setDefaultNavigationTimeout(0);
 
-        const userAgent = "CharacterAI/1.0.0 (iPhone; iOS 14.4.2; Scale/3.00)";
+        const userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
         await page.setUserAgent(userAgent);
 
         // Special thanks to @Parking-Master for this fix
