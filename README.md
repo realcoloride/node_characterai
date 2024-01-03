@@ -201,4 +201,4 @@ $ which chromium-browser # or whatever command you use to launch chrome
 
 📜 If you use this API, you also bound to the terms of usage of their website.
 
-*(real)coloride - 2023, Licensed MIT.*
+*(real)coloride - 2023-2024, Licensed MIT.*
