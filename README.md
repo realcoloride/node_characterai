@@ -87,7 +87,7 @@ To get it, you can open your browser, go to the [Character.AI website](https://c
 ```
 3. The following page should appear:
 ![Access_Token_Mobile](https://github.com/realcoloride/node_characterai/assets/108619637/50181353-0e55-448f-87e9-e4d3b6457319)
-4. Click copy to clipboard to copy your access token to your clipboard.
+4. Click the respective buttons to copy your access token or id token to your clipboard.
 ---
 
 When using the package, you can:
