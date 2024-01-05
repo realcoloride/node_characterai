@@ -54,13 +54,18 @@ const characterAI = new CharacterAI();
 
 ## Using an Access Token
 
-Some parts of the API (like managing a conversation) require you to be logged in using an `accessToken`.
+Some parts of the API (like managing a conversation) require you to be logged in using an `accessToken` and an `idToken`.
 
 To get it, you can open your browser, go to the [Character.AI website](https://character.ai) in `localStorage`.
 
+> [!IMPORTANT]  
+> If you are using old versions of the package and are getting a `Authentication token is invalid`, you now need an `idToken` to authenticate (as of update `1.2.4` and higher). See below.
+> 
+> **If you are using something that is using the package and has not updated to the latest version in a while, make sure to update the package by doing `npm i` or manually copying the files or open a respective issue to their package (if they have one).**
+
 ---
-### ⚠️ WARNING: DO NOT share your access token to anyone you do not trust or if you do not know what you're doing. 
-#### _Anyone with your access token could have access to your account without your consent. Do this at your own risk._
+### ⚠️ WARNING: DO NOT share your access token and id token to anyone you do not trust or if you do not know what you're doing. 
+#### _Anyone with your access token and id token could have access to your account without your consent. Do this at your own risk._
 ---
 
 ### On PC:
@@ -69,9 +74,9 @@ To get it, you can open your browser, go to the [Character.AI website](https://c
 3. Go to the `Application` tab
 4. Go to the `Storage` section and click on `Local Storage`
 5. Look for the `@@auth0spajs@@::dyD3gE281MqgISG7FuIXYhL2WEknqZzv::https://auth0.character.ai/::openid profile email offline_access` key
-6. Open the body with the arrows and copy the access token
+6. Open the body, copy the access token, store it somewhere and then copy the id token.
 
-![Access_Token](https://i.imgur.com/09Q9mLe.png)
+![Access_Token](https://github.com/realcoloride/node_characterai/assets/108619637/9c830ed3-a28d-4fc0-8220-44c33bf8bf58)
 
 ### On Mobile:
 
@@ -81,7 +86,7 @@ To get it, you can open your browser, go to the [Character.AI website](https://c
 (function() { const c = Object.keys(window.localStorage).map( e => { if ( e.startsWith("@@") ) return e }).filter(Boolean); if (!c.length) return alert("You need to login first!"); var at = JSON.parse(window.localStorage[c]).body.access_token; document.documentElement.innerHTML = `Here is your access token:\n<input value=${at}><br/><strong>Do not share this to anyone unless you know what you are doing! This is your personal access token. If stolen or asked by someone you don't trust, they could access your account without your consent; if so, please close the page immediately.</strong></br><button id="copy" onclick="navigator.clipboard.writeText('${at}'); alert('Copied to clipboard!')">Copy to clipboard</button><button onclick="window.location.reload();">Refresh the page</button>`; at = null; })()
 ```
 3. The following page should appear:
-![image](https://github.com/realcoloride/node_characterai/assets/108619637/28f1f176-df43-430b-9605-e989a1b8414d)
+![Access_Token_Mobile](https://github.com/realcoloride/node_characterai/assets/108619637/50181353-0e55-448f-87e9-e4d3b6457319)
 4. Click copy to clipboard to copy your access token to your clipboard.
 ---
 
@@ -130,7 +135,8 @@ await chat.sendAndAwaitResponse({
 
 |**Problem**|Answer|
 |-------|------|
-|❌ **Token was invalid**|Make sure your token is actually valid and you copied your entire token (its pretty long).|
+|❌ **Token was invalid**|Make sure your token is actually valid and you copied your entire token (its pretty long) or, you have not updated the package.|
+|🤨 **ID token is missing.**|Read [this](https://github.com/realcoloride/node_characterai?tab=readme-ov-file#using-an-access-token), if problems still persist, feel free to open an Issue.|
 |⚠️ **The specified Chromium path for puppeteer could not be located**|On most systems, puppeteer will automatically locate Chromium. But on certain distributions, the path has to be specified manually. This warning occurs if `node_characterai` could not locate Chromium on linux (*/usr/bin/chromium-browser*), and will error if puppeteer cannot locate it automatically. See [this](#specifying-chromiums-path) for a fix.|
 |😮 **Why are chromium processes opening?**|This is because as of currently, the simple fetching is broken and I use puppeteer (a chromium browser control library) to go around cloudflare's restrictions.|
 |👥 **`authenticateAsGuest()` doesn't work**|See issue [#14](https://github.com/realcoloride/node_characterai/issues/14).|
