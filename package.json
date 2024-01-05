@@ -1,6 +1,6 @@
 {
   "name": "node_characterai",
-  "version": "1.2.3",
+  "version": "1.2.4",
   "description": "Unofficial Character AI wrapper for node.",
   "main": "index.js",
   "scripts": {
