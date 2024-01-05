@@ -201,16 +201,18 @@ class Client {
     }
 
     // authentification
-    async authenticateWithToken(token) {
+    async authenticateWithToken(accessToken, idToken) {
         if (this.isAuthenticated()) throw Error("Already authenticated");
-        if (!token || typeof(token) != "string") throw Error("Specify a valid token");
+        if (!accessToken || typeof(accessToken) != "string") throw Error("Specify a valid access token");
+        if (!idToken || typeof(idToken) != "string") throw Error("Your ID token is missing.\nDue to characterAI changes, in newer versions of the package, you will need a idToken aswell of an accessToken.\n\nSee: https://github.com/realcoloride/node_characterai?tab=readme-ov-file#using-an-access-token for more details.");
 
         await this.requester.initialize();
 
         const request = await this.requester.request("https://beta.character.ai/dj-rest-auth/auth0/", {
             method: "POST",
             body: Parser.stringify({
-                access_token: token
+                access_token: accessToken,
+                id_token: idToken
             }),
             headers: {
                 "Content-Type": "application/json",
