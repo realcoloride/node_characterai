@@ -119,7 +119,7 @@ await chat.uploadImage("https://www.example.com/image.jpg");
 await chat.uploadImage("./photos/image.jpg");
 
 // Other supported types are Buffers, Readable Streams, File Paths, and URLs
-await chat.uploadImage(imageBuffer, "image/png");
+await chat.uploadImage(imageBuffer);
 
 // Including the image relative path is necessary to upload an image
 await chat.sendAndAwaitResponse({
