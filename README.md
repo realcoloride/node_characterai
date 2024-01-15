@@ -115,7 +115,7 @@ The last part of the URL is the character ID:
 await chat.generateImage("dolphins swimming in green water");
 
 // If no mime type (file extension) is specified, the script will automatically detect it
-await chat.uploadImage("https://www.example.com/image.jpg", "image/jpeg");
+await chat.uploadImage("https://www.example.com/image.jpg");
 await chat.uploadImage("./photos/image.jpg");
 
 // Other supported types are Buffers, Readable Streams, File Paths, and URLs
