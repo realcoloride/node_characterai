@@ -12,7 +12,7 @@ class Requester {
     #initialized = false;
     #hasDisplayed = false;
 
-    #headless = "new";
+    headless = "new";
     puppeteerPath = undefined;
     puppeteerLaunchArgs = [
         "--fast-start",
@@ -95,9 +95,9 @@ class Requester {
 
         console.log("[node_characterai] Puppeteer - This is an experimental feature. Please report any issues on github.");
 
-        puppeteer.use(StealthPlugin())
+        puppeteer.use(StealthPlugin());
         const browser = await puppeteer.launch({
-            headless: this.#headless,
+            headless: this.headless,
             args: this.puppeteerLaunchArgs,
             protocolTimeout: this.puppeteerProtocolTimeout || 0, // Props to monckey100
             executablePath: this.puppeteerPath || null
