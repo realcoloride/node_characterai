@@ -54,12 +54,12 @@ const characterAI = new CharacterAI();
 
 ## Using an Access Token
 
-Some parts of the API (like managing a conversation) require you to be logged in using an `accessToken` and an `idToken`.
+Some parts of the API (like managing a conversation) require you to be logged in using a `sessionToken`.
 
 To get it, you can open your browser, go to the [Character.AI website](https://character.ai) in `localStorage`.
 
 > [!IMPORTANT]  
-> If you are using old versions of the package and are getting a `Authentication token is invalid`, you now need an `idToken` to authenticate (as of update `1.2.4` and higher). See below.
+> If you are using old versions of the package and are getting a `Authentication token is invalid`, you now again need a `sessionToken` to authenticate (as of update `1.2.5` and higher). See below.
 > 
 > **If you are using something that is using the package and has not updated to the latest version in a while, make sure to update the package by doing `npm i` or manually copying the files or open a respective issue to their package (if they have one).**
 
@@ -73,20 +73,20 @@ To get it, you can open your browser, go to the [Character.AI website](https://c
 2. Open the developer tools (<kbd>F12</kbd>, <kbd>Ctrl+Shift+I</kbd>, or <kbd>Cmd+J</kbd>)
 3. Go to the `Application` tab
 4. Go to the `Storage` section and click on `Local Storage`
-5. Look for the `@@auth0spajs@@::dyD3gE281MqgISG7FuIXYhL2WEknqZzv::https://auth0.character.ai/::openid profile email offline_access` key
-6. Open the body, copy the access token, store it somewhere and then copy the id token.
+5. Look for the `char_token` key
+6. Open the object, right click on value and copy your session token.
 
-![Access_Token](https://github.com/realcoloride/node_characterai/assets/108619637/9c830ed3-a28d-4fc0-8220-44c33bf8bf58)
+![Session_Token](https://github.com/realcoloride/node_characterai/assets/108619637/1d46db04-0744-42d2-a6d7-35152b967a82)
 
 ### On Mobile:
 
 1. Open the Character.AI website in your browser (https://beta.character.ai)
 2. Open the URL bar, write `javascript:` (case sensitive) and paste the following:
 ```javascript
-(function () {const localStorageKeys = Object.keys(window.localStorage).filter((key) => key.startsWith("@@"));if (localStorageKeys.length === 0) {alert("You need to log in first!");return;}const storageInformation = JSON.parse(window.localStorage[localStorageKeys[0]]).body;const accessToken = storageInformation.access_token;const idToken = storageInformation.id_token;document.documentElement.innerHTML = `<div><p>Here is your access token:</p><input value="${accessToken}" readonly><p>Here is your id token:</p><input value="${idToken}" readonly><p><strong>Do not share this with anyone unless you know what you are doing! Those are your personal access token and id token. If stolen or requested by someone you don't trust, they could access your account without your consent; if so, please close the page immediately.</strong></p><button id="copy" onclick="navigator.clipboard.writeText('${accessToken}'); alert('Copied to clipboard!')">Copy access token to clipboard</button><button id="copy" onclick="navigator.clipboard.writeText('${idToken}'); alert('Copied to clipboard!')">Copy id token to clipboard</button><button onclick="window.location.reload();">Refresh the page</button></div>`;accessToken = null; idToken = null;})();
+(function(){let e=window.localStorage["char_token"];if(!e){alert("You need to log in first!");return;}let t=JSON.parse(e).value;document.documentElement.innerHTML=`<div><i><p>provided by node_characterai - <a href="https://github.com/realcoloride/node_characterai?tab=readme-ov-file#using-an-access-token">click here for more information</a></p></i><p>Here is your session token:</p><input value="${t}" readonly><p><strong>Do not share this with anyone unless you know what you are doing! Those are your personal session token. If stolen or requested by someone you don't trust, they could access your account without your consent; if so, please close the page immediately.</strong></p><button id="copy" onclick="navigator.clipboard.writeText('${t}'); alert('Copied to clipboard!')">Copy session token to clipboard</button><button onclick="window.location.reload();">Refresh the page</button></div>`;localStorageKey=null;storageInformation=null;t=null;})();
 ```
 3. The following page should appear:
-![Access_Token_Mobile](https://github.com/realcoloride/node_characterai/assets/108619637/50181353-0e55-448f-87e9-e4d3b6457319)
+![Access_Token_Mobile](https://github.com/realcoloride/node_characterai/assets/108619637/516722db-a90f-4dd0-987e-fda01e68ac09)
 4. Click the respective buttons to copy your access token or id token to your clipboard.
 ---
 
