@@ -97,7 +97,7 @@ class Requester {
 
         puppeteer.use(StealthPlugin());
         const browser = await puppeteer.launch({
-            headless: this.#headless,
+            headless: this.headless,
             args: this.puppeteerLaunchArgs,
             protocolTimeout: this.puppeteerProtocolTimeout || 0, // Props to monckey100
             executablePath: this.puppeteerPath || null
