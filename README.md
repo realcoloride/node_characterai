@@ -61,7 +61,7 @@ To get it, you can open your browser, go to the [Character.AI website](https://c
 > [!IMPORTANT]  
 > If you are using old versions of the package and are getting a `Authentication token is invalid`, you now again need a `sessionToken` to authenticate (as of update `1.2.5` and higher). See below.
 > 
-> **If you are using something that is using the package and has not updated to the latest version in a while, make sure to update the package by doing `npm i` or manually copying the files or open a respective issue to their package (if they have one).**
+> **If you are using something that is using the package and has not updated to the latest version in a while, make sure to update the package by doing `npm update node_characterai` or manually copying the files or open a respective issue to their package (if they have one).**
 
 ---
 ### ⚠️ WARNING: DO NOT share your access token and id token to anyone you do not trust or if you do not know what you're doing. 
