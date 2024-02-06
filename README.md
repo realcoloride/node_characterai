@@ -64,8 +64,8 @@ To get it, you can open your browser, go to the [Character.AI website](https://c
 > **If you are using something that is using the package and has not updated to the latest version in a while, make sure to update the package by doing `npm update node_characterai` or manually copying the files or open a respective issue to their package (if they have one).**
 
 ---
-### ⚠️ WARNING: DO NOT share your access token and id token to anyone you do not trust or if you do not know what you're doing. 
-#### _Anyone with your access token and id token could have access to your account without your consent. Do this at your own risk._
+### ⚠️ WARNING: DO NOT share your session token to anyone you do not trust or if you do not know what you're doing. 
+#### _Anyone with your session token could have access to your account without your consent. Do this at your own risk._
 ---
 
 ### On PC:
