@@ -80,6 +80,44 @@ class Client {
             return response[property]
         } else Error("Failed fetching characters by category.");
     }
+    // trending characters
+    async fetchTrendingCharacters() {
+        const request = await this.requester.request("https://beta.character.ai/chat/characters/trending/", {
+            headers: this.getHeaders()
+        });
+
+        if (request.status() === 200) {
+            const response = await Parser.parseJSON(request);
+
+            return response;
+        } else Error("Failed fetching trending characters.");
+    }
+    // recommended characters
+    async fetchRecommendedCharacters() {
+        const request = await this.requester.request("https://beta.character.ai/chat/characters/recommended/", {
+            headers: this.getHeaders()
+        });
+
+        if (request.status() === 200) { 
+            const response = await Parser.parseJSON(request);
+
+            return response;
+        } else Error("Failed fetching recommended characters.");
+    }
+    // user created characters
+    async fetchUserCreatedCharacters() {
+        if (!this.isAuthenticated()) throw Error("You must be authenticated to do this.");
+
+        const request = await this.requester.request("https://beta.character.ai/chat/characters/?scope=user", {
+            headers: this.getHeaders()
+        });
+
+        if (request.status() === 200) {
+            const response = await Parser.parseJSON(request);
+
+            return response;
+        } else Error("Failed fetching user created characters.");
+    }   
     async fetchCharacterInfo(characterId) {
         if (!this.isAuthenticated()) throw Error("You must be authenticated to do this.");
         if (characterId == undefined || typeof(characterId) != "string") throw Error("Invalid arguments.");
@@ -169,6 +207,71 @@ class Client {
         } else Error("Could not create or resume a chat.");
     }
 
+	// Create new character
+    async createNewCharacter(options) {
+        if (!this.isAuthenticated()) throw Error("You must be authenticated to do this.");
+        if (options == undefined || typeof(options) != "object") throw Error("Invalid arguments.");
+        
+        let defaultOptions = {
+            categories: [],
+            copyable: false,
+            definition: "",
+            avatar_rel_path: "",
+            img_gen_enabled: false,
+            base_img_prompt: "",
+            strip_img_prompt_from_msg: false,
+            voice_id: "",
+        };
+
+        let {
+            title,
+            greeting,
+            description,
+            name,
+            visibility,
+        } = options;
+
+        if (title == undefined || typeof(title) != "string") {
+            throw Error("title must be a string");
+        }
+        if (greeting == undefined || typeof(greeting) != "string") {
+            throw Error("greeting must be a string");
+        }
+        if (description == undefined || typeof(description) != "string") {
+            throw Error("description must be a string");
+        }
+        if (name == undefined || typeof(name) != "string") {
+            throw Error("name must be a string");
+        }
+        if (visibility == undefined || typeof(visibility) != "string") {
+            throw Error("visibility must be a string");
+        }
+
+		visibility = visibility.toUpperCase();
+
+		if (visibility != "PUBLIC" && visibility != "PRIVATE") throw Error("visibility must be either PUBLIC or PRIVATE");
+
+		let optionsToUse = {
+			title,
+			greeting,
+			description,
+			name,
+			visibility,
+			...defaultOptions,
+		};
+
+		const request = await this.requester.request("https://beta.character.ai/chat/character/create/", {
+			body: Parser.stringify(optionsToUse),
+			method: "POST",
+			headers: this.getHeaders()
+		});
+
+		if (request.status() === 200) {
+			const response = await Parser.parseJSON(request);
+
+			return response;
+		} else Error("Could not create a new character.");
+	}
     // Fetch speech from text using provided voice id
     async fetchTTS(voiceId, toSpeak) {
         if (!this.isAuthenticated()) throw Error("You must be authenticated to do this.");
@@ -280,6 +383,48 @@ WARNING: CharacterAI has changed its authentication methods again.
             } else throw Error("Registering failed");
         } else throw Error("Failed to fetch a lazy token");
     }
+
+    // Update user details
+    // for changing user profile picture, need uploadImage function; endpoint "/chat/avatar/upload/"
+    async updateUserDetails(options) {
+        if (!this.isAuthenticated()) throw Error("You must be authenticated to do this.");
+        if (options == undefined || typeof(options) != "object") throw Error("Invalid arguments.");
+
+        let {
+            username,
+            name,
+        } = options;
+
+        let _user = await this.fetchUser();
+
+        if (username == undefined || typeof(username) != "string") {
+            username = _user.user.user.username;
+        }
+        if (name == undefined || typeof(name) != "string") {
+            name = _user.user.name;
+        }
+
+        let _options = {
+            username,
+            name,
+            avatar_type: "UPLOADED",
+            avatar_rel_path: "",
+        }
+        const request = await this.requester.request("https://beta.character.ai/chat/user/update/", {
+            body: Parser.stringify({
+                ..._options
+            }),
+            method: "POST",
+            headers: this.getHeaders()
+        });
+
+        if (request.status() === 200) {
+            const response = await Parser.parseJSON(request);
+
+            return response;
+        } else Error("Could not update user details.");
+    }
+
     unauthenticate() {
         if (this.isAuthenticated()) {
             this.#authenticated = false;
