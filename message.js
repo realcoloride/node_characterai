@@ -49,6 +49,7 @@ class Message {
         this.chat = chat;
         this.rawOptions = options;
 
+        this.uuid = options.uuid;
         this.id = options.id
         this.text = options.text
         this.src = options.src

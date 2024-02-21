@@ -91,8 +91,6 @@ class Client {
             }),
             method: "POST"
         });
-        
-        console.log(request);
 
         if (request.status() === 200) {
             const response = await Parser.parseJSON(request);
@@ -144,6 +142,9 @@ class Client {
 
         if (request.status() === 200 || request.status() === 404) {
             let response = await request.text();
+
+            if (response.startsWith("no character found for"))
+                throw Error("Character with this id was not found");
 
             if (response === "No Such History" || response === "there is no history between user and character") { // Create a new chat
                 request = await this.requester.request("https://beta.character.ai/chat/history/create/", {
