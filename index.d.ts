@@ -120,7 +120,7 @@ declare class Chat {
   fetchHistory(pageNumber?: number): Promise<MessageHistory>;
 
   sendAndAwaitResponse(
-    optionsOrMessage: Record<string, any>,
+    optionsOrMessage: Record<string, any> | string,
     singleReply: boolean
   ): Promise<Message[] | Message>;
 
