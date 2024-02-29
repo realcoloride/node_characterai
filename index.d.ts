@@ -284,3 +284,5 @@ interface RequestOptions {
   headers: Record<string, string>;
   mime?: string;
 }
+
+export default Client;
