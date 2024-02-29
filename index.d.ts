@@ -185,4 +185,13 @@ interface RequestOptions {
   mime?: string;
 }
 
+export type {
+  Message,
+  Reply,
+  OutgoingMessage,
+  MessageHistory,
+  Chat,
+  Parser,
+  Requester,
+};
 export default Client;
