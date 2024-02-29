@@ -1,22 +1,14 @@
+import type { Browser, Page } from 'puppeteer';
+
 declare module 'puppeteer-extra' {
   interface Page {
     deleteCookie(): Promise<void>;
   }
 }
 
-declare module 'json-bigint' {
-  interface JSONbigStatic {
-    parse(text: string): any;
-    stringify(value: any): string;
-  }
-
-  const JSONbig: JSONbigStatic;
-  export = JSONbig;
-}
-
 declare class Requester {
-  browser: puppeteer.Browser | undefined;
-  page: puppeteer.Page | undefined;
+  browser: Browser | undefined;
+  page: Page | undefined;
 
   #initialized: boolean;
   #hasDisplayed: boolean;
@@ -31,108 +23,16 @@ declare class Requester {
 
   constructor();
   isInitialized(): boolean;
-  waitForWaitingRoom(page: puppeteer.Page): Promise<void>;
+  waitForWaitingRoom(page: Page): Promise<void>;
   initialize(): Promise<void>;
-  request(url: string, options: RequestOptions): Promise<puppeteer.Response>;
-  uploadImage(
-    options: RequestOptions,
-    buffer: Buffer
-  ): Promise<puppeteer.Response>;
+  request(url: string, options: RequestOptions): Promise<any>;
+  uploadImage(options: RequestOptions, buffer: Buffer): Promise<any>;
   uninitialize(): Promise<void>;
 }
 
 declare class Parser {
   static parseJSON(response: Response): Promise<any>;
   static stringify(text: any): string;
-}
-
-declare class OutgoingMessage {
-  payload: {
-    history_external_id: string | null;
-    character_external_id: string | null;
-    text: string;
-    tgt: string | null;
-    ranking_method: string;
-    faux_chat: boolean;
-    staging: boolean;
-    model_server_address: string | null;
-    override_prefix: string | null;
-    override_rank: string | null;
-    rank_candidates: string | null;
-    filter_candidates: string | null;
-    prefix_limit: string | null;
-    prefix_token_limit: string | null;
-    livetune_coeff: string | null;
-    parent_msg_id: string | null;
-    stream_params: string | null;
-    enable_tti: boolean;
-    initial_timeout: string | null;
-    insert_beginning: string | null;
-    translate_candidates: string | null;
-    stream_every_n_steps: number;
-    chunks_to_pad: number;
-    is_proactive: boolean;
-    image_rel_path: string;
-    image_description: string;
-    image_description_type: string;
-    image_origin_type: string;
-  };
-
-  constructor(chat: Chat, options: Record<string, any>);
-}
-
-declare class Message {
-  chat: Chat;
-  rawOptions: Record<string, any>;
-  uuid: string;
-  id: string;
-  text: string;
-  src: string;
-  tgt: string;
-  isAlternative: boolean;
-  imageRelativePath: string;
-  imagePromptText: string;
-  deleted: boolean | null;
-  srcName: string;
-  srcInternalId: string;
-  srcIsHuman: boolean;
-  srcCharacterAvatarFileName: string;
-  srcCharacterDict: Record<string, any>;
-  responsibleUserName: string;
-
-  constructor(chat: Chat, options: Record<string, any>);
-  getPreviousMessage(): Promise<Message | null>;
-  delete(deletePreviousToo?: boolean): Promise<void>;
-  getAvatarLink(): string;
-  returnMessage(): string;
-}
-
-declare class Reply {
-  chat: Chat;
-  text: string;
-  id: string;
-  imageRelativePath: string;
-  srcCharacterName: string;
-  srcAvatarFileName: string;
-  isFinalChunk: boolean;
-  lastUserMessageId: string;
-
-  constructor(chat: Chat, options: Record<string, any>);
-  getMessage(): Promise<Message>;
-}
-
-declare class MessageHistory {
-  chat: Chat;
-  messages: Message[];
-  hasMore: boolean;
-  nextPage: string | null;
-
-  constructor(
-    chat: Chat,
-    messages: Message[],
-    hasMore: boolean,
-    nextPage: string | null
-  );
 }
 
 declare class OutgoingMessage {
