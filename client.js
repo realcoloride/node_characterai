@@ -91,8 +91,6 @@ class Client {
             }),
             method: "POST"
         });
-        
-        console.log(request);
 
         if (request.status() === 200) {
             const response = await Parser.parseJSON(request);
@@ -144,6 +142,9 @@ class Client {
 
         if (request.status() === 200 || request.status() === 404) {
             let response = await request.text();
+
+            if (response.startsWith("no character found for"))
+                throw Error("Character with this id was not found");
 
             if (response === "No Such History" || response === "there is no history between user and character") { // Create a new chat
                 request = await this.requester.request("https://beta.character.ai/chat/history/create/", {
@@ -201,30 +202,37 @@ class Client {
     }
 
     // authentification
-    async authenticateWithToken(token) {
+    async authenticateWithToken(sessionToken) {
         if (this.isAuthenticated()) throw Error("Already authenticated");
-        if (!token || typeof(token) != "string") throw Error("Specify a valid token");
+        if (!sessionToken || typeof(sessionToken) != "string") throw Error("You must specify a valid session token");
 
         await this.requester.initialize();
 
-        const request = await this.requester.request("https://beta.character.ai/dj-rest-auth/auth0/", {
+if (sessionToken.length != 40) console.warn(
+`===============================================================================
+WARNING: CharacterAI has changed its authentication methods again.
+         For easier development purposes, usage of session tokens will be used.
+         See: https://github.com/realcoloride/node_characterai/issues/146
+===============================================================================`
+);
+        const request = await this.requester.request("https://neo.character.ai/recommendation/v1/user", {
             method: "POST",
-            body: Parser.stringify({
-                access_token: token
-            }),
+            body: Parser.stringify({}),
             headers: {
                 "Content-Type": "application/json",
+                "Authorization": `Token ${sessionToken}`
             }
         });
-        if (request.status() === 200) {
-            const response = await Parser.parseJSON(request);
 
+        if (request.status() === 200) {
             this.#isGuest = false;
             this.#authenticated = true;
-            this.#token = response.key;
+            this.#token = sessionToken;
 
-            return response.token
-        } else throw Error("Authentication token is invalid");
+            return sessionToken;
+        }
+        
+        throw Error("Authentication token is invalid");
     }
     async authenticateAsGuest() {
         if (this.isAuthenticated()) throw Error("Already authenticated");

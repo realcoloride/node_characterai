@@ -49,6 +49,7 @@ class Message {
         this.chat = chat;
         this.rawOptions = options;
 
+        this.uuid = options.uuid;
         this.id = options.id
         this.text = options.text
         this.src = options.src
@@ -88,12 +89,12 @@ class Message {
 
         try {
             const messagesToDelete = [];
-            messagesToDelete.push(this.id);
+            messagesToDelete.push(this.uuid);
 
             if (deletePreviousToo) {
                 const previousMessage = await this.getPreviousMessage();
-                if (previousMessage != null && previousMessage.id != null && previousMessage.deleted != true);
-                    messagesToDelete.push(previousMessage.id);
+                if (previousMessage != null && previousMessage.uuid != null && previousMessage.deleted != true);
+                    messagesToDelete.push(previousMessage.uuid);
             }
 
             await chat.deleteMessages(messagesToDelete);

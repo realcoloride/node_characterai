@@ -54,19 +54,41 @@ const characterAI = new CharacterAI();
 
 ## Using an Access Token
 
-Some parts of the API, like managing a conversation, requires you to be logged in using an `accessToken`.
+Some parts of the API (like managing a conversation) require you to be logged in using a `sessionToken`.
 
 To get it, you can open your browser, go to the [Character.AI website](https://character.ai) in `localStorage`.
 
-To do so:
+> [!IMPORTANT]  
+> If you are using old versions of the package and are getting a `Authentication token is invalid`, you now again need a `sessionToken` to authenticate (as of update `1.2.5` and higher). See below.
+> 
+> **If you are using something that is using the package and has not updated to the latest version in a while, make sure to update the package by doing `npm update node_characterai` or manually copying the files or open a respective issue to their package (if they have one).**
+
+---
+### ⚠️ WARNING: DO NOT share your session token to anyone you do not trust or if you do not know what you're doing. 
+#### _Anyone with your session token could have access to your account without your consent. Do this at your own risk._
+---
+
+### On PC:
 1. Open the Character.AI website in your browser (https://beta.character.ai)
 2. Open the developer tools (<kbd>F12</kbd>, <kbd>Ctrl+Shift+I</kbd>, or <kbd>Cmd+J</kbd>)
 3. Go to the `Application` tab
 4. Go to the `Storage` section and click on `Local Storage`
-5. Look for the `@@auth0spajs@@::dyD3gE281MqgISG7FuIXYhL2WEknqZzv::https://auth0.character.ai/::openid profile email offline_access` key
-6. Open the body with the arrows and copy the access token
+5. Look for the `char_token` key
+6. Open the object, right click on value and copy your session token.
 
-![Access_Token](https://i.imgur.com/09Q9mLe.png)
+![Session_Token](https://github.com/realcoloride/node_characterai/assets/108619637/1d46db04-0744-42d2-a6d7-35152b967a82)
+
+### On Mobile:
+
+1. Open the Character.AI website in your browser (https://beta.character.ai)
+2. Open the URL bar, write `javascript:` (case sensitive) and paste the following:
+```javascript
+(function(){let e=window.localStorage["char_token"];if(!e){alert("You need to log in first!");return;}let t=JSON.parse(e).value;document.documentElement.innerHTML=`<div><i><p>provided by node_characterai - <a href="https://github.com/realcoloride/node_characterai?tab=readme-ov-file#using-an-access-token">click here for more information</a></p></i><p>Here is your session token:</p><input value="${t}" readonly><p><strong>Do not share this with anyone unless you know what you are doing! Those are your personal session token. If stolen or requested by someone you don't trust, they could access your account without your consent; if so, please close the page immediately.</strong></p><button id="copy" onclick="navigator.clipboard.writeText('${t}'); alert('Copied to clipboard!')">Copy session token to clipboard</button><button onclick="window.location.reload();">Refresh the page</button></div>`;localStorageKey=null;storageInformation=null;t=null;})();
+```
+3. The following page should appear:
+![Access_Token_Mobile](https://github.com/realcoloride/node_characterai/assets/108619637/516722db-a90f-4dd0-987e-fda01e68ac09)
+4. Click the respective buttons to copy your access token or id token to your clipboard.
+---
 
 When using the package, you can:
 * Login as guest using `authenticateAsGuest()` - *for mass usage or testing purposes*
@@ -90,21 +112,22 @@ The last part of the URL is the character ID:
 
 ```javascript
 // Most of these functions will return you an URL to the image
-
 await chat.generateImage("dolphins swimming in green water");
 
 // If no mime type (file extension) is specified, the script will automatically detect it
-await chat.uploadImage("https://www.example.com/image.jpg", "image/jpeg");
-
+await chat.uploadImage("https://www.example.com/image.jpg");
 await chat.uploadImage("./photos/image.jpg");
 
 // Other supported types are Buffers, Readable Streams, File Paths, and URLs
-
-await chat.uploadImage(imageBuffer, "image/png");
-
-await chat.sendAndAwaitResponse({ text: "What is in this image?", { image_rel_path: "https://www.example.com/coffee.jpg" } }, true);
+await chat.uploadImage(imageBuffer);
 
 // Including the image relative path is necessary to upload an image
+await chat.sendAndAwaitResponse({
+  text: "What is in this image?",
+  image_rel_path: "https://www.example.com/coffee.jpg",
+  image_description: "This is coffee.",
+  image_description_type: "HUMAN" // Set this if you are manually saying what the AI is looking at
+}, true);
 ```
 *Props to @creepycats for implementing most of this stuff out*
 
@@ -112,7 +135,8 @@ await chat.sendAndAwaitResponse({ text: "What is in this image?", { image_rel_pa
 
 |**Problem**|Answer|
 |-------|------|
-|❌ **Token was invalid**|Make sure your token is actually valid and you copied your entire token (its pretty long).|
+|❌ **Token was invalid**|Make sure your token is actually valid and you copied your entire token (its pretty long) or, you have not updated the package.|
+|🤨 **ID token is missing.**|Read [this](https://github.com/realcoloride/node_characterai?tab=readme-ov-file#using-an-access-token), if problems still persist, feel free to open an Issue.|
 |⚠️ **The specified Chromium path for puppeteer could not be located**|On most systems, puppeteer will automatically locate Chromium. But on certain distributions, the path has to be specified manually. This warning occurs if `node_characterai` could not locate Chromium on linux (*/usr/bin/chromium-browser*), and will error if puppeteer cannot locate it automatically. See [this](#specifying-chromiums-path) for a fix.|
 |😮 **Why are chromium processes opening?**|This is because as of currently, the simple fetching is broken and I use puppeteer (a chromium browser control library) to go around cloudflare's restrictions.|
 |👥 **`authenticateAsGuest()` doesn't work**|See issue [#14](https://github.com/realcoloride/node_characterai/issues/14).|
@@ -183,4 +207,4 @@ $ which chromium-browser # or whatever command you use to launch chrome
 
 📜 If you use this API, you also bound to the terms of usage of their website.
 
-*(real)coloride - 2023, Licensed MIT.*
+*(real)coloride - 2023-2024, Licensed MIT.*
