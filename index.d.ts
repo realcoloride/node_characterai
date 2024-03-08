@@ -194,4 +194,5 @@ export type {
   Parser,
   Requester,
 };
-export default Client;
+
+export = Client;
