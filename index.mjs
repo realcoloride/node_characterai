@@ -1,2 +1,2 @@
-import Client from "./client.mjs";
-module.exports = Client;
+import { Client } from "./client.mjs";
+export default Client;
