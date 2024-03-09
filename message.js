@@ -113,13 +113,13 @@ class Message {
 };
 
 class Reply {
-    constructor(chat, options) {
+    constructor(chat, options, index) {
         this.chat = chat;
 
-        if (options.force_login == true) throw Error("Too many messages! (this might be because you use a guest account)");
+        if (options.force_login == true) throw Error("Too many messages! (this might be because you use a guest account or that characterai has restricted messages for guests.)");
         if (options.abort == true) throw Error("Could not get the full reply because it was aborted. This happens often when the output was filtered for violent or explicit content.");
 
-        const replyOptions = options.replies[0];
+        const replyOptions = options.replies[index];
         this.text = replyOptions.text
         this.id = replyOptions.id
         this.imageRelativePath = replyOptions.image_rel_path
