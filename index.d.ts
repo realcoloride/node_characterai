@@ -27,6 +27,22 @@ interface UserObject {
   bio: string;
 }
 
+interface CharactersData {
+  external_id: string;
+  title: string;
+  greeting: string;
+  description: string;
+  avatar_file_name: string;
+  visibility: string;
+  copyable: boolean;
+  participant__name: string;
+  participant__num_interactions: number;
+  user__id: number;
+  user__username: string;
+  img_gen_enabled: boolean;
+  priority: number;
+}
+
 declare class Requester {
   browser: Browser | undefined;
   page: Page | undefined;
@@ -178,8 +194,8 @@ declare class Client {
   constructor();
   fetchCategories(): Promise<any>;
   fetchUserConfig(): Promise<any>;
-  fetchUser(): Promise<UserObject>;
-  fetchFeaturedCharacters(): Promise<any>;
+  fetchUser(): Promise<{ user: UserObject }>;
+  fetchFeaturedCharacters(): Promise<CharactersData[]>;
   fetchCharactersByCategory(curated?: boolean): Promise<any>;
   fetchCharacterInfo(characterId: string): Promise<any>;
   searchCharacters(characterName: string): Promise<any>;
