@@ -6,6 +6,27 @@ declare module 'puppeteer-extra' {
   }
 }
 
+interface UserData {
+  username: string;
+  id: number;
+  first_name: string;
+  account: any;
+  is_staff: boolean;
+  subscription: any; // Will be replaced in future as we don't know the exact type of it.
+}
+
+interface UserObject {
+  user: UserData;
+  is_human: boolean;
+  name: string;
+  email: string;
+  needs_to_acknowledge_policy: boolean;
+  suspended_until: null | string;
+  hidden_characters: any[];
+  blocked_users: any[];
+  bio: string;
+}
+
 declare class Requester {
   browser: Browser | undefined;
   page: Page | undefined;
@@ -157,7 +178,7 @@ declare class Client {
   constructor();
   fetchCategories(): Promise<any>;
   fetchUserConfig(): Promise<any>;
-  fetchUser(): Promise<any>;
+  fetchUser(): Promise<UserObject>;
   fetchFeaturedCharacters(): Promise<any>;
   fetchCharactersByCategory(curated?: boolean): Promise<any>;
   fetchCharacterInfo(characterId: string): Promise<any>;
