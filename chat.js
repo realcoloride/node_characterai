@@ -22,7 +22,7 @@ class Chat {
             throw Error("Invalid arguments");
 
         const client = this.client;
-        const pageQuery = pageNumber ? `&page_num=${pageNumber}` : ""
+        const pageQuery = pageNumber ? `&page_num=${pageNumber}` : "";
 
         const request = await this.requester.request(`https://beta.character.ai/chat/history/msgs/user/?history_external_id=${this.externalId}${pageQuery}`, {
             headers: client.getHeaders()
@@ -61,17 +61,21 @@ class Chat {
 
         if (request.status() === 200) {
             const response = await Parser.parseJSON(request);
+
+            // guests restricted/abort message
+            if (response["force_login"] == true ||
+                response["abort"]       == true) 
+                return new Reply(this, response);
+
             const replies = response.replies;
+            const messages = [];
 
-            const messages = []
-
-            for (let i = 0; i < replies.length; i++) {
-                messages.push(new Reply(this, response));
-            }
+            for (let i = 0; i < replies.length; i++)
+                messages.push(new Reply(this, response, i));
             
             if (!singleReply) return messages;
             else return messages.pop();
-        } else throw Error("Failed sending message.")
+        } else throw Error("Failed sending message.");
     }
     
     // Image generation & uploading
