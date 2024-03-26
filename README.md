@@ -114,8 +114,6 @@ The last part of the URL is the character ID:
 ```javascript
 // Most of these functions will return you an URL to the image
 await chat.generateImage("dolphins swimming in green water");
-
-// If no mime type (file extension) is specified, the script will automatically detect it
 await chat.uploadImage("https://www.example.com/image.jpg");
 await chat.uploadImage("./photos/image.jpg");
 
@@ -137,7 +135,6 @@ await chat.sendAndAwaitResponse({
 |**Problem**|Answer|
 |-------|------|
 |❌ **Token was invalid**|Make sure your token is actually valid and you copied your entire token (its pretty long) or, you have not updated the package.|
-|🤨 **ID token is missing.**|Read [this](https://github.com/realcoloride/node_characterai?tab=readme-ov-file#using-an-access-token), if problems still persist, feel free to open an Issue.|
 |⚠️ **The specified Chromium path for puppeteer could not be located**|On most systems, puppeteer will automatically locate Chromium. But on certain distributions, the path has to be specified manually. This warning occurs if `node_characterai` could not locate Chromium on linux (*/usr/bin/chromium-browser*), and will error if puppeteer cannot locate it automatically. See [this](#specifying-chromiums-path) for a fix.|
 |😮 **Why are chromium processes opening?**|This is because as of currently, the simple fetching is broken and I use puppeteer (a chromium browser control library) to go around cloudflare's restrictions.|
 |👥 **`authenticateAsGuest()` doesn't work**|See issue [#14](https://github.com/realcoloride/node_characterai/issues/14).|
