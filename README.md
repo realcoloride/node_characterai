@@ -42,6 +42,7 @@ const characterAI = new CharacterAI();
   // Place your character's id here
   const characterId = "8_1NyR8w1dOXmI1uWaieQcd147hecbdIK7CeEAIrdJw";
 
+  // Create a chat object to interact with the conversation
   const chat = await characterAI.createOrContinueChat(characterId);
 
   // Send a message
