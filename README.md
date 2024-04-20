@@ -81,7 +81,7 @@ To get it, you can open your browser, go to the [Character.AI website](https://c
 
 ### On Mobile:
 
-1. Open the Character.AI website in your browser (https://beta.character.ai)
+1. Open the Character.AI website in your browser on the OLD interface (https://old.character.ai/)
 2. Open the URL bar, write `javascript:` (case sensitive) and paste the following:
 ```javascript
 (function(){let e=window.localStorage["char_token"];if(!e){alert("You need to log in first!");return;}let t=JSON.parse(e).value;document.documentElement.innerHTML=`<div><i><p>provided by node_characterai - <a href="https://github.com/realcoloride/node_characterai?tab=readme-ov-file#using-an-access-token">click here for more information</a></p></i><p>Here is your session token:</p><input value="${t}" readonly><p><strong>Do not share this with anyone unless you know what you are doing! This is your personal session token. If stolen or requested by someone you don't trust, they could access your account without your consent; if so, please close the page immediately.</strong></p><button id="copy" onclick="navigator.clipboard.writeText('${t}'); alert('Copied to clipboard!')">Copy session token to clipboard</button><button onclick="window.location.reload();">Refresh the page</button></div>`;localStorageKey=null;storageInformation=null;t=null;})();
