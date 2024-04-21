@@ -145,6 +145,7 @@ await chat.sendAndAwaitResponse({
 |📣 **Is this official?**|No, this project is made by a fan of the website and is unofficial. *To support the developers, please check out [their website](https://beta.character.ai)*.|
 |😲 **Did something awesome with `node_characterai`?**|Please let me know!|
 |✉️ **Want to contact me?**|See my profile|
+|☕ **Want to support me?**|You can send me a coffee on ko.fi: https://ko-fi.com/coloride. Many thanks!|
 |💡 **Have an idea?**|Open an issue in the [**Issues**](https://github.com/realcoloride/node_characterai/issues) tab|
 |➕ **Other issue?**|Open an issue in the [**Issues**](https://github.com/realcoloride/node_characterai/issues) tab|
 
