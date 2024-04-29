@@ -162,7 +162,7 @@ class Chat {
         if (!this.client.isAuthenticated()) throw Error("You must be authenticated to do this.");
 
         const client = this.client;
-        const request = await this.requester.request(`https://beta.character.ai/chat/character/histories/`, {
+        const request = await this.requester.request(`https://neo.character.ai/chats/?character_ids=${this.externalId}&num_preview_turns=${amount}`, {
             headers:client.getHeaders(),
             method:"POST",
             body: Parser.stringify({
