@@ -146,7 +146,7 @@ class Client {
             if (response.startsWith("no character found for"))
                 throw Error("Character with this id was not found");
 
-            if (response === "history not found." || response === "No Such History" || response === "there is no history between user and character") { // Create a new chat
+            if (response === "No Such History" || response === "there is no history between user and character") { // Create a new chat
                 request = await this.requester.request("https://beta.character.ai/chat/history/create/", {
                     body: Parser.stringify({
                         character_external_id: characterId,
