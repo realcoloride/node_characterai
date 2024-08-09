@@ -1,10 +1,11 @@
 {
   "name": "node_characterai",
-  "version": "1.2.8",
+  "version": "2.0.0",
   "description": "Unofficial Character AI wrapper for node.",
-  "main": "index.js",
+  "main": "dist/client.js",
+  "types": "dist/client.d.ts",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "npx tsc"
   },
   "repository": {
     "type": "git",
@@ -25,15 +26,13 @@
   "bugs": {
     "url": "https://github.com/realcoloride/node_characterai/issues"
   },
-  "dependencies": {
-    "jimp": "^0.22.8",
-    "json-bigint": "^1.0.0",
-    "node_characterai": "^1.2.7",
-    "node-fetch": "^3.3.0",
-    "puppeteer": "^19.11.1",
-    "puppeteer-extra": "^3.3.6",
-    "puppeteer-extra-plugin-stealth": "^2.11.2",
-    "uuid": "^9.0.0"
+  "homepage": "https://github.com/realcoloride/node_characterai#readme",
+  "devDependencies": {
+    "@types/node": "^20.14.11",
+    "typescript": "^5.5.4"
   },
-  "homepage": "https://github.com/realcoloride/node_characterai#readme"
+  "dependencies": {
+    "jimp": "^0.22.12",
+    "json-bigint": "^1.0.0"
+  }
 }
