@@ -1,7 +1,19 @@
 import { PathLike } from "fs";
-import Parser from './parser';
+import Parser from '../parser';
 import Jimp from 'jimp';
 import { Image } from "@jimp/core";
+
+class ProfileCharacters {
+
+}
+
+
+
+class ProfileVoices {
+
+
+
+}
 
 class Profile {
     username = "";
