@@ -34,8 +34,9 @@ export function getterProperty(target: any, propertyKey: string) {
 };
 
 export interface ICharacterDMCreation {
-    greeting: boolean,
-    specificChatId?: string
+    withGreeting: boolean,
+    specificChatId?: string,
+    createNewConversation: boolean
 };
 
 export class Character {
@@ -189,7 +190,7 @@ export class Character {
         await this.client.connectToConversation(this.characterId, false, chatObject);
 
         // create conversation
-        if (!options.specificChatId) {
+        if (options.createNewConversation) {
             const request = await this.client.sendDMWebsocketAsync({
                 data: Parser.stringify({
                     command: "create_chat",
@@ -197,12 +198,12 @@ export class Character {
                     payload: {
                         chat: {
                             chat_id: uuidv4(),
-                            creator_id: this.client.myProfile.userId.toString(),
+                            creator_id: this.client.myProfile.userId,
                             visibility: "VISIBILITY_PRIVATE",
                             character_id: this.characterId,
                             type: "TYPE_ONE_ON_ONE"
                         },
-                        with_greeting: this.greeting
+                        with_greeting: options.withGreeting
                     },
                     origin_id: "Android"
                 }),

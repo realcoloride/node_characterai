@@ -29,7 +29,7 @@ export class CAIWebsocket extends EventEmitter {
     private userId? = 0;
     private websocket?: WebSocket = undefined;
 
-    async open(): Promise<CAIWebsocket> {
+    async open(withCheck: boolean): Promise<CAIWebsocket> {
         return new Promise((resolve, reject) => {
             const websocket = new WebSocket(this.address, { headers: { Cookie: this.cookie } });
             this.websocket = websocket;
@@ -40,15 +40,31 @@ export class CAIWebsocket extends EventEmitter {
                         Parser.stringify({ connect: { name: 'js'}, id: 1 }) +
                         Parser.stringify({ subscribe: { channel: `user#${this.userId}` }, id: 1 });
                     websocket.send(payload);
-                    this.emit("connected");
                 }
-                resolve(this);
+                if (!withCheck) resolve(this);
             })
-            websocket.on('message', (data) => {
+            websocket.on('close', (code: number, reason: Buffer) => reject(`Websocket connection failed (${code}): ${reason}`));
+            websocket.on('message', async(data) => {
                 const message = data.toString('utf-8');
+                console.log("RECEIVED", message);
+                
+                if (withCheck) {
+                    const potentialObject = await Parser.parseJSON(message, false);
+                    const connectInformation = potentialObject.connect;
+                    if (connectInformation && connectInformation?.pong == true) {
+                        this.emit("connected");
+                        resolve(this);
+                        return;
+                    }
+                }
 
-                if (message == "{}") websocket.send("{}");
-                else this.emit("rawMessage", message)
+                // keep alive packet
+                if (message == "{}") {
+                    websocket.send("{}");
+                    return;
+                }
+
+                this.emit("rawMessage", message);
             });
         });
     }
@@ -57,8 +73,8 @@ export class CAIWebsocket extends EventEmitter {
             let streamedMessage: any[] | undefined = options.streaming ? [] : undefined;
             let turn: any;
 
-            this.on("rawMessage", function handler(this: CAIWebsocket, message: string | any) {
-                if (options.parseJSON) message = Parser.parseJSON(message);
+            this.on("rawMessage", async function handler(this: CAIWebsocket, message: string | any) {
+                if (options.parseJSON) message = await Parser.parseJSON(message);
 
                 if (!options.parseJSON || !options.messageType) {
                     this.off("rawMessage", handler);
@@ -83,9 +99,10 @@ export class CAIWebsocket extends EventEmitter {
                 } catch {
                     streamedMessage?.push(message);
                 }
-
-                this.websocket?.send(options.data);
             });
+            
+            console.log("SENDING" , options);
+            this.websocket?.send(options.data);
         })
     }
     close() {

@@ -2,8 +2,8 @@
 import { parse as jsonBigIntParse, stringify as jsonBigIntStringify, } from 'json-bigint'; 
 
 class Parser {
-    static async parseJSON(response: any) {
-        const text = await response.text();
+    static async parseJSON(response: any, isRequest: boolean = true) {
+        const text = isRequest ? await response.text() : response;
         try {
             return jsonBigIntParse(text);
         } catch {

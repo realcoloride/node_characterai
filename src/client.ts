@@ -23,7 +23,7 @@ export default class CharacterAI extends EventEmitter {
     // todo type safety for on('')
 
     private dmChatWebsocket: CAIWebsocket | null = null;
-    async sendDMWebsocketAsync(options: ICAIWebsocketMessage) { this.dmChatWebsocket?.sendAsync(options); }
+    async sendDMWebsocketAsync(options: ICAIWebsocketMessage) { return await this.dmChatWebsocket?.sendAsync(options); }
 
     private groupChatWebsocket: CAIWebsocket | null = null;
     async sendGroupChatWebsocketAsync(options: ICAIWebsocketMessage) { this.groupChatWebsocket?.sendAsync(options); }
@@ -33,6 +33,8 @@ export default class CharacterAI extends EventEmitter {
 
     private _currentConversation?: DMConversation | GroupChatConversation = undefined;
     public get currentConversation() { return this._currentConversation }
+
+    public autoReconnecting = true; // todo
 
     private async openWebsockets() {
         try {
@@ -49,13 +51,15 @@ export default class CharacterAI extends EventEmitter {
                 authorization: this.token,
                 edgeRollout,
                 userId: this.myProfile.userId
-            }).open();
+            }).open(true);
+            console.log("done1")
 
             this.groupChatWebsocket = await new CAIWebsocket({
                 url: "wss://neo.character.ai/ws/",
                 authorization: this.token,
                 edgeRollout
-            }).open();
+            }).open(false);
+            console.log("done2")
         } catch (error) {
             throw Error("Failed opening websocket. Error:" + error);
         }
@@ -144,7 +148,7 @@ export default class CharacterAI extends EventEmitter {
             contentType: 'application/json'
         });
         const response = await Parser.parseJSON(request);
-        if (!request.ok) throw new Error(response);
+        if (!request.ok) throw new Error("Failed to fetch character");
 
         return new Character(this, response.character);
     }
