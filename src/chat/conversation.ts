@@ -24,6 +24,6 @@ export class Conversation {
 
     constructor(client: CharacterAI, information: any) {
         this.client = client;
-        console.log("creating from ", information)
+        //console.log("creating from ", information)
     }
 };

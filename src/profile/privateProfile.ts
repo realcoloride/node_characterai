@@ -141,7 +141,6 @@ export class PrivateProfile extends PublicProfile {
         const response = await Parser.parseJSON(request);
 
         if (!request.ok) throw new Error(response);
-        console.log('rrrr', response);
         const { user } = response.user;
 
         this.loadFromInformation(user);

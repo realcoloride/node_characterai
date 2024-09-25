@@ -18,9 +18,17 @@ export interface ICAIWebsocketCreation {
 export interface ICAIWebsocketMessage {
     data: any,
     parseJSON: boolean,
-    awaitResponse: boolean,
+    expectedReturnCommand: string,
     messageType: CAIWebsocketConnectionType,
+    streaming: boolean,
+    expectedRequestId?: string
+}
+export interface ICAIWebsocketCommand {
+    command: string,
+    expectedReturnCommand: string,
+    originId: 'Android' | 'web-next',
     streaming: boolean
+    payload: any,
 }
 
 export class CAIWebsocket extends EventEmitter {
@@ -35,7 +43,6 @@ export class CAIWebsocket extends EventEmitter {
             this.websocket = websocket;
 
             websocket.once('open', () => {
-                console.log(this.userId)
                 if (!withCheck) {
                     this.emit("connected");
                     resolve(this);
@@ -45,14 +52,13 @@ export class CAIWebsocket extends EventEmitter {
                 const payload = 
                     Parser.stringify({ connect: { name: 'js'}, id: 1 }) +
                     Parser.stringify({ subscribe: { channel: `user#${this.userId}` }, id: 1 });
-                console.log("conn open, sending payload", payload)
                 websocket.send(payload);
             })
             websocket.on('close', (code: number, reason: Buffer) => reject(`Websocket connection failed (${code}): ${reason}`));
             websocket.on('error', (error) => reject(error.message));
             websocket.on('message', async(data) => {
                 const message = data.toString('utf-8');
-                console.log("RECEIVED", message);
+                // console.log("RECEIVED", message);
                 
                 if (withCheck) {
                     const potentialObject = await Parser.parseJSON(message, false);
@@ -80,9 +86,9 @@ export class CAIWebsocket extends EventEmitter {
             let turn: any;
 
             this.on("rawMessage", async function handler(this: CAIWebsocket, message: string | any) {
-                if (options.parseJSON) message = await Parser.parseJSON(message, false);
-
-                if (!options.parseJSON || !options.messageType) {
+                if (options.parseJSON)
+                    message = await Parser.parseJSON(message, false);
+                else {
                     this.off("rawMessage", handler);
                     resolve(message);
                     return;
@@ -94,20 +100,16 @@ export class CAIWebsocket extends EventEmitter {
                 }
 
                 try {
-                    switch (options.messageType) {
-                        case CAIWebsocketConnectionType.DM: turn = message.turn; break;
-                        case CAIWebsocketConnectionType.GroupChat: turn = message.push?.data?.turn; break;
-                    }
+                    const { request_id, command } = message;
+                    if (options.expectedRequestId != request_id || options.expectedReturnCommand != command) return;
 
-                    if (options.awaitResponse && // combine
-                       (!turn?.author.is_human && turn?.candidates[0].is_final) || turn?.candidates[0].is_final)
-                        disconnectHandlerAndResolve();
+                    //if (!options.streaming)  STREAMING MUST BE FIGURED OUT ASAP
+                    disconnectHandlerAndResolve();
                 } catch {
                     streamedMessage?.push(message);
                 }
             });
             
-            console.log("SENDING" , options);
             this.websocket?.send(options.data);
         })
     }

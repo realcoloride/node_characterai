@@ -177,7 +177,6 @@ export class Character {
     // upvotes
     public upvotes = 0;
 
-
     /// features
     async DM(options: ICharacterDMCreation) {
         this.client.checkAndThrow(true, false);
@@ -187,35 +186,31 @@ export class Character {
         if (options.specificChatId)
             chatObject = await this.client.fetchConversation(options.specificChatId, true);
 
-        await this.client.connectToConversation(this.characterId, false, chatObject);
-
         // create conversation
         if (options.createNewConversation) {
-            const request = await this.client.sendDMWebsocketAsync({
-                data: Parser.stringify({
-                    command: "create_chat",
-                    request_id: uuidv4().slice(0, -12) + this.characterId.slice(this.characterId.length - 12), // <- this line of code is bad 
-                    payload: {
-                        chat: {
-                            chat_id: "2265a6e8-0618-4f63-8c3c-3239faba2661",//uuidv4(),
-                            creator_id: this.client.myProfile.userId.toString(),
-                            visibility: "VISIBILITY_PRIVATE",
-                            character_id: this.characterId,
-                            type: "TYPE_ONE_ON_ONE"
-                        },
-                        with_greeting: options.withGreeting
+            const request = await this.client.sendDMWebsocketCommandAsync({
+                command: "create_chat",
+                expectedReturnCommand: "create_chat_response",
+                originId: "Android",
+                streaming: false,
+                payload: {
+                    chat: {
+                        chat_id: uuidv4(),
+                        creator_id: this.client.myProfile.userId.toString(),
+                        visibility: "VISIBILITY_PRIVATE",
+                        character_id: this.characterId,
+                        type: "TYPE_ONE_ON_ONE"
                     },
-                    origin_id: "Android"
-                }),
-                parseJSON: true,
-                messageType: CAIWebsocketConnectionType.DM,
-                awaitResponse: false,
-                streaming: true
+                    with_greeting: options.withGreeting
+                }
             })
+            const response = await Parser.parseJSON(request, false);
+            chatObject = response.chat;
 
             console.log("wonders yummy wonders", request);
         }
 
+        await this.client.connectToConversation(this.characterId, false, chatObject);
     }
     async createGroupChat() {
         // todo
@@ -245,7 +240,6 @@ export class Character {
     constructor(client: CharacterAI, information: any) {
         this.client = client;
         this.avatar = new CAIImage(client);
-        console.log("wooo", information);
         ObjectPatcher.patch(this.client, this, information);
     }
     [Symbol.for('nodejs.util.inspect.custom')]() {

@@ -3,13 +3,12 @@ import Parser from './parser';
 import { PrivateProfile } from './profile/privateProfile';
 import { PublicProfile } from './profile/publicProfile';
 import Requester from './requester';
-import { WebSocket } from 'ws';
-import { CAIWebsocket, CAIWebsocketConnectionType, ICAIWebsocketMessage } from './websocket';
+import { CAIWebsocket, CAIWebsocketConnectionType, ICAIWebsocketCommand, ICAIWebsocketMessage } from './websocket';
 import { Conversation } from './chat/conversation';
 import DMConversation from './chat/dmConversation';
 import GroupChatConversation from './chat/groupChatConversation';
 import { Character } from './character/character';
-import { PublicProfileCharacter } from './profile/profileCharacter';
+import { v4 as uuidv4 } from 'uuid';
 
 export default class CharacterAI extends EventEmitter {
     private token: string = "";
@@ -23,7 +22,25 @@ export default class CharacterAI extends EventEmitter {
     // todo type safety for on('')
 
     private dmChatWebsocket: CAIWebsocket | null = null;
-    async sendDMWebsocketAsync(options: ICAIWebsocketMessage) { return await this.dmChatWebsocket?.sendAsync(options); }
+    async sendDMWebsocketAsync(options: ICAIWebsocketMessage) { 
+        return await this.dmChatWebsocket?.sendAsync(options); 
+    }
+    async sendDMWebsocketCommandAsync(options: ICAIWebsocketCommand) {
+        const requestId = uuidv4();
+        return await this.sendDMWebsocketAsync({
+            parseJSON: true,
+            expectedReturnCommand: options.expectedReturnCommand,
+            messageType: CAIWebsocketConnectionType.DM,
+            streaming: options.streaming,
+            expectedRequestId: requestId,
+            data: Parser.stringify({
+                command: options.command,
+                origin_id: options.originId,
+                payload: options.payload,
+                request_id: requestId
+            })
+        });
+    }
 
     private groupChatWebsocket: CAIWebsocket | null = null;
     async sendGroupChatWebsocketAsync(options: ICAIWebsocketMessage) { this.groupChatWebsocket?.sendAsync(options); }
@@ -51,16 +68,14 @@ export default class CharacterAI extends EventEmitter {
                 authorization: this.token,
                 edgeRollout,
                 userId: this.myProfile.userId
-            }).open(false);
-            console.log("done1")
+            }).open(true);
 
             this.dmChatWebsocket = await new CAIWebsocket({
                 url: "wss://neo.character.ai/ws/",
                 authorization: this.token,
                 edgeRollout,
                 userId: this.myProfile.userId
-            }).open(true);
-            console.log("done2")
+            }).open(false);
         } catch (error) {
             throw Error("Failed opening websocket. Error:" + error);
         }
@@ -74,13 +89,14 @@ export default class CharacterAI extends EventEmitter {
         if (connectionType != CAIWebsocketConnectionType.Disconnected) throw Error(`You are already in a ${(connectionType == CAIWebsocketConnectionType.DM ? "DM" : "group chat")} conversation. Please disconnect from your current conversation (using characterAI.currentConversation.close()) to create and follow a new one.`);
 
         if (isRoom) {
-            const request = await this.groupChatWebsocket?.sendAsync({
+            let request:any; // todo
+            /*const request = await this.groupChatWebsocket?.sendAsync({
                 data: Parser.stringify({ subscribe : { channel: `room:${id}`, id: 1 }}),
                 messageType: CAIWebsocketConnectionType.GroupChat,
                 awaitResponse: true,
                 parseJSON: true,
                 streaming: false
-            });
+            });*/
 
             if (request.error) return request;
 
@@ -97,7 +113,7 @@ export default class CharacterAI extends EventEmitter {
                 includeAuthorization: true
             });
             const fetchRecentResponse = await Parser.parseJSON(fetchRecentRequest);
-            console.log(fetchRecentResponse);
+            console.log("fetch rep" , fetchRecentResponse);
             if (!fetchRecentRequest.ok) throw new Error(fetchRecentResponse);
 
             // todo set id from first AAAAA fetchRecentResponse.chats[];
