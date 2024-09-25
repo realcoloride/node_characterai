@@ -38,6 +38,7 @@ export class PublicProfile {
     public set followersCount(value) { this.num_followers = value; }
 
     // avatar_file_name
+    @hiddenProperty
     public avatar: CAIImage;
 
     // subscription_type
@@ -50,6 +51,7 @@ export class PublicProfile {
     public creatorInformation: any;
 
     // for actions
+    @hiddenProperty
     protected client: CharacterAI;
 
     constructor(client: CharacterAI, options?: any) {

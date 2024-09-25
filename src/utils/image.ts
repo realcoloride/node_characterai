@@ -8,6 +8,7 @@ const baseEndpoint = "https://characterai.io/i/200/static/avatars/";
 // class to contain cai related images
 export class CAIImage {
     // field is get only
+    @hiddenProperty
     private client: CharacterAI;
 
     @hiddenProperty

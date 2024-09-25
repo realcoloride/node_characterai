@@ -8,6 +8,8 @@ import { CAIWebsocket, CAIWebsocketConnectionType, ICAIWebsocketMessage } from '
 import { Conversation } from './chat/conversation';
 import DMConversation from './chat/dmConversation';
 import GroupChatConversation from './chat/groupChatConversation';
+import { Character } from './character/character';
+import { PublicProfileCharacter } from './profile/profileCharacter';
 
 export default class CharacterAI extends EventEmitter {
     private token: string = "";
@@ -20,11 +22,14 @@ export default class CharacterAI extends EventEmitter {
     
     // todo type safety for on('')
 
-    private singleChatWebsocket: CAIWebsocket | null = null;
-    private groupChatWebsocket: CAIWebsocket | null = null;
-    private _connectionType: CAIWebsocketConnectionType | null = null;
-    public get connectionType() { return this._connectionType; }
+    private dmChatWebsocket: CAIWebsocket | null = null;
+    async sendDMWebsocketAsync(options: ICAIWebsocketMessage) { this.dmChatWebsocket?.sendAsync(options); }
 
+    private groupChatWebsocket: CAIWebsocket | null = null;
+    async sendGroupChatWebsocketAsync(options: ICAIWebsocketMessage) { this.groupChatWebsocket?.sendAsync(options); }
+
+    private _connectionType: CAIWebsocketConnectionType = CAIWebsocketConnectionType.Disconnected;
+    public get connectionType() { return this._connectionType; }
 
     private _currentConversation?: DMConversation | GroupChatConversation = undefined;
     public get currentConversation() { return this._currentConversation }
@@ -39,7 +44,7 @@ export default class CharacterAI extends EventEmitter {
             const edgeRollout = headers.get("set-cookie")?.match(/edge_rollout=(\d+)/)?.at(1);
             if (!edgeRollout) throw Error("Could not get edge rollout");
     
-            this.singleChatWebsocket = await new CAIWebsocket({
+            this.dmChatWebsocket = await new CAIWebsocket({
                 url: "wss://neo.character.ai/connection/websocket",
                 authorization: this.token,
                 edgeRollout,
@@ -116,7 +121,7 @@ export default class CharacterAI extends EventEmitter {
     }
 
     // profile fetching
-    async lookupProfile(username: string) {
+    async fetchProfile(username: string) {
         this.checkAndThrow(true, false);
 
         const profile = new PublicProfile(this, { username });
@@ -129,12 +134,31 @@ export default class CharacterAI extends EventEmitter {
         this.checkAndThrow(true, false);
 
     }
-    async lookupCharacter(externalId: string) {
+    async fetchCharacter(characterId: string) {
         this.checkAndThrow(true, false);
 
+        const request = await this.requester.request("https://plus.character.ai/chat/character/info/", {
+            method: 'POST',
+            body: Parser.stringify({ external_id: characterId }),
+            includeAuthorization: true,
+            contentType: 'application/json'
+        });
+        const response = await Parser.parseJSON(request);
+        if (!request.ok) throw new Error(response);
+
+        return new Character(this, response.character);
     }
 
-    // suggestions
+    // suggestions/discover
+    async getFeaturedCharacters() {
+
+    }
+    async getRecommendedCharactersForYou() {
+
+    }
+    async getCharacterCategories() {
+
+    }
     async getRecentCharacters() {
 
     }
@@ -174,7 +198,7 @@ WARNING: CharacterAI has changed its authentication methods again.
         this.checkAndThrow(true, false);
         this.token = "";
 
-        this.singleChatWebsocket?.close();
+        this.dmChatWebsocket?.close();
         this.groupChatWebsocket?.close();
     }
 
@@ -194,10 +218,4 @@ WARNING: CharacterAI has changed its authentication methods again.
         if (requiresNoAuthentication && this.authenticated) 
             throw Error("Already authenticated");
     }
-
-    async fetchCategories() {
-
-    }
-    
-    
 }

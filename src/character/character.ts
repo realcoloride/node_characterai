@@ -1,10 +1,12 @@
 import CharacterAI from "../client";
+import Parser from "../parser";
 import { PrivateProfile } from "../profile/privateProfile";
 import { PublicProfile } from "../profile/publicProfile";
 import { CAIImage as CAIImage } from "../utils/image";
 import ObjectPatcher from "../utils/patcher";
 import { CharacterVisibility } from "../utils/visbility";
 import { CAIWebsocketConnectionType } from "../websocket";
+import { v4 as uuidv4 } from 'uuid';
 
 export enum CharacterVote {
     None,
@@ -37,6 +39,7 @@ export interface ICharacterDMCreation {
 };
 
 export class Character {
+    @hiddenProperty
     protected client: CharacterAI;
 
     // external_id
@@ -51,6 +54,9 @@ export class Character {
     // description
     public description: string = "";
 
+    // identifier
+    public identifier: string = "";
+
     // visbility
     public visibility: CharacterVisibility = CharacterVisibility.Public;
 
@@ -61,18 +67,67 @@ export class Character {
     public greeting = "";
 
     // avatar_file_name
+    @hiddenProperty
     public avatar: CAIImage;
+
+    // songs (no type found)
+    public songs = [];
 
     // img_gen_enabled
     @hiddenProperty
-    private img_gen_enabled = "";
+    private img_gen_enabled = false;
     @getterProperty
     public get imageGenerationEnabled() { return this.img_gen_enabled; }
     public set imageGenerationEnabled(value) { this.img_gen_enabled = value; }
 
+    // base_image_prompt
+    @hiddenProperty
+    private base_img_prompt = "";
+    @getterProperty
+    public get baseImagePrompt() { return this.base_img_prompt; }
+    public set baseImagePrompt(value) { this.base_img_prompt = value; }
+
+    // img_prompt_regex
+    @hiddenProperty
+    private img_prompt_regex = "";
+    @getterProperty
+    public get imagePromptRegex() { return this.img_prompt_regex; }
+    public set imagePromptRegex(value) { this.img_prompt_regex = value; }
+
+    // strip_img_prompt_from_msg
+    @hiddenProperty
+    private strip_img_prompt_from_msg = false;
+    @getterProperty
+    public get stripImagePromptFromMessage() { return this.strip_img_prompt_from_msg; }
+    public set stripImagePromptFromMessage(value) { this.strip_img_prompt_from_msg = value; }
+    
+    // starter_prompts
+    @hiddenProperty
+    private starter_prompts = [];
+    @getterProperty
+    public get starterPrompts() { return this.starter_prompts; }
+    public set starterPrompts(value) { this.starter_prompts = value; }
+    
+    // comments_enabled
+    @hiddenProperty
+    private comments_enabled = true;
+    @getterProperty
+    public get commentsEnabled() { return this.comments_enabled; }
+    public set commentsEnabled(value) { this.comments_enabled = value; }
+    
+    // short_hash
+    @hiddenProperty
+    private short_hash = "";
+    @getterProperty
+    public get shortHash() { return this.short_hash; }
+    public set shortHash(value) { this.short_hash = value; }
+    
+    // short_hash
+    public usage = "default";
+
     //definition: string = "";
 
-    // default_voice_id
+    // default_voice_id TODO SWITCH TO VOICE INSTANCE
     @hiddenProperty
     private default_voice_id = "";
     @getterProperty
@@ -80,11 +135,20 @@ export class Character {
     public set defaultVoiceId(value) { this.default_voice_id = value; }
 
     // participant__name / aka display name
+    // name
     @hiddenProperty
-    private participant__name = "";
+    private participant__name?: string = undefined;
+    @hiddenProperty
+    private name?: string = undefined;
+    @hiddenProperty
+    private participant__user__username?: string = undefined;
     @getterProperty
-    public get displayName() { return this.participant__name; }
-    public set displayName(value) { this.participant__name = value; }
+    public get displayName() { return this.participant__name ?? this.name ?? this.participant__user__username; }
+    public set displayName(value) { 
+        if (this.participant__name) this.participant__name = value;
+        if (this.name) this.name = value;
+        if (this.participant__user__username) this.participant__user__username == value;
+    }
 
     // user__username / aka author
     @hiddenProperty
@@ -97,7 +161,7 @@ export class Character {
     @hiddenProperty
     private num_interactions?: string = undefined;
     @getterProperty
-    public get interactionCount() { return this.participant__num_interactions || this.num_interactions; }
+    public get interactionCount() { return this.participant__num_interactions ?? this.num_interactions; }
     public set interactionCount(value) { 
         if (this.participant__num_interactions) this.participant__num_interactions = value;
         if (this.num_interactions) this.num_interactions = value;
@@ -109,8 +173,8 @@ export class Character {
     public get userId() { return this.user__id; }
     public set userId(value) { this.user__id = value; }
 
-    //stripImagePromptFromMessage: boolean = false;
-    //upvotes?
+    // upvotes
+    public upvotes = 0;
 
 
     /// features
@@ -120,12 +184,35 @@ export class Character {
         // todo greeting
         let chatObject;
 
+        await this.client.connectToConversation(this.characterId, false, options.specificChatId);
+
         // create conversation
         if (!options.specificChatId) {
+            const request = await this.client.sendDMWebsocketAsync({
+                data: Parser.stringify({
+                    command: "create_chat",
+                    request_id: uuidv4().slice(0, -12) + this.characterId.slice(this.characterId.length - 12), // <- this line of code is bad 
+                    payload: {
+                        chat: {
+                            chat_id: uuidv4(),
+                            creator_id: this.client.myProfile.userId.toString(),
+                            visibility: "VISIBILITY_PRIVATE",
+                            character_id: this.characterId,
+                            type: "TYPE_ONE_ON_ONE"
+                        },
+                        with_greeting: this.greeting
+                    },
+                    origin_id: "Android"
+                }),
+                parseJSON: true,
+                messageType: CAIWebsocketConnectionType.DM,
+                awaitResponse: false,
+                streaming: true
+            })
 
+            console.log(request);
         }
 
-        await this.client.connectToConversation(this.characterId, false, options.specificChatId);
     }
     async createGroupChat() {
         // todo
@@ -138,7 +225,7 @@ export class Character {
         // if the author is us, give private profile directly else fetch
         const username = this.user__username;
         const myProfile = this.client.myProfile;
-        return username == myProfile.username ? myProfile : await this.client.lookupProfile(username);
+        return username == myProfile.username ? myProfile : await this.client.fetchProfile(username);
     }
     async getVote() {
 

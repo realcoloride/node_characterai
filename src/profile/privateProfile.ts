@@ -26,6 +26,7 @@ export interface IProfileModification {
 
 export class PrivateProfile extends PublicProfile {
     public characters: PrivateProfileCharacter[] = [];
+    @hiddenProperty
     public avatar: EditableCAIImage;
 
     // is_human
