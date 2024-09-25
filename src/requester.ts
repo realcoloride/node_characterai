@@ -30,7 +30,6 @@ export default class Requester {
         if (options.body) headers["Content-Length"] = options.body.length;
         if (options.contentType) headers["Content-Type"] = options.contentType;
 
-        console.log(headers);
         return await fetch(url, {
             headers,
             method: options.method,

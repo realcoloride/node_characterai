@@ -1,14 +1,14 @@
-import CAIClient from "./client";
-import PrivateProfile from "./profile/privateProfile";
-import { PublicProfile } from "./profile/publicProfile";
-import { CAIImage as CAIImage } from "./utils/image";
-import ObjectPatcher from "./utils/patcher";
-import { CharacterVisibility } from "./utils/visbility";
+import CAIClient from "../client";
+import PrivateProfile from "../profile/privateProfile";
+import { PublicProfile } from "../profile/publicProfile";
+import { CAIImage as CAIImage } from "../utils/image";
+import ObjectPatcher from "../utils/patcher";
+import { CharacterVisibility } from "../utils/visbility";
 
 export enum CharacterVote {
     None,
     Like,
-    Dislike,
+    Dislike
 }
 
 // makes it hidden from debug
@@ -102,7 +102,7 @@ export class Character {
     private user__id = 0;
     public get userId() { return this.user__id; }
     public set userId(value) { this.user__id = value; }
-    
+
     //stripImagePromptFromMessage: boolean = false;
     //upvotes?
 
@@ -130,7 +130,6 @@ export class Character {
         
         const decoratedFields = (this as any).constructor[serializableFieldsSymbol] || [];
         const allFields = Object.keys(this);
-        console.log(decoratedFields);
     
         for (const field of decoratedFields) {
             if (!field.show) continue; 
@@ -143,7 +142,6 @@ export class Character {
             if (!decoratedFields.some((decorated: any) => decorated.propertyKey === field))
                 serializedData[field] = (this as any)[field];
         }
-        console.log("aezaeae", serializedData)
     
         return serializedData;
     }

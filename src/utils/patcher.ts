@@ -7,17 +7,11 @@ export default class ObjectPatcher {
             // TODO
 
             instance.avatar = avatar;
-
-            delete object["avatar_file_name"];
         }
 
         for (const [key, value] of Object.entries(object)) {
             if (key == "avatar_file_name") continue;
-            
-            console.log({key, value});
             instance[key] = value;
-
         }
-
     }
 }

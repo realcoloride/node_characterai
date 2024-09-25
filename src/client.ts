@@ -1,4 +1,3 @@
-import Parser from './parser';
 import PrivateProfile from './profile/privateProfile';
 import { PublicProfile } from './profile/publicProfile';
 import Requester from './requester';
@@ -17,12 +16,28 @@ export default class CAIClient {
         this.requester = new Requester();
     }
 
-    // profiles/fetching
+    // profile fetching
     async lookupProfile(username: string) {
+        this.checkAndThrow(true, false);
+
         const profile = new PublicProfile(this, { username });
         await profile.fetch();
         
         return profile;
+    }
+    // character fetching
+    async searchCharacter(query: string, suggested: boolean = false) {
+        this.checkAndThrow(true, false);
+
+    }
+    async lookupCharacter(externalId: string) {
+        this.checkAndThrow(true, false);
+
+    }
+
+    // suggestions
+    async getRecentCharacters() {
+
     }
 
     // authentication
@@ -55,6 +70,10 @@ WARNING: CharacterAI has changed its authentication methods again.
     unauthenticate() {
         this.checkAndThrow(true, false);
         this.token = "";
+    }
+
+    throwBecauseNotAvailableYet() {
+        throw Error("This feature is not available yet due to some restrictions from CharacterAI. Sorry!");
     }
 
     // allows for quick auth errors

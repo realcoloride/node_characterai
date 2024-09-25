@@ -1,4 +1,4 @@
-import { Character, Character, IDefaultCharacter } from "../character";
+import { Character, Character, IDefaultCharacter } from "../character/character";
 import { CAIImage } from "../utils/image";
 
 class ProfilePersonas {

@@ -1,4 +1,4 @@
-import { Character } from "../character";
+import { Character } from "../character/character";
 import CAIClient from "../client";
 import Parser from "../parser";
 import { PrivateProfileCharacter, PublicProfileCharacter } from "./profileCharacter";
@@ -27,7 +27,6 @@ export default class PrivateProfile extends PublicProfile {
         const response = await Parser.parseJSON(request);
 
         if (!request.ok) throw new Error(response);
-        console.log(response);
-        
+        this.loadFromInformation(response);
     }
 }

@@ -3,7 +3,7 @@ import CAIClient from '../client';
 import { CAIImage as CAIImage } from '../utils/image';
 import ObjectPatcher from '../utils/patcher';
 import { PublicProfileCharacter } from './profileCharacter';
-import { hiddenProperty } from '../character';
+import { hiddenProperty } from '../character/character';
 
 class ProfileVoices {
 
@@ -53,12 +53,48 @@ export class PublicProfile {
         this.client = client;
         this.loadFromInformation(options);
     }
+
+    // features
+    async follow() {
+        // sad
+        this.client.throwBecauseNotAvailableYet();
+
+        this.client.checkAndThrow(true, false);
+        if (this.username == this.client.myProfile.username) throw new Error("You cannot follow yourself!");
+
+        const request = await this.client.requester.request("https://plus.character.ai/chat/user/follow", {
+            method: 'POST',
+            includeAuthorization: true,
+            body: Parser.stringify({ username: this.username })
+        });
+
+        if (!request.ok) throw new Error(await Parser.parseJSON(request));
+    }
+    async getFollowers(page = 1) {
+        this.client.checkAndThrow(true, false);
+        
+        const request = await this.client.requester.request("https://plus.character.ai/chat/user/followers", {
+            method: 'POST',
+            includeAuthorization: true,
+            body: Parser.stringify({ username: this.username, pageParam: page })
+        });
+        if (!request.ok) throw new Error(await Parser.parseJSON(request));
+    }
+    async getFollowing(page = 1) {
+        this.client.checkAndThrow(true, false);
+
+        const request = await this.client.requester.request("https://plus.character.ai/chat/user/following", {
+            method: 'POST',
+            includeAuthorization: true,
+            body: Parser.stringify({ username: this.username, pageParam: page })
+        });
+        if (!request.ok) throw new Error(await Parser.parseJSON(request));
+    }
     
     // character management
     protected loadFromInformation(information: any) {
         if (!information) return;
         const { characters } = information;
-        console.log(information);
 
         ObjectPatcher.patch(this, information);
         this.loadCharacters(characters);
@@ -68,8 +104,6 @@ export class PublicProfile {
         // reset old characters
         this.characters = [];
         characters.forEach(characterInformation => this.characters.push(new PublicProfileCharacter(this.client, characterInformation)));
-        
-        console.log(this.characters);
     }
 
     async #setProfilePicture(image: any) {
@@ -118,7 +152,7 @@ export class PublicProfile {
         const response = await Parser.parseJSON(request);
 
         if (!request.ok || response?.length == 0)
-            throw new Error("Profile not found");
+            throw new Error("Profile not found. Watch out! Profile names are case sensitive.");
 
         this.loadFromInformation(response.public_user);
     }
