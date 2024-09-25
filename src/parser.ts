@@ -1,13 +1,12 @@
-var JSONbig = require("json-bigint");
+
+import { parse as jsonBigIntParse, stringify as jsonBigIntStringify, } from 'json-bigint'; 
 
 class Parser {
-    static async parseJSON(response: string) {
-        const result = JSONbig.parse(await response.text());
-        return result;
+    static async parseJSON(response: any) {
+        return jsonBigIntParse(await response.text());
     }
-    static stringify(text: any) {
-        const result = JSON.stringify(text);
-        return result;
+    static stringify(input: any) {
+        return jsonBigIntStringify(input);
     }
 }
 

@@ -32,6 +32,7 @@
     "typescript": "^5.5.4"
   },
   "dependencies": {
+    "@types/json-bigint": "^1.0.4",
     "jimp": "^0.22.12",
     "json-bigint": "^1.0.0"
   }

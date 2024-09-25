@@ -1,20 +1,31 @@
-import Profile from './profile/profile';
+import Parser from './parser';
+import PrivateProfile from './profile/privateProfile';
+import Requester from './requester';
 
-class Client {
-    private token = undefined;
+export default class CAIClient {
+    private token: string = "";
     public get authenticated() {
-        return this.token != undefined;
+        return this.token != "";
     }
     
-    private profile: Profile;
+    public myProfile: PrivateProfile;
+    public requester: Requester;
+    
+    constructor() {
+        this.myProfile = new PrivateProfile(this);
+        this.requester = new Requester();
+    }
 
+    // profiles/fetching
+    
 
     // authentication
-    authenticate(sessionToken: string) {
+    async authenticate(sessionToken: string) {
         this.checkAndThrow(false, true);
         
-        await this.requester.initialize();
-        
+        if (sessionToken.startsWith("Token "))
+            sessionToken = sessionToken.substring("Token ".length, sessionToken.length);
+
         if (sessionToken.length != 40) console.warn(
 `===============================================================================
 WARNING: CharacterAI has changed its authentication methods again.
@@ -22,22 +33,20 @@ WARNING: CharacterAI has changed its authentication methods again.
             See: https://github.com/realcoloride/node_characterai/issues/146
 ===============================================================================`);
 
-        
-        const request = await this.requester.request("https://character.ai/api/ping", {
+        this.requester.updateToken(sessionToken);
+        const request = await this.requester.request("https://plus.character.ai/chat/user/settings/", {
             method: "GET",
-            headers: {
-                "Authorization": `Token ${sessionToken}`
-            }
+            includeAuthorization: true
         });
+        if (!request.ok) throw Error("Invaild session token.");
 
-        console.log(request);
-
+        // reload info
+        await this.myProfile.fetch();
     }
 
     unauthenticate() {
         if (!this.authenticated) return;
-        this.token = undefined;
-        this.requester.uninitialize();
+        this.token = "";
     }
 
 
