@@ -1,8 +1,8 @@
-import CAIClient from "../client";
+import CharacterAI from "../client";
 import { CAIImage } from "./image";
 
 export default class ObjectPatcher {
-    static patch(client: CAIClient, instance: any, object: Record<string, any>) {
+    static patch(client: CharacterAI, instance: any, object: Record<string, any>) {
         const avatarFileName = object["avatar_file_name"];
         if (avatarFileName) {
             const avatar = new CAIImage(client);
@@ -20,7 +20,7 @@ export default class ObjectPatcher {
             if (value != undefined) continue;
             delete object[key];
         }
-        
+
         return object;
     }
 }

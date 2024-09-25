@@ -6,6 +6,7 @@ interface RequesterOptions {
     contentType?: 'application/json';
 }
 
+// responsible for requests
 export default class Requester {
     private authorization: string = "";
     updateToken(token: string) {

@@ -30,44 +30,51 @@ export class PrivateProfile extends PublicProfile {
 
     // is_human
     @hiddenProperty
-    is_human = true;
+    private is_human = true;
     @getterProperty
     public get isHuman() { return this.is_human; }
     public set isHuman(value) { this.is_human = value; }
 
     // email
-    email = "";
+    private email = "";
 
     // needs_to_aknowledge_policy
     @hiddenProperty
-    needs_to_aknowledge_policy = true;
+    private needs_to_aknowledge_policy = true;
     @getterProperty
     public get needsToAknowledgePolicy() { return this.needs_to_aknowledge_policy; }
     public set needsToAknowledgePolicy(value) { this.needs_to_aknowledge_policy = value; }
 
     // suspended_until
     @hiddenProperty
-    suspended_until: any; // TODO
+    private suspended_until: any; // TODO
     @getterProperty
     public get suspendedUntil() { return this.suspended_until; }
     public set suspendedUntil(value) { this.suspended_until = value; }
 
     // hidden_characters
     @hiddenProperty
-    hidden_characters: PublicProfileCharacter[] = []; // TODO
+    private hidden_characters: PublicProfileCharacter[] = []; // TODO
     @getterProperty
     public get hiddenCharacters() { return this.hidden_characters; }
     public set hiddenCharacters(value) { this.hidden_characters = value; }
 
     // blocked_users
     @hiddenProperty
-    blocked_users: any[] = []; // TODO
+    private blocked_users: any[] = []; // TODO
     @getterProperty
     public get blockedUsers() { return this.blocked_users; }
     public set blockedUsers(value) { this.blocked_users = value; }
 
     // interests
     interests?: any[] | null = null; // TODO
+
+    // id
+    @hiddenProperty
+    private id = 0;
+    @getterProperty
+    public get userId() { return this.id; }
+    public set userId(value) { this.id = value; }
 
     async edit(options: IProfileModification) {
         this.client.checkAndThrow(true, false);

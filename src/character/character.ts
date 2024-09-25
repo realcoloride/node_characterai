@@ -1,15 +1,16 @@
-import CAIClient from "../client";
+import CharacterAI from "../client";
 import { PrivateProfile } from "../profile/privateProfile";
 import { PublicProfile } from "../profile/publicProfile";
 import { CAIImage as CAIImage } from "../utils/image";
 import ObjectPatcher from "../utils/patcher";
 import { CharacterVisibility } from "../utils/visbility";
+import { CAIWebsocketConnectionType } from "../websocket";
 
 export enum CharacterVote {
     None,
     Like,
     Dislike
-}
+};
 
 // makes it hidden from debug
 const serializableFieldsSymbol = Symbol('serializableFields');
@@ -19,7 +20,7 @@ export function hiddenProperty(target: any, propertyKey: string) {
         target.constructor[serializableFieldsSymbol] = [];
 
     target.constructor[serializableFieldsSymbol].push({ propertyKey, show: false });
-}
+};
 
 // for getters
 export function getterProperty(target: any, propertyKey: string) {
@@ -28,16 +29,21 @@ export function getterProperty(target: any, propertyKey: string) {
 
     const fieldName = propertyKey;
     target.constructor[serializableFieldsSymbol].push({ propertyKey, show: true, fieldName });
-}
+};
+
+export interface ICharacterDMCreation {
+    greeting: boolean,
+    specificChatId?: string
+};
 
 export class Character {
-    protected client: CAIClient;
+    protected client: CharacterAI;
 
     // external_id
     @hiddenProperty
     private external_id = "";
-    public get externalId() { return this.external_id; }
-    public set externalId(value) { this.external_id = value; }
+    public get characterId() { return this.external_id; }
+    public set characterId(value) { this.external_id = value; }
 
     // title
     public title: string = "";
@@ -108,6 +114,26 @@ export class Character {
 
 
     /// features
+    async DM(options: ICharacterDMCreation) {
+        this.client.checkAndThrow(true, false);
+
+        // todo greeting
+        let chatObject;
+
+        // create conversation
+        if (!options.specificChatId) {
+
+        }
+
+        await this.client.connectToConversation(this.characterId, false, options.specificChatId);
+    }
+    async createGroupChat() {
+        // todo
+    }
+    async continueConversation() {
+        // todo   
+    }
+
     async getAuthorProfile(): Promise<PublicProfile | PrivateProfile> {
         // if the author is us, give private profile directly else fetch
         const username = this.user__username;
@@ -122,7 +148,7 @@ export class Character {
     }
 
     // todo remember to load avatar
-    constructor(client: CAIClient, information: any) {
+    constructor(client: CharacterAI, information: any) {
         this.client = client;
         this.avatar = new CAIImage(client);
         ObjectPatcher.patch(this.client, this, information);

@@ -1,5 +1,5 @@
 import Parser from '../parser';
-import CAIClient from '../client';
+import CharacterAI from '../client';
 import { CAIImage as CAIImage } from '../utils/image';
 import ObjectPatcher from '../utils/patcher';
 import { PublicProfileCharacter } from './profileCharacter';
@@ -50,9 +50,9 @@ export class PublicProfile {
     public creatorInformation: any;
 
     // for actions
-    protected client: CAIClient;
+    protected client: CharacterAI;
 
-    constructor(client: CAIClient, options?: any) {
+    constructor(client: CharacterAI, options?: any) {
         this.avatar = new CAIImage(client);
         this.client = client;
         this.loadFromInformation(options);

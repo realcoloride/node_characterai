@@ -29,11 +29,13 @@
   "homepage": "https://github.com/realcoloride/node_characterai#readme",
   "devDependencies": {
     "@types/node": "^20.14.11",
+    "@types/ws": "^8.5.12",
     "typescript": "^5.5.4"
   },
   "dependencies": {
     "@types/json-bigint": "^1.0.4",
     "jimp": "^0.22.12",
-    "json-bigint": "^1.0.0"
+    "json-bigint": "^1.0.0",
+    "ws": "^8.18.0"
   }
 }
