@@ -46,19 +46,20 @@ export default class CharacterAI extends EventEmitter {
             const edgeRollout = headers.get("set-cookie")?.match(/edge_rollout=(\d+)/)?.at(1);
             if (!edgeRollout) throw Error("Could not get edge rollout");
     
-            this.dmChatWebsocket = await new CAIWebsocket({
+            this.groupChatWebsocket = await new CAIWebsocket({
                 url: "wss://neo.character.ai/connection/websocket",
                 authorization: this.token,
                 edgeRollout,
                 userId: this.myProfile.userId
-            }).open(true);
+            }).open(false);
             console.log("done1")
 
-            this.groupChatWebsocket = await new CAIWebsocket({
+            this.dmChatWebsocket = await new CAIWebsocket({
                 url: "wss://neo.character.ai/ws/",
                 authorization: this.token,
-                edgeRollout
-            }).open(false);
+                edgeRollout,
+                userId: this.myProfile.userId
+            }).open(true);
             console.log("done2")
         } catch (error) {
             throw Error("Failed opening websocket. Error:" + error);

@@ -197,8 +197,8 @@ export class Character {
                     request_id: uuidv4().slice(0, -12) + this.characterId.slice(this.characterId.length - 12), // <- this line of code is bad 
                     payload: {
                         chat: {
-                            chat_id: uuidv4(),
-                            creator_id: this.client.myProfile.userId,
+                            chat_id: "2265a6e8-0618-4f63-8c3c-3239faba2661",//uuidv4(),
+                            creator_id: this.client.myProfile.userId.toString(),
                             visibility: "VISIBILITY_PRIVATE",
                             character_id: this.characterId,
                             type: "TYPE_ONE_ON_ONE"
@@ -245,6 +245,7 @@ export class Character {
     constructor(client: CharacterAI, information: any) {
         this.client = client;
         this.avatar = new CAIImage(client);
+        console.log("wooo", information);
         ObjectPatcher.patch(this.client, this, information);
     }
     [Symbol.for('nodejs.util.inspect.custom')]() {

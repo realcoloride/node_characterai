@@ -12,7 +12,7 @@ export interface ICAIWebsocketCreation {
     url: string,
     edgeRollout: string,
     authorization: string,
-    userId?: number
+    userId: number
 }
 
 export interface ICAIWebsocketMessage {
@@ -26,7 +26,7 @@ export interface ICAIWebsocketMessage {
 export class CAIWebsocket extends EventEmitter {
     private address = "";
     private cookie = "";
-    private userId? = 0;
+    private userId = 0;
     private websocket?: WebSocket = undefined;
 
     async open(withCheck: boolean): Promise<CAIWebsocket> {
@@ -35,15 +35,21 @@ export class CAIWebsocket extends EventEmitter {
             this.websocket = websocket;
 
             websocket.once('open', () => {
-                if (this.userId) {
-                    const payload = 
-                        Parser.stringify({ connect: { name: 'js'}, id: 1 }) +
-                        Parser.stringify({ subscribe: { channel: `user#${this.userId}` }, id: 1 });
-                    websocket.send(payload);
+                console.log(this.userId)
+                if (!withCheck) {
+                    this.emit("connected");
+                    resolve(this);
+                    return;
                 }
-                if (!withCheck) resolve(this);
+
+                const payload = 
+                    Parser.stringify({ connect: { name: 'js'}, id: 1 }) +
+                    Parser.stringify({ subscribe: { channel: `user#${this.userId}` }, id: 1 });
+                console.log("conn open, sending payload", payload)
+                websocket.send(payload);
             })
             websocket.on('close', (code: number, reason: Buffer) => reject(`Websocket connection failed (${code}): ${reason}`));
+            websocket.on('error', (error) => reject(error.message));
             websocket.on('message', async(data) => {
                 const message = data.toString('utf-8');
                 console.log("RECEIVED", message);
@@ -74,7 +80,7 @@ export class CAIWebsocket extends EventEmitter {
             let turn: any;
 
             this.on("rawMessage", async function handler(this: CAIWebsocket, message: string | any) {
-                if (options.parseJSON) message = await Parser.parseJSON(message);
+                if (options.parseJSON) message = await Parser.parseJSON(message, false);
 
                 if (!options.parseJSON || !options.messageType) {
                     this.off("rawMessage", handler);
@@ -115,6 +121,6 @@ export class CAIWebsocket extends EventEmitter {
         super();
         this.address = options.url;
         this.cookie = `HTTP_AUTHORIZATION="Token ${options.authorization}"; edge_rollout=${options.edgeRollout};`;
-        this.userId = options.userId ?? 0;
+        this.userId = options.userId;
     }
 }
