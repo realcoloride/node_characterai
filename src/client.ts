@@ -1,5 +1,6 @@
 import Parser from './parser';
 import PrivateProfile from './profile/privateProfile';
+import { PublicProfile } from './profile/publicProfile';
 import Requester from './requester';
 
 export default class CAIClient {
@@ -17,7 +18,12 @@ export default class CAIClient {
     }
 
     // profiles/fetching
-    
+    async lookupProfile(username: string) {
+        const profile = new PublicProfile(this, { username });
+        await profile.fetch();
+        
+        return profile;
+    }
 
     // authentication
     async authenticate(sessionToken: string) {
@@ -40,17 +46,18 @@ WARNING: CharacterAI has changed its authentication methods again.
         });
         if (!request.ok) throw Error("Invaild session token.");
 
+        this.token = sessionToken;
+
         // reload info
         await this.myProfile.fetch();
     }
 
     unauthenticate() {
-        if (!this.authenticated) return;
+        this.checkAndThrow(true, false);
         this.token = "";
     }
 
-
-
+    // allows for quick auth errors
     checkAndThrow(
         requiresAuthentication: boolean, 
         requiresNoAuthentication: boolean,

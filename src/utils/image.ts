@@ -1,3 +1,5 @@
-export class CharacterAIImage {
-    
+export class CAIImage {
+    async fromUrl(url: string) {
+
+    }
 }

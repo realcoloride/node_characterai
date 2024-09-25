@@ -1,47 +1,69 @@
 import Parser from '../parser';
 import CAIClient from '../client';
-
-class ProfileCharacters {
-
-    
-    async get() {
-
-    }
-
-    constructor(profile: PublicProfile) {
-
-    }
-}
-
-
+import { CAIImage as CAIImage } from '../utils/image';
+import ObjectPatcher from '../utils/patcher';
+import { PublicProfileCharacter } from './profileCharacter';
 
 class ProfileVoices {
-
-
 
 }
 
 export class PublicProfile {
+    // characters
+    public characters: PublicProfileCharacter[] = [];
+
+    // username
     username = "";
-    id: number = 0;
-    // first_name
-    displayName = "";
-    // is_staff
-    isStaff : boolean = false;
-    bio = "";
+    
+    // name
+    private name = "";
+    public get displayName() { return this.name; }
+    public set displayName(value) { this.name = value; }
+
+    // num_following
+    private num_following = 0;
+    public get followingCount() { return this.num_following; }
+    public set followingCount(value) { this.num_following = value; }
+
+    // num_followers
+    private num_followers = 0;
+    public get followersCount() { return this.num_followers; }
+    public set followersCount(value) { this.num_followers = value; }
+
+    // avatar_file_name
+    public avatar: CAIImage = new CAIImage();
+
+    // subscription_type
+    public subscriptionType: string = "";
+    
+    // bio
+    public bio = "";
+
+    // creator_info
+    public creatorInformation: any;
 
 
     // for actions
     protected client: CAIClient;
-    public characters: ProfileCharacters;
 
     constructor(client: CAIClient, options?: any) {
         this.client = client;
-        this.characters = new ProfileCharacters(this);
+        this.loadFromInformation(options);
     }
     
     // character management
+    protected loadFromInformation(information: any) {
+        if (!information) return;
+        const { characters, avatar_file_name } = information;
 
+        ObjectPatcher.patch(this, information);
+        this.loadCharacters(characters);
+    }
+    protected loadCharacters(characters: any[]) {
+        // reset old characters
+        this.characters = [];
+        characters.forEach(characterInformation => this.characters.push(new PublicProfileCharacter(this.client, characterInformation)));
+    }
 
     async #setProfilePicture(image: any) {
         const base64 = await image.getBase64Async(-1);
@@ -75,13 +97,22 @@ export class PublicProfile {
         
     }*/
 
+    // updates profile or fetches it for the first time
     async fetch() {
-        const request = await this.client.requester.request("https://plus.character.ai/chat/user/", {
-            method: 'GET',
-            includeAuthorization: true
+        this.client.checkAndThrow(true, false);
+
+        const request = await this.client.requester.request("https://plus.character.ai/chat/user/public/", {
+            method: 'POST',
+            includeAuthorization: true,
+            contentType: 'application/json',
+            body: Parser.stringify({ "username": this.username })
         });
 
-        console.log(await Parser.parseJSON(request));
+        const response = await Parser.parseJSON(request);
 
+        if (!request.ok || response?.length == 0)
+            throw new Error("Profile not found");
+
+        this.loadFromInformation(response.public_user);
     }
 }

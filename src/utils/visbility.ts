@@ -1,4 +1,4 @@
-enum Visibility {
+enum CharacterVisibility {
     Private = "PRIVATE",
     Public = "PUBLIC",
 }

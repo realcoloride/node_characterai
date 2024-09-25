@@ -1,5 +1,5 @@
-import { Character, DefaultCharacter, IDefaultCharacter } from "../chat/character";
-import { CharacterAIImage } from "../utils/image";
+import { Character, Character, IDefaultCharacter } from "../character";
+import { CAIImage } from "../utils/image";
 
 class ProfilePersonas {
     getPersonas() {
@@ -20,15 +20,15 @@ class ProfilePersonas {
 
 interface IPersona extends IDefaultCharacter {
     background?: string,
-    picture?: CharacterAIImage
+    picture?: CAIImage
 }
 interface IPersonaCreationOptions {
     title: string,
     background: string,
-    picture?: CharacterAIImage
+    picture?: CAIImage
 }
 
-class Persona extends DefaultCharacter {
+class Persona extends Character {
 
     /* persona fields */ 
     categories = []; // TODO: type this

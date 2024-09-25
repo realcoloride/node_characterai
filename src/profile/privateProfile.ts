@@ -1,9 +1,17 @@
+import { Character } from "../character";
 import CAIClient from "../client";
 import Parser from "../parser";
+import { PrivateProfileCharacter, PublicProfileCharacter } from "./profileCharacter";
 import { PublicProfile } from "./publicProfile";
 
 export default class PrivateProfile extends PublicProfile {
-    
+    public characters: PrivateProfileCharacter[] = [];
+
+    // characters
+    createCharacter() {
+        
+    }
+
 
     async fetchHiddenCharacters() {
 
