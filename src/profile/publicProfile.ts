@@ -3,6 +3,7 @@ import CAIClient from '../client';
 import { CAIImage as CAIImage } from '../utils/image';
 import ObjectPatcher from '../utils/patcher';
 import { PublicProfileCharacter } from './profileCharacter';
+import { hiddenProperty } from '../character';
 
 class ProfileVoices {
 
@@ -16,16 +17,19 @@ export class PublicProfile {
     username = "";
     
     // name
+    @hiddenProperty
     private name = "";
     public get displayName() { return this.name; }
     public set displayName(value) { this.name = value; }
 
     // num_following
+    @hiddenProperty
     private num_following = 0;
     public get followingCount() { return this.num_following; }
     public set followingCount(value) { this.num_following = value; }
 
     // num_followers
+    @hiddenProperty
     private num_followers = 0;
     public get followersCount() { return this.num_followers; }
     public set followersCount(value) { this.num_followers = value; }
@@ -42,7 +46,6 @@ export class PublicProfile {
     // creator_info
     public creatorInformation: any;
 
-
     // for actions
     protected client: CAIClient;
 
@@ -54,15 +57,19 @@ export class PublicProfile {
     // character management
     protected loadFromInformation(information: any) {
         if (!information) return;
-        const { characters, avatar_file_name } = information;
+        const { characters } = information;
+        console.log(information);
 
         ObjectPatcher.patch(this, information);
         this.loadCharacters(characters);
     }
     protected loadCharacters(characters: any[]) {
+        if (!characters) return;
         // reset old characters
         this.characters = [];
         characters.forEach(characterInformation => this.characters.push(new PublicProfileCharacter(this.client, characterInformation)));
+        
+        console.log(this.characters);
     }
 
     async #setProfilePicture(image: any) {
