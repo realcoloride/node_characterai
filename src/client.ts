@@ -85,18 +85,18 @@ export default class CharacterAI extends EventEmitter {
             return this._currentConversation;
         }
 
-        // if no specific object fetch last conversation
+        // if no specific object fetch latest conversation
         if (!specificChatObject) {
             const fetchRecentRequest = await this.requester.request(`https://neo.character.ai/chats/recent/${id}`, {
                 method: 'GET',
                 includeAuthorization: true
             });
             const fetchRecentResponse = await Parser.parseJSON(fetchRecentRequest);
-            console.log(fetchRecentRequest);
+            console.log(fetchRecentResponse);
             if (!fetchRecentRequest.ok) throw new Error(fetchRecentResponse);
 
             // todo set id from first AAAAA fetchRecentResponse.chats[];
-
+            specificChatObject = fetchRecentResponse.chats[0];
         }
 
         this._connectionType = CAIWebsocketConnectionType.DM;
@@ -161,6 +161,22 @@ export default class CharacterAI extends EventEmitter {
     }
     async getRecentCharacters() {
 
+    }
+
+    // conversations
+    // raw is the raw output else the convo instance
+    async fetchConversation(chatId: string, raw: boolean = false) {
+        this.checkAndThrow(true, false);
+
+        const request = await this.requester.request(`https://neo.character.ai/chat/${chatId}/`, {
+            method: 'GET',
+            includeAuthorization: true,
+        });
+        const response = await Parser.parseJSON(request);
+        if (!request.ok) throw new Error(response);
+        const data = response.chat;
+
+        return raw ? data : new Conversation(this, data);
     }
 
     // authentication

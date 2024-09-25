@@ -183,8 +183,10 @@ export class Character {
 
         // todo greeting
         let chatObject;
+        if (options.specificChatId)
+            chatObject = await this.client.fetchConversation(options.specificChatId, true);
 
-        await this.client.connectToConversation(this.characterId, false, options.specificChatId);
+        await this.client.connectToConversation(this.characterId, false, chatObject);
 
         // create conversation
         if (!options.specificChatId) {
@@ -210,7 +212,7 @@ export class Character {
                 streaming: true
             })
 
-            console.log(request);
+            console.log("wonders yummy wonders", request);
         }
 
     }
@@ -231,6 +233,10 @@ export class Character {
 
     }
     async setVote(vote: CharacterVote) {
+
+    }
+
+    async hide() { // /chat/character/hide
 
     }
 
