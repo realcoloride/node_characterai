@@ -1,11 +1,12 @@
+import CAIClient from "../client";
 import { CAIImage } from "./image";
 
 export default class ObjectPatcher {
-    static patch(instance: any, object: Record<string, any>) {
-        if (object["avatar_file_name"]) {
-            const avatar = new CAIImage();
-            // TODO
-
+    static patch(client: CAIClient, instance: any, object: Record<string, any>) {
+        const avatarFileName = object["avatar_file_name"];
+        if (avatarFileName) {
+            const avatar = new CAIImage(client);
+            avatar.changeToEndpointUrlSync(avatarFileName);
             instance.avatar = avatar;
         }
 

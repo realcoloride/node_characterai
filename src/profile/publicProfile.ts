@@ -35,7 +35,7 @@ export class PublicProfile {
     public set followersCount(value) { this.num_followers = value; }
 
     // avatar_file_name
-    public avatar: CAIImage = new CAIImage();
+    public avatar: CAIImage;
 
     // subscription_type
     public subscriptionType: string = "";
@@ -50,6 +50,7 @@ export class PublicProfile {
     protected client: CAIClient;
 
     constructor(client: CAIClient, options?: any) {
+        this.avatar = new CAIImage(client);
         this.client = client;
         this.loadFromInformation(options);
     }
@@ -72,7 +73,7 @@ export class PublicProfile {
     }
     async getFollowers(page = 1) {
         this.client.checkAndThrow(true, false);
-        
+
         const request = await this.client.requester.request("https://plus.character.ai/chat/user/followers", {
             method: 'POST',
             includeAuthorization: true,
@@ -96,7 +97,7 @@ export class PublicProfile {
         if (!information) return;
         const { characters } = information;
 
-        ObjectPatcher.patch(this, information);
+        ObjectPatcher.patch(this.client, this, information);
         this.loadCharacters(characters);
     }
     protected loadCharacters(characters: any[]) {

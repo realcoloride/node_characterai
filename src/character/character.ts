@@ -55,7 +55,7 @@ export class Character {
     public greeting = "";
 
     // avatar_file_name
-    public avatar: CAIImage = new CAIImage();
+    public avatar: CAIImage;
 
     // img_gen_enabled
     @hiddenProperty
@@ -121,9 +121,13 @@ export class Character {
 
     }
 
+    // todo remember to load avatar
     constructor(client: CAIClient, information: any) {
         this.client = client;
-        ObjectPatcher.patch(this, information);
+        this.avatar = new CAIImage(client);
+    }
+    async loadFromInformation(information: any) {
+        await ObjectPatcher.patch(this.client, this, information);
     }
     [Symbol.for('nodejs.util.inspect.custom')]() {
         const serializedData: any = {};
