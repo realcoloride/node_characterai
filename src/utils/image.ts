@@ -23,7 +23,7 @@ export class CAIImage {
 
     // cannot be set
     @hiddenProperty
-    private jimpImage: Jimp;
+    private jimpImage?: Jimp = undefined;
     // if image is loaded
     @hiddenProperty
     private loaded: boolean = false;
@@ -41,30 +41,26 @@ export class CAIImage {
     protected changeCallback?: Function;
 
     private async upload(image: Jimp) {
+        if (!this.changeCallback) throw new Error("You cannot change this image.");
+        
         this.client.checkAndThrow(true, false);
-
         this.loaded = false;
-        const base64 = await image.getBase64Async(-1);
-
-        const request = await this.client.requester.request("https://character.ai/api/trpc/user.uploadAvatar?batch=1", {
-            method: 'POST',
-            includeAuthorization: true,
-            body: Parser.stringify({"0": { json: { imageDataUrl: base64 } }})
-        });
-        const response = await Parser.parseJSON(request);
-        if (!request.ok) throw new Error(response);
-
-        return response[0].result.data.json;
+        
+        const endpointUrl = await this.changeCallback();
+        this.loaded = true;
+        return endpointUrl;
     }
 
-    // these change the image
-    async changeToPrompt(prompt: string) {
+    // these change the image / avatarPrompt will do avatar options
+    async changeToPrompt(prompt: string, avatarPrompt = false) {
         this.loaded = false;
 
-        const request = await this.client.requester.request("https://plus.character.ai/chat/character/generate-avatar-options", {
+        const request = await this.client.requester.request(`https://plus.character.ai/chat/${(avatarPrompt ? "character/generate-avatar-options" : "chat/generate-image")}`, {
             method: 'POST',
             includeAuthorization: true,
-            body: Parser.stringify({ prompt, num_candidates: 4, model_version: "v1" })
+            body: Parser.stringify(avatarPrompt 
+                ? { prompt, num_candidates: 4, model_version: "v1" }
+                : { image_description: prompt })
         });
         const response = await Parser.parseJSON(request);
         if (!request.ok) throw new Error(response);
@@ -74,6 +70,7 @@ export class CAIImage {
         
         if (this.changeCallback) await this.changeCallback();
     }
+    
     async changeToUrl(pathOrUrl: string) {
         this.loaded = false;
 
@@ -107,7 +104,6 @@ export class CAIImage {
 
     constructor(client: CharacterAI) {
         this.client = client;
-        this.jimpImage = new Jimp(); // temporary instance for constructor (epic memory usage)
     }
 }
 
@@ -115,7 +111,7 @@ export class CAIImage {
 // with extra callback to save and upload :)
 export class EditableCAIImage extends CAIImage {
     // to call if you just changed something with the jimp image
-    async updateIfChanged() {
+    async uploadChanges() {
         if (this.changeCallback) await this.changeCallback();
     }
 

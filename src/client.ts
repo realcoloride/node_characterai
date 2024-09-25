@@ -1,4 +1,4 @@
-import PrivateProfile from './profile/privateProfile';
+import { PrivateProfile } from './profile/privateProfile';
 import { PublicProfile } from './profile/publicProfile';
 import Requester from './requester';
 

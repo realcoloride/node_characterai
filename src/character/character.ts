@@ -1,5 +1,5 @@
 import CAIClient from "../client";
-import PrivateProfile from "../profile/privateProfile";
+import { PrivateProfile } from "../profile/privateProfile";
 import { PublicProfile } from "../profile/publicProfile";
 import { CAIImage as CAIImage } from "../utils/image";
 import ObjectPatcher from "../utils/patcher";
@@ -125,9 +125,7 @@ export class Character {
     constructor(client: CAIClient, information: any) {
         this.client = client;
         this.avatar = new CAIImage(client);
-    }
-    async loadFromInformation(information: any) {
-        await ObjectPatcher.patch(this.client, this, information);
+        ObjectPatcher.patch(this.client, this, information);
     }
     [Symbol.for('nodejs.util.inspect.custom')]() {
         const serializedData: any = {};

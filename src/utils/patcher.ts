@@ -15,4 +15,12 @@ export default class ObjectPatcher {
             instance[key] = value;
         }
     }
+    static clean(object: Record<string, any>) {
+        for (const [key, value] of Object.entries(object)) {
+            if (value != undefined) continue;
+            delete object[key];
+        }
+        
+        return object;
+    }
 }
