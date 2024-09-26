@@ -116,12 +116,13 @@ export class Conversation extends Specable {
 
         let nextToken: string | undefined = undefined;
 
-        for (let i = 0; i < maxMessagesStored; i += 50) {
+        for (let i = 0; i < maxMessagesStored / 50; i += 50) {
             const response = await this.getTurnsBatch();
             const { turns } = response;
             if (!turns) break;
             nextToken = response?.meta?.next_token;
             
+            console.log("FETCHING !!!!")
             for (let j = 0; j < turns.length; j++) 
                 this.addMessage(new Message(this.client, turns[j]));
         }  

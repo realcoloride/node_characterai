@@ -80,8 +80,8 @@ export default class DMConversation extends Conversation {
                 options?.image?.endpointUrl ?? ""
             )
         })
-
-        console.log(request);
-        return new Message(this.client, {}); // todo
+        
+        // todo
+        return new Message(this.client, request.turn);
     }
 };

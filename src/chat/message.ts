@@ -101,5 +101,6 @@ export class Message extends Specable {
         super();
         this.client = client;
         ObjectPatcher.patch(this.client, this, turn);
+        console.log("turn", turn)
     }
 }
