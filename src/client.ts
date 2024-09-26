@@ -74,6 +74,8 @@ export default class CharacterAI extends EventEmitter {
             const edgeRollout = headers.get("set-cookie")?.match(/edge_rollout=(\d+)/)?.at(1);
             if (!edgeRollout) throw Error("Could not get edge rollout");
     
+            // todo listen for events
+
             this.groupChatWebsocket = await new CAIWebsocket({
                 url: "wss://neo.character.ai/connection/websocket",
                 authorization: this.token,
@@ -144,6 +146,13 @@ export default class CharacterAI extends EventEmitter {
         this._currentConversation = new DMConversation(this, specificChatObject);
         await this._currentConversation.refreshMessages();
         return this._currentConversation;
+    }
+    disconnectFromConversation() {
+        this._connectionType = CAIWebsocketConnectionType.Disconnected;
+        this._currentConversation = undefined;
+
+        this.dmChatWebsocket?.close();
+        this.groupChatWebsocket?.close();
     }
 
     constructor() {
@@ -256,8 +265,7 @@ WARNING: CharacterAI has changed its authentication methods again.
         this.checkAndThrow(CheckAndThrow.RequiresAuthentication);
         this.token = "";
 
-        this.dmChatWebsocket?.close();
-        this.groupChatWebsocket?.close();
+        this.disconnectFromConversation();
     }
 
     throwBecauseNotAvailableYet() {

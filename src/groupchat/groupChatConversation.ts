@@ -8,12 +8,13 @@ export default class GroupChatConversation extends Conversation {
 
     }
     async reset() {
-        
+
     }
 
+    
 
     async addCharacter() {
-
+        
     }
     async removeCharacter() {
 

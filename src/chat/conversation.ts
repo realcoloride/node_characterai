@@ -79,29 +79,26 @@ export class Conversation extends Specable {
         return await this.client.fetchProfileByUsername(this.creator_id)
     }
 
-    private frozen = false; // <- if refreshing, operations will be frozen
-
+    protected frozen = false; // <- if refreshing, operations will be frozen
     private async getTurnsBatch(nextToken?: string) {
         const query = encodeURIComponent(nextToken ? `?next_token=${nextToken}}` : "");
-        console.log("THIS:", this)
-        const request = await this.client.requester.request(`https://neo.character.ai/chats/recent/${this.chatId}/${query}`, {
+        const request = await this.client.requester.request(`https://neo.character.ai/turns/${this.chatId}/${query}`, {
             method: 'GET',
             includeAuthorization: true
         });
+
         const response = await Parser.parseJSON(request);
         if (!request.ok) throw new Error(response);
-        console.log(response);
-
         return response;
     }
     
     // responsible for checking if we reached the limit to avoid too much memory usage
     private async addMessage(message: Message) {
         // messages are always ranked from more recent to oldest
-        if (this.messages.length == this.maxMessagesStored) {
-            Warnings.show("reachedMaxMessages");
-            // remove last
+        if (this.messages.length >= this.maxMessagesStored) {
+            // remove last & show warning
             this.messages.pop();
+            Warnings.show("reachedMaxMessages");
         }
 
         // add to front
@@ -126,12 +123,12 @@ export class Conversation extends Specable {
             nextToken = response?.meta?.next_token;
             
             for (let j = 0; j < turns.length; j++) 
-                this.addMessage(new Message(this.client, turns[i]));
+                this.addMessage(new Message(this.client, turns[j]));
         }  
         
         this.frozen = false;
     }
-    async sendMessage(message: string, options?: ICAIMessageSending): Promise<Message> {
+    async sendMessage(message: string, options?: ICAIMessageSending): Promise<Message | undefined> {
         return new Message(this.client, {});
     }
 
@@ -147,7 +144,7 @@ export class Conversation extends Specable {
 
     // disconnects from room
     async close() {
-
+        
     }
 
     constructor(client: CharacterAI, information: any) {

@@ -1,4 +1,5 @@
 import { CheckAndThrow } from "../client";
+import Warnings from "../warnings";
 import { Conversation, ICAIMessageSending } from "./conversation";
 import { Message } from "./message";
 import { v4 as uuidv4 } from 'uuid';
@@ -56,8 +57,12 @@ const generateBaseSendingPayload = (
 
 export default class DMConversation extends Conversation {
 
-    async sendMessage(message: string, options?: ICAIMessageSending): Promise<Message> {
+    async sendMessage(message: string, options?: ICAIMessageSending): Promise<Message | undefined> {
         this.client.checkAndThrow(CheckAndThrow.RequiresToBeInDM);
+        if (this.frozen) {
+            Warnings.show("sendingFrozen");
+            return;
+        }
         
         // manual turn is FALSE by default
         const request = await this.client.sendDMWebsocketCommandAsync({
