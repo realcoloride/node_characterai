@@ -31,8 +31,9 @@ export default class CharacterAI extends EventEmitter {
             parseJSON: true,
             expectedReturnCommand: options.expectedReturnCommand,
             messageType: CAIWebsocketConnectionType.DM,
-            streaming: options.streaming,
+            waitForAIResponse: true,
             expectedRequestId: requestId,
+            streaming: options.streaming,
             data: Parser.stringify({
                 command: options.command,
                 origin_id: options.originId,
@@ -142,13 +143,17 @@ export default class CharacterAI extends EventEmitter {
     }
 
     // profile fetching
-    async fetchProfile(username: string) {
+    async fetchProfileByUsername(username: string) {
         this.checkAndThrow(true, false);
 
         const profile = new PublicProfile(this, { username });
         await profile.fetch();
         
         return profile;
+    }
+    async fetchProfileById(userId: number) {
+        this.checkAndThrow(true, false);
+        this.throwBecauseNotAvailableYet();
     }
     // character fetching
     async searchCharacter(query: string, suggested: boolean = false) {

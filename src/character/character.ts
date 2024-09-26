@@ -190,9 +190,8 @@ export class Character {
         if (options.createNewConversation) {
             const request = await this.client.sendDMWebsocketCommandAsync({
                 command: "create_chat",
-                expectedReturnCommand: "create_chat_response",
                 originId: "Android",
-                streaming: false,
+                streaming: true,
                 payload: {
                     chat: {
                         chat_id: uuidv4(),
@@ -205,7 +204,8 @@ export class Character {
                 }
             })
             const response = await Parser.parseJSON(request, false);
-            chatObject = response.chat;
+            chatObject = response[0].chat;
+            console.log("chat object", chatObject);
 
             console.log("wonders yummy wonders", request);
         }
@@ -213,26 +213,27 @@ export class Character {
         await this.client.connectToConversation(this.characterId, false, chatObject);
     }
     async createGroupChat() {
+        this.client.checkAndThrow(true, false);
+
         // todo
     }
-    async continueConversation() {
-        // todo   
-    }
-
     async getAuthorProfile(): Promise<PublicProfile | PrivateProfile> {
         // if the author is us, give private profile directly else fetch
         const username = this.user__username;
         const myProfile = this.client.myProfile;
-        return username == myProfile.username ? myProfile : await this.client.fetchProfile(username);
+        return username == myProfile.username ? myProfile : await this.client.fetchProfileByUsername(username);
     }
     async getVote() {
+        this.client.checkAndThrow(true, false);
 
     }
     async setVote(vote: CharacterVote) {
+        this.client.checkAndThrow(true, false);
 
     }
 
     async hide() { // /chat/character/hide
+        this.client.checkAndThrow(true, false);
 
     }
 

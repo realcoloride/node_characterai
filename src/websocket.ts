@@ -18,14 +18,15 @@ export interface ICAIWebsocketCreation {
 export interface ICAIWebsocketMessage {
     data: any,
     parseJSON: boolean,
-    expectedReturnCommand: string,
+    expectedReturnCommand?: string,
     messageType: CAIWebsocketConnectionType,
-    streaming: boolean,
+    waitForAIResponse: boolean,
+    streaming: boolean, // streams give an output of an array instead of the message straight up
     expectedRequestId?: string
 }
 export interface ICAIWebsocketCommand {
     command: string,
-    expectedReturnCommand: string,
+    expectedReturnCommand?: string,
     originId: 'Android' | 'web-next',
     streaming: boolean
     payload: any,
@@ -99,13 +100,31 @@ export class CAIWebsocket extends EventEmitter {
                     resolve(options.streaming ? streamedMessage?.concat(message) : message);
                 }
 
-                try {
-                    const { request_id, command } = message;
-                    if (options.expectedRequestId != request_id || options.expectedReturnCommand != command) return;
+                // the way it works is you have an accumulation of packets tied to your request id
+                // the returnal will only happen if you wait for turn
+                // turns will allow you to know the end for streaming (is final)
+                // ws requests are turn based
+                const { request_id: requestId, command } = message;
+                const { expectedReturnCommand } = message;
 
-                    //if (!options.streaming)  STREAMING MUST BE FIGURED OUT ASAP
-                    disconnectHandlerAndResolve();
+                // check for requestId (if specified)
+                if (requestId && requestId != options.expectedRequestId) return;
+
+                try {
+                    // get turn
+                    switch (options.messageType) {
+                        case CAIWebsocketConnectionType.DM: turn = message.turn; break;
+                        case CAIWebsocketConnectionType.GroupChat: turn = message.push?.data?.turn; break;
+                    }
+                    
+                    const isFinal = turn.candidates[0].is_final;
+                    const condition = options.waitForAIResponse ? !turn.author.is_human && isFinal : isFinal;
+                    
+                    // if expectedReturnCommand or condition is met
+                    if ((expectedReturnCommand && command == expectedReturnCommand) || condition)
+                        disconnectHandlerAndResolve();
                 } catch {
+                    // if turn is NOT present, push to queue
                     streamedMessage?.push(message);
                 }
             });
