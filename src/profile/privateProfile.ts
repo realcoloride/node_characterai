@@ -1,6 +1,6 @@
 import Jimp from "jimp";
 import { ICharacterCreation } from "../character/modification";
-import CharacterAI from "../client";
+import CharacterAI, { CheckAndThrow } from "../client";
 import Parser from "../parser";
 import { CAIImage, EditableCAIImage } from "../utils/image";
 import { PrivateProfileCharacter, PublicProfileCharacter } from "./profileCharacter";
@@ -78,7 +78,7 @@ export class PrivateProfile extends PublicProfile {
     public set userId(value) { this.id = value; }
 
     async edit(options: IProfileModification) {
-        this.client.checkAndThrow(true, false);
+        this.client.checkAndThrow(CheckAndThrow.RequiresAuthentication);
 
         const request = await this.client.requester.request("https://plus.character.ai/chat/user/update/", {
             method: 'POST',
@@ -111,7 +111,7 @@ export class PrivateProfile extends PublicProfile {
 
     // characters
     async createCharacter(options: ICharacterCreation) {
-        this.client.checkAndThrow(true, false);
+        this.client.checkAndThrow(CheckAndThrow.RequiresAuthentication);
 
         const request = await this.client.requester.request("https://plus.character.ai/chat/user/", {
             method: 'POST',
@@ -132,7 +132,7 @@ export class PrivateProfile extends PublicProfile {
     }
 
     async fetch() {
-        this.client.checkAndThrow(true, false);
+        this.client.checkAndThrow(CheckAndThrow.RequiresAuthentication);
 
         const request = await this.client.requester.request("https://plus.character.ai/chat/user/", {
             method: 'GET',

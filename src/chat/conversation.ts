@@ -1,20 +1,27 @@
 import { getterProperty, hiddenProperty } from "../character/character";
-import CharacterAI from "../client";
+import CharacterAI, { CheckAndThrow } from "../client";
+import { CAIImage } from "../utils/image";
+import ObjectPatcher from "../utils/patcher";
 import { Message } from "./message";
 
 export interface ICAIConversationCreation {
     messages?: any[]
-}
+};
 
 export enum ConversationState {
     Active = "STATE_ACTIVE",
     Archived = "STATE_ARCHIVED"
-}
+};
 
 export enum ConversationVisibility {
     Public = "VISIBILITY_PUBLIC",
     Private = "VISIBILITY_PRIVATE"
-}
+};
+
+export interface ICAIMessageSending {
+    manualTurn: boolean,
+    image?: CAIImage
+};
 
 export class Conversation {
     @hiddenProperty
@@ -46,6 +53,9 @@ export class Conversation {
     // character_id
     @hiddenProperty
     private character_id = "";
+    @getterProperty
+    protected get characterId() { return this.character_id; }
+    protected set characterId(value) { this.character_id = value; }
 
     // state
     public state: ConversationState = ConversationState.Active;
@@ -69,15 +79,8 @@ export class Conversation {
     async fetchMessages() {
 
     }
-    async sendMessage() {
-        this.client.checkAndThrow(true, false);
-
-        
-        const turnKey
-
-        return await this.client.sendDMWebsocketCommandAsync({
-            command: 
-        })
+    async sendMessage(message: string, options?: ICAIMessageSending): Promise<Message> {
+        return new Message();
     }
 
     async archive() {
@@ -97,6 +100,7 @@ export class Conversation {
 
     constructor(client: CharacterAI, information: any) {
         this.client = client;
+        ObjectPatcher.patch(this.client, this, information);
         console.log("creating from ", information)
     }
 };

@@ -1,5 +1,5 @@
 import Parser from '../parser';
-import CharacterAI from '../client';
+import CharacterAI, { CheckAndThrow } from '../client';
 import { CAIImage as CAIImage } from '../utils/image';
 import ObjectPatcher from '../utils/patcher';
 import { PublicProfileCharacter } from './profileCharacter';
@@ -65,7 +65,7 @@ export class PublicProfile {
         // sad
         this.client.throwBecauseNotAvailableYet();
 
-        this.client.checkAndThrow(true, false);
+        this.client.checkAndThrow(CheckAndThrow.RequiresAuthentication);
         if (this.username == this.client.myProfile.username) throw new Error("You cannot follow yourself!");
 
         const request = await this.client.requester.request("https://plus.character.ai/chat/user/follow", {
@@ -80,7 +80,7 @@ export class PublicProfile {
         // sad
         this.client.throwBecauseNotAvailableYet();
 
-        this.client.checkAndThrow(true, false);
+        this.client.checkAndThrow(CheckAndThrow.RequiresAuthentication);
         if (this.username == this.client.myProfile.username) throw new Error("You cannot unfollow or follow yourself!");
 
         const request = await this.client.requester.request("https://plus.character.ai/chat/user/unfollow", {
@@ -92,7 +92,7 @@ export class PublicProfile {
         if (!request.ok) throw new Error(await Parser.parseJSON(request));
     }
     async getFollowers(page = 1) {
-        this.client.checkAndThrow(true, false);
+        this.client.checkAndThrow(CheckAndThrow.RequiresAuthentication);
 
         const request = await this.client.requester.request("https://plus.character.ai/chat/user/followers", {
             method: 'POST',
@@ -102,7 +102,7 @@ export class PublicProfile {
         if (!request.ok) throw new Error(await Parser.parseJSON(request));
     }
     async getFollowing(page = 1) {
-        this.client.checkAndThrow(true, false);
+        this.client.checkAndThrow(CheckAndThrow.RequiresAuthentication);
 
         const request = await this.client.requester.request("https://plus.character.ai/chat/user/following", {
             method: 'POST',
@@ -112,7 +112,7 @@ export class PublicProfile {
         if (!request.ok) throw new Error(await Parser.parseJSON(request));
     }
     async getLikedCharacters() {
-        this.client.checkAndThrow(true, false);
+        this.client.checkAndThrow(CheckAndThrow.RequiresAuthentication);
         const request = await this.client.requester.request("https://plus.character.ai/chat/user/characters/upvoted/", {
             method: 'GET',
             includeAuthorization: true
@@ -170,7 +170,7 @@ export class PublicProfile {
 
     // updates profile or fetches it for the first time
     async fetch() {
-        this.client.checkAndThrow(true, false);
+        this.client.checkAndThrow(CheckAndThrow.RequiresAuthentication);
 
         const request = await this.client.requester.request("https://plus.character.ai/chat/user/public/", {
             method: 'POST',

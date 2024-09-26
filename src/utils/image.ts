@@ -1,5 +1,5 @@
 import Jimp from 'jimp';
-import CharacterAI from '../client';
+import CharacterAI, { CheckAndThrow } from '../client';
 import Parser from '../parser';
 import { PathLike } from 'fs';
 import { getterProperty, hiddenProperty } from '../character/character';
@@ -41,14 +41,15 @@ export class CAIImage {
 
     protected changeCallback?: Function;
 
-    private async upload(image: Jimp) {
+    private async upload() {
         if (!this.changeCallback) throw new Error("You cannot change this image.");
         
-        this.client.checkAndThrow(true, false);
+        this.client.checkAndThrow(CheckAndThrow.RequiresAuthentication);
         this.loaded = false;
         
         const endpointUrl = await this.changeCallback();
         this.loaded = true;
+
         return endpointUrl;
     }
 
@@ -76,7 +77,7 @@ export class CAIImage {
         this.loaded = false;
 
         this.jimpImage = await Jimp.read(pathOrUrl);
-        this._endpointUrl = await this.upload(this.jimpImage);
+        this._endpointUrl = await this.upload();
         this.loaded = true;
 
         if (this.changeCallback) await this.changeCallback();
@@ -97,7 +98,7 @@ export class CAIImage {
 
     // loads the image it hasn't been loaded yet from the endpoint
     private async load() {
-        this.client.checkAndThrow(true, false);
+        this.client.checkAndThrow(CheckAndThrow.RequiresAuthentication);
 
         this.jimpImage = await Jimp.read(this.getFullUrl());
         this.loaded = true;

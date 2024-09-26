@@ -6,7 +6,7 @@ export class Message {
 
     }
     async copyFromHere() {
-        
+
     }
     async delete() {
 

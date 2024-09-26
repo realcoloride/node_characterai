@@ -11,6 +11,14 @@ import { Character } from './character/character';
 import { v4 as uuidv4 } from 'uuid';
 import { GroupChats } from './groupchat/groupChats';
 
+export enum CheckAndThrow {
+    RequiresAuthentication = 0,
+    RequiresNoAuthentication,
+    RequiresToBeInDM,
+    RequiresToBeInGroupChat,
+    RequiresToBeInNoConversation
+}
+
 export default class CharacterAI extends EventEmitter {
     private token: string = "";
     public get authenticated() {
@@ -86,7 +94,7 @@ export default class CharacterAI extends EventEmitter {
     
     // todo indicate do not use if you dont know what you're doing
     async connectToConversation(id: string, isRoom: boolean, specificChatObject?: any): Promise<DMConversation | GroupChatConversation> {
-        this.checkAndThrow(true, false);
+        this.checkAndThrow(CheckAndThrow.RequiresAuthentication);
         
         const { connectionType } = this;
         if (connectionType != CAIWebsocketConnectionType.Disconnected) throw Error(`You are already in a ${(connectionType == CAIWebsocketConnectionType.DM ? "DM" : "group chat")} conversation. Please disconnect from your current conversation (using characterAI.currentConversation.close()) to create and follow a new one.`);
@@ -147,7 +155,7 @@ export default class CharacterAI extends EventEmitter {
 
     // profile fetching
     async fetchProfileByUsername(username: string) {
-        this.checkAndThrow(true, false);
+        this.checkAndThrow(CheckAndThrow.RequiresAuthentication);
 
         const profile = new PublicProfile(this, { username });
         await profile.fetch();
@@ -155,18 +163,18 @@ export default class CharacterAI extends EventEmitter {
         return profile;
     }
     async fetchProfileById(userId: number) {
-        this.checkAndThrow(true, false);
+        this.checkAndThrow(CheckAndThrow.RequiresAuthentication);
 
         // not available yet
         this.throwBecauseNotAvailableYet();
     }
     // character fetching
     async searchCharacter(query: string, suggested: boolean = false) {
-        this.checkAndThrow(true, false);
+        this.checkAndThrow(CheckAndThrow.RequiresAuthentication);
 
     }
     async fetchCharacter(characterId: string) {
-        this.checkAndThrow(true, false);
+        this.checkAndThrow(CheckAndThrow.RequiresAuthentication);
 
         const request = await this.requester.request("https://plus.character.ai/chat/character/info/", {
             method: 'POST',
@@ -197,7 +205,7 @@ export default class CharacterAI extends EventEmitter {
     // conversations
     // raw is the raw output else the convo instance
     async fetchConversation(chatId: string, raw: boolean = false) {
-        this.checkAndThrow(true, false);
+        this.checkAndThrow(CheckAndThrow.RequiresAuthentication);
 
         const request = await this.requester.request(`https://neo.character.ai/chat/${chatId}/`, {
             method: 'GET',
@@ -212,7 +220,7 @@ export default class CharacterAI extends EventEmitter {
 
     // authentication
     async authenticate(sessionToken: string) {
-        this.checkAndThrow(false, true);
+        this.checkAndThrow(CheckAndThrow.RequiresNoAuthentication);
         
         if (sessionToken.startsWith("Token "))
             sessionToken = sessionToken.substring("Token ".length, sessionToken.length);
@@ -242,7 +250,7 @@ WARNING: CharacterAI has changed its authentication methods again.
     }
 
     unauthenticate() {
-        this.checkAndThrow(true, false);
+        this.checkAndThrow(CheckAndThrow.RequiresAuthentication);
         this.token = "";
 
         this.dmChatWebsocket?.close();
@@ -255,14 +263,24 @@ WARNING: CharacterAI has changed its authentication methods again.
 
     // allows for quick auth errors
     checkAndThrow(
-        requiresAuthentication: boolean, 
-        requiresNoAuthentication: boolean,
+        argument: CheckAndThrow,
         requiresAuthenticatedMessage: string = "You must be authenticated to do this."
     ) {
-        if (requiresAuthentication && !this.authenticated)
+        if ((argument == CheckAndThrow.RequiresAuthentication || 
+             argument >= CheckAndThrow.RequiresToBeInDM) && !this.authenticated) 
             throw Error(requiresAuthenticatedMessage);
 
-        if (requiresNoAuthentication && this.authenticated) 
+        if (argument == CheckAndThrow.RequiresNoAuthentication && this.authenticated) 
             throw Error("Already authenticated");
+
+        const { connectionType } = this;
+        if (argument == CheckAndThrow.RequiresToBeInNoConversation && connectionType != CAIWebsocketConnectionType.Disconnected)
+            throw Error(`You are already in a ${(connectionType == CAIWebsocketConnectionType.DM ? "DM" : "group chat")} conversation. Please disconnect from your current conversation (using characterAI.currentConversation.close()) to create and follow a new one.`);
+        
+        if (argument == CheckAndThrow.RequiresToBeInDM && connectionType != CAIWebsocketConnectionType.DM) 
+            throw Error("This action requires you to be connected to a DM.");
+
+        if (argument == CheckAndThrow.RequiresToBeInGroupChat && connectionType != CAIWebsocketConnectionType.GroupChat)
+            throw Error("This action requires you to be connected to a Group Chat.");
     }
 }

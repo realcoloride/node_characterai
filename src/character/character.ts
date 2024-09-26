@@ -1,4 +1,5 @@
-import CharacterAI from "../client";
+import DMConversation from "../chat/dmConversation";
+import CharacterAI, { CheckAndThrow } from "../client";
 import Parser from "../parser";
 import { PrivateProfile } from "../profile/privateProfile";
 import { PublicProfile } from "../profile/publicProfile";
@@ -186,8 +187,8 @@ export class Character {
     public upvotes = 0;
 
     /// features
-    async DM(options: ICharacterDMCreation) {
-        this.client.checkAndThrow(true, false);
+    async DM(options: ICharacterDMCreation): Promise<DMConversation> {
+        this.client.checkAndThrow(CheckAndThrow.RequiresAuthentication);
 
         // todo greeting
         let chatObject;
@@ -211,17 +212,14 @@ export class Character {
                     with_greeting: options.withGreeting
                 }
             })
-            const response = await Parser.parseJSON(request, false);
-            chatObject = response[0].chat;
-            console.log("chat object", chatObject);
-
-            console.log("wonders yummy wonders", request);
+            
+            chatObject = request[0].chat;
         }
 
-        await this.client.connectToConversation(this.characterId, false, chatObject);
+        return await this.client.connectToConversation(this.characterId, false, chatObject);
     }
     async createGroupChat(options: ICharacterGroupChatCreation) {
-        this.client.checkAndThrow(true, false);
+        this.client.checkAndThrow(CheckAndThrow.RequiresAuthentication);
 
         // todo
     }
@@ -232,16 +230,16 @@ export class Character {
         return username == myProfile.username ? myProfile : await this.client.fetchProfileByUsername(username);
     }
     async getVote() {
-        this.client.checkAndThrow(true, false);
+        this.client.checkAndThrow(CheckAndThrow.RequiresAuthentication);
 
     }
     async setVote(vote: CharacterVote) {
-        this.client.checkAndThrow(true, false);
+        this.client.checkAndThrow(CheckAndThrow.RequiresAuthentication);
 
     }
 
     async hide() { // /chat/character/hide
-        this.client.checkAndThrow(true, false);
+        this.client.checkAndThrow(CheckAndThrow.RequiresAuthentication);
 
     }
 
