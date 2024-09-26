@@ -4,7 +4,7 @@ import Parser from "../parser";
 import { CAIImage } from "../utils/image";
 import ObjectPatcher from "../utils/patcher";
 import Warnings from "../warnings";
-import { Message } from "./message";
+import { CAIMessage } from "./message";
 
 export interface ICAIConversationCreation {
     messages?: any[]
@@ -33,7 +33,7 @@ export class Conversation extends Specable {
     // max messages stored before it enters into a snake like thing to delete the oldest messages from memory. 
     // must be a multiple of 50.
     public maxMessagesStored = 200;
-    public messages: Message[] = [];
+    public messages: CAIMessage[] = [];
 
     // chat_id
     @hiddenProperty
@@ -94,7 +94,7 @@ export class Conversation extends Specable {
     }
     
     // responsible for checking if we reached the limit to avoid too much memory usage
-    protected addMessage(message: Message) {
+    protected addMessage(message: CAIMessage) {
         // messages are always ranked from more recent to oldest
         if (this.messages.length >= this.maxMessagesStored) {
             // remove last & show warning
@@ -125,13 +125,13 @@ export class Conversation extends Specable {
             nextToken = response?.meta?.next_token;
             
             for (let j = 0; j < turns.length; j++) 
-                this.addMessage(new Message(this.client, turns[j]));
+                this.addMessage(new CAIMessage(this.client, this, turns[j]));
         }  
         
         this.frozen = false;
     }
-    async sendMessage(content: string, options?: ICAIMessageSending): Promise<Message> {
-        return new Message(this.client, {});
+    async sendMessage(content: string, options?: ICAIMessageSending): Promise<CAIMessage> {
+        return new CAIMessage(this.client, this, {});
     }
 
     async archive() {

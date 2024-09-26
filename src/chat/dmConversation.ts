@@ -1,7 +1,7 @@
 import { CheckAndThrow } from "../client";
 import Warnings from "../warnings";
 import { Conversation, ICAIMessageSending } from "./conversation";
-import { Message } from "./message";
+import { CAIMessage } from "./message";
 import { v4 as uuidv4 } from 'uuid';
 
 const generateBaseSendingPayload = (
@@ -56,7 +56,7 @@ const generateBaseSendingPayload = (
 }};
 
 export default class DMConversation extends Conversation {
-    async sendMessage(content: string, options?: ICAIMessageSending): Promise<Message> {
+    async sendMessage(content: string, options?: ICAIMessageSending): Promise<CAIMessage> {
         this.client.checkAndThrow(CheckAndThrow.RequiresToBeInDM);
         if (this.frozen)
             Warnings.show("sendingFrozen");
@@ -80,6 +80,6 @@ export default class DMConversation extends Conversation {
         })
         
         // here we should receive OUR message not theirs if selected. im not sure how to do this but i will see
-        return this.addMessage(new Message(this.client, request.turn));
+        return this.addMessage(new CAIMessage(this.client, this, request.turn));
     }
 };

@@ -5,10 +5,13 @@ import ObjectPatcher from "../utils/patcher";
 import { CAIWebsocketConnectionType } from "../websocket";
 import { v4 as uuidv4 } from 'uuid';
 import { Candidate, EditedCandidate } from "./candidate";
+import { Conversation } from "./conversation";
 
-export class Message extends Specable {
+export class CAIMessage extends Specable {
     @hiddenProperty
     private client: CharacterAI;
+    @hiddenProperty
+    private conversation: Conversation;
 
     public image?: CAIImage; // todo
 
@@ -86,8 +89,8 @@ export class Message extends Specable {
         const isEditedCandidate = this.candidates.length > 1;
             
         const candidate = isEditedCandidate
-            ? new EditedCandidate(this.client, candidateObject)
-            : new Candidate(this.client, candidateObject);
+            ? new EditedCandidate(this.client, this, candidateObject)
+            : new Candidate(this.client, this, candidateObject);
 
         this.candidateIdToCandidate[candidate.candidateId] = candidate;
         if (addAfterToActualRawCandidates) this.candidates.unshift(candidateObject);
@@ -157,6 +160,12 @@ export class Message extends Specable {
     async switchToCandidate(candidate: 'next' | 'previous' | string) {
 
     }
+    async getMessageBefore() {
+
+    }
+    async getMessageAfter() {
+
+    }
     async pin() {
 
     }
@@ -164,12 +173,13 @@ export class Message extends Specable {
 
     }
     async delete() {
-
+        
     }
 
-    constructor(client: CharacterAI, turn: any) {
+    constructor(client: CharacterAI, conversation: Conversation, turn: any) {
         super();
         this.client = client;
+        this.conversation = conversation;
         ObjectPatcher.patch(this.client, this, turn);
         this.indexCandidates();
     }
