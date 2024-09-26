@@ -7,7 +7,7 @@ export class Message extends Specable {
     @hiddenProperty
     private client: CharacterAI;
 
-    public image?: CAIImage;
+    public image?: CAIImage; // todo
 
     // turn_key
     @hiddenProperty
@@ -36,17 +36,17 @@ export class Message extends Specable {
     // author
     @hiddenProperty
     private author: any = {};
-    public getAuthor() {
-        return {
-            authorId: this.author.author_id,
-            isHuman: this.author.is_human ?? false,
-            name: this.author.turn_id,
-        };
-    }
+    @getterProperty
+    public get authorId() { return this.author.author_id; }
+    @getterProperty
+    public get isHuman() { return this.author.is_human ?? false; }
+    @getterProperty
+    public get name() { return this.author.name; }
+
     async getAuthorProfile() {
         this.client.checkAndThrow(CheckAndThrow.RequiresAuthentication);
 
-        const { authorId, isHuman } = this.getAuthor();
+        const { authorId, isHuman } = this;
         if (!isHuman) throw Error("Failed to fetch author because this is message was not made by a human.");
 
         return await this.client.fetchProfileById(authorId);
@@ -54,7 +54,7 @@ export class Message extends Specable {
     async getCharacter() {
         this.client.checkAndThrow(CheckAndThrow.RequiresAuthentication);
 
-        const { authorId, isHuman } = this.getAuthor();
+        const { authorId, isHuman } = this;
         if (isHuman) throw Error("Failed to fetch character because this is message was not made by a character.");
 
         return await this.client.fetchCharacter(authorId);
@@ -101,6 +101,5 @@ export class Message extends Specable {
         super();
         this.client = client;
         ObjectPatcher.patch(this.client, this, turn);
-        console.log("turn", turn)
     }
 }

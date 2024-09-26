@@ -59,7 +59,6 @@ export class CAIWebsocket extends EventEmitter {
             websocket.on('error', (error) => reject(error.message));
             websocket.on('message', async(data) => {
                 const message = data.toString('utf-8');
-                // console.log("RECEIVED", message);
                 
                 if (withCheck) {
                     const potentialObject = await Parser.parseJSON(message, false);
@@ -77,6 +76,7 @@ export class CAIWebsocket extends EventEmitter {
                     return;
                 }
 
+                // console.log("RECEIVED", message);
                 this.emit("rawMessage", message);
             });
         });

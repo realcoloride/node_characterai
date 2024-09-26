@@ -93,7 +93,7 @@ export class Conversation extends Specable {
     }
     
     // responsible for checking if we reached the limit to avoid too much memory usage
-    private async addMessage(message: Message) {
+    protected addMessage(message: Message) {
         // messages are always ranked from more recent to oldest
         if (this.messages.length >= this.maxMessagesStored) {
             // remove last & show warning
@@ -103,6 +103,7 @@ export class Conversation extends Specable {
 
         // add to front
         this.messages.unshift(message);
+        return message;
     }
 
     // keeps up to date with messages. this WILL wipe old messages
@@ -122,14 +123,13 @@ export class Conversation extends Specable {
             if (!turns) break;
             nextToken = response?.meta?.next_token;
             
-            console.log("FETCHING !!!!")
             for (let j = 0; j < turns.length; j++) 
                 this.addMessage(new Message(this.client, turns[j]));
         }  
         
         this.frozen = false;
     }
-    async sendMessage(message: string, options?: ICAIMessageSending): Promise<Message | undefined> {
+    async sendMessage(content: string, options?: ICAIMessageSending): Promise<Message | undefined> {
         return new Message(this.client, {});
     }
 

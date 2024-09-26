@@ -266,6 +266,7 @@ WARNING: CharacterAI has changed its authentication methods again.
         this.token = "";
 
         this.disconnectFromConversation();
+        this.removeAllListeners();
     }
 
     throwBecauseNotAvailableYet() {

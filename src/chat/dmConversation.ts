@@ -57,7 +57,7 @@ const generateBaseSendingPayload = (
 
 export default class DMConversation extends Conversation {
 
-    async sendMessage(message: string, options?: ICAIMessageSending): Promise<Message | undefined> {
+    async sendMessage(content: string, options?: ICAIMessageSending): Promise<Message | undefined> {
         this.client.checkAndThrow(CheckAndThrow.RequiresToBeInDM);
         if (this.frozen) {
             Warnings.show("sendingFrozen");
@@ -68,9 +68,10 @@ export default class DMConversation extends Conversation {
         const request = await this.client.sendDMWebsocketCommandAsync({
             command: (options?.manualTurn ?? false) ? "create_chat" : "create_and_generate_turn",
             originId: "Android",
-            streaming: true,
+            
+            streaming: false,
             payload: generateBaseSendingPayload(
-                message,
+                content,
                 false, // todo TTS
                 this.characterId,
                 this.client.myProfile.username,
@@ -82,6 +83,6 @@ export default class DMConversation extends Conversation {
         })
         
         // todo
-        return new Message(this.client, request.turn);
+        return this.addMessage(new Message(this.client, request.turn));
     }
 };
