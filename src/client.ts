@@ -156,6 +156,8 @@ export default class CharacterAI extends EventEmitter {
     }
     async fetchProfileById(userId: number) {
         this.checkAndThrow(true, false);
+
+        // not available yet
         this.throwBecauseNotAvailableYet();
     }
     // character fetching

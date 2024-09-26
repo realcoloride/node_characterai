@@ -1,6 +1,6 @@
 import { getterProperty, hiddenProperty } from "../character/character";
 import CharacterAI from "../client";
-import { CharacterVisibility } from "../utils/visbility";
+import { Message } from "./message";
 
 export interface ICAIConversationCreation {
     messages?: any[]
@@ -19,6 +19,9 @@ export enum ConversationVisibility {
 export class Conversation {
     @hiddenProperty
     protected client: CharacterAI;
+
+    public maxMessagesStored = 200; // max messages stored before it enters into a snake like thing to delete the oldest messages from memory
+    public messages: Message[] = [];
 
     // chat_id
     @hiddenProperty
@@ -62,8 +65,19 @@ export class Conversation {
         return await this.client.fetchProfileByUsername(this.creator_id)
     }
 
-    async sendMessage() {
+    // keeps up to date with messages
+    async fetchMessages() {
 
+    }
+    async sendMessage() {
+        this.client.checkAndThrow(true, false);
+
+        
+        const turnKey
+
+        return await this.client.sendDMWebsocketCommandAsync({
+            command: 
+        })
     }
 
     async archive() {
@@ -73,7 +87,7 @@ export class Conversation {
 
     }
     async rename() {
-        
+
     }
 
     // disconnects from room

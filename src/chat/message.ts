@@ -5,7 +5,10 @@ export class Message {
     async pin() {
 
     }
-    async delete() {
+    async copyFromHere() {
         
+    }
+    async delete() {
+
     }
 }
