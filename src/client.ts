@@ -6,9 +6,10 @@ import Requester from './requester';
 import { CAIWebsocket, CAIWebsocketConnectionType, ICAIWebsocketCommand, ICAIWebsocketMessage } from './websocket';
 import { Conversation } from './chat/conversation';
 import DMConversation from './chat/dmConversation';
-import GroupChatConversation from './chat/groupChatConversation';
+import GroupChatConversation from './groupchat/groupChatConversation';
 import { Character } from './character/character';
 import { v4 as uuidv4 } from 'uuid';
+import { GroupChats } from './groupchat/groupChats';
 
 export default class CharacterAI extends EventEmitter {
     private token: string = "";
@@ -18,7 +19,8 @@ export default class CharacterAI extends EventEmitter {
     
     public myProfile: PrivateProfile;
     public requester: Requester;
-    
+    public groupChats: GroupChats;
+
     // todo type safety for on('')
 
     private dmChatWebsocket: CAIWebsocket | null = null;
@@ -140,6 +142,7 @@ export default class CharacterAI extends EventEmitter {
         super();
         this.myProfile = new PrivateProfile(this);
         this.requester = new Requester();
+        this.groupChats = new GroupChats(this);
     }
 
     // profile fetching

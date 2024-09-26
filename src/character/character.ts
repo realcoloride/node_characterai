@@ -39,6 +39,14 @@ export interface ICharacterDMCreation {
     createNewConversation: boolean
 };
 
+export interface ICharacterGroupChatCreation {
+    name: string,
+    characters: Character[] | string[],
+    anyoneCanJoin: boolean,
+    requireApproval: boolean,
+    withGreeting: boolean
+};
+
 export class Character {
     @hiddenProperty
     protected client: CharacterAI;
@@ -212,7 +220,7 @@ export class Character {
 
         await this.client.connectToConversation(this.characterId, false, chatObject);
     }
-    async createGroupChat() {
+    async createGroupChat(options: ICharacterGroupChatCreation) {
         this.client.checkAndThrow(true, false);
 
         // todo

@@ -62,6 +62,21 @@ export class Conversation {
         return await this.client.fetchProfileByUsername(this.creator_id)
     }
 
+    async sendMessage() {
+
+    }
+
+    async archive() {
+
+    }
+    async duplicate() {
+
+    }
+    async rename() {
+        
+    }
+
+    // disconnects from room
     async close() {
 
     }
