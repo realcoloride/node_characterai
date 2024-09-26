@@ -42,7 +42,7 @@ export default class CharacterAI extends EventEmitter {
             parseJSON: true,
             expectedReturnCommand: options.expectedReturnCommand,
             messageType: CAIWebsocketConnectionType.DM,
-            waitForAIResponse: true,
+            waitForAIResponse: options.waitForAIResponse ?? true,
             expectedRequestId: requestId,
             streaming: options.streaming,
             data: Parser.stringify({
@@ -56,6 +56,24 @@ export default class CharacterAI extends EventEmitter {
 
     private groupChatWebsocket: CAIWebsocket | null = null;
     async sendGroupChatWebsocketAsync(options: ICAIWebsocketMessage) { this.groupChatWebsocket?.sendAsync(options); }
+    async sendGroupChatWebsocketCommandAsync(options: ICAIWebsocketCommand) {
+        const requestId = uuidv4();
+        // todo
+        return await this.sendDMWebsocketAsync({
+            parseJSON: true,
+            expectedReturnCommand: options.expectedReturnCommand,
+            messageType: CAIWebsocketConnectionType.DM,
+            waitForAIResponse: true,
+            expectedRequestId: requestId,
+            streaming: options.streaming,
+            data: Parser.stringify({
+                command: options.command,
+                origin_id: options.originId,
+                payload: options.payload,
+                request_id: requestId
+            })
+        });
+    }
 
     private _connectionType: CAIWebsocketConnectionType = CAIWebsocketConnectionType.Disconnected;
     public get connectionType() { return this._connectionType; }
@@ -290,6 +308,9 @@ WARNING: CharacterAI has changed its authentication methods again.
         if (argument == CheckAndThrow.RequiresToNotBeConnected && connectionType != CAIWebsocketConnectionType.Disconnected)
             throw Error(`You are already in a ${(connectionType == CAIWebsocketConnectionType.DM ? "DM" : "group chat")} conversation. Please disconnect from your current conversation (using characterAI.currentConversation.close()) to create and follow a new one.`);
         
+        if (argument == CheckAndThrow.RequiresToBeConnected && connectionType == CAIWebsocketConnectionType.Disconnected)
+            throw Error("This action requires you to be connected to a DM or a Group Chat.");
+
         if (argument == CheckAndThrow.RequiresToBeInDM && connectionType != CAIWebsocketConnectionType.DM) 
             throw Error("This action requires you to be connected to a DM.");
 

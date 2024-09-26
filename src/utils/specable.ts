@@ -18,25 +18,26 @@ export function getterProperty(target: any, propertyKey: string) {
     target.constructor[serializableFieldsSymbol].push({ propertyKey, show: true, fieldName });
 };
 
-export class Specable {
-    [Symbol.for('nodejs.util.inspect.custom')]() {
-        const serializedData: any = {};
-        
-        const decoratedFields = (this as any).constructor[serializableFieldsSymbol] || [];
-        const allFields = Object.keys(this);
+function autoSpec(this: any) {
+    const serializedData: any = {};
     
-        for (const field of decoratedFields) {
-            if (!field.show) continue; 
-    
-            const fieldName = field.fieldName || field.propertyKey;
-            serializedData[fieldName] = (this as any)[field.propertyKey];
-        }
-    
-        for (const field of allFields) {
-            if (!decoratedFields.some((decorated: any) => decorated.propertyKey === field))
-                serializedData[field] = (this as any)[field];
-        }
-    
-        return serializedData;
+    const decoratedFields = this.constructor[serializableFieldsSymbol] || [];
+    const allFields = Object.keys(this);
+
+    for (const field of decoratedFields) {
+        if (!field.show) continue; 
+
+        const fieldName = field.fieldName || field.propertyKey;
+        serializedData[fieldName] = this[field.propertyKey];
     }
+
+    for (const field of allFields) {
+        if (!decoratedFields.some((decorated: any) => decorated.propertyKey === field))
+            serializedData[field] = this[field];
+    }
+
+    return serializedData;
 }
+
+export class Specable { [Symbol.for('nodejs.util.inspect.custom')]() { autoSpec(); } }
+export class EventEmitterSpecable { [Symbol.for('nodejs.util.inspect.custom')]() { autoSpec(); } }

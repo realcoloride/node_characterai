@@ -2,6 +2,9 @@ import { getterProperty, hiddenProperty, Specable } from "../utils/specable";
 import CharacterAI, { CheckAndThrow } from "../client";
 import { CAIImage } from "../utils/image";
 import ObjectPatcher from "../utils/patcher";
+import { CAIWebsocketConnectionType } from "../websocket";
+import { v4 as uuidv4 } from 'uuid';
+import { Candidate, EditedCandidate } from "./candidate";
 
 export class Message extends Specable {
     @hiddenProperty
@@ -31,7 +34,7 @@ export class Message extends Specable {
     public get lastUpdateDate() { return new Date(this.last_update_time); }
 
     // state
-    private state = "STATE_OK";
+    public state = "STATE_OK";
 
     // author
     @hiddenProperty
@@ -66,28 +69,93 @@ export class Message extends Specable {
     // |_ raw_content?
     // |_ is_final?
     @hiddenProperty
-    private candidates: any = [];
+    private candidates: any[] = [];
+    // the main request forces you to use candidates
 
     @hiddenProperty
-    public get candidate() { return this.candidates[0]; }
-    @getterProperty
-    public get candidateId() { return this.candidate.candidate_id; }
-    @getterProperty
-    public get content() { return this.candidate.raw_content; }
-    @getterProperty
-    public get isFinal() { return this.candidate.is_final; }
+    private candidateIdToCandidate: Record<string, Candidate> = {};
+
+    // the way candidates work is basically the messages that get edited you have
+    // a way to select between 1/30 candidates and [0] will always be the latest candidate
+    // turn key is the identifier that holds them (aka a "message.id")
+    // combo is chat id + turn key but we already have the chat id
+    // turn keys are indexed by the conversation
+
+    // this function will index candidates and give them proper instances
+    private addCandidate(candidateObject: any, addAfterToActualRawCandidates: boolean) {
+        const isEditedCandidate = this.candidates.length > 1;
+            
+        const candidate = isEditedCandidate
+            ? new EditedCandidate(this.client, candidateObject)
+            : new Candidate(this.client, candidateObject);
+
+        this.candidateIdToCandidate[candidate.candidateId] = candidate;
+        if (addAfterToActualRawCandidates) this.candidates.unshift(candidateObject);
+    }
+    private indexCandidates() {
+        this.candidateIdToCandidate = {};
+
+        for (let i = 0; i < this.candidates.length; i++) {
+            const candidateObject = this.candidates[i];
+            this.addCandidate(candidateObject, false); // we use previously added, no need to readd
+        }
+    }
+    private getCandidateByTurnId(turnId: string) {
+        const candidate = this.candidateIdToCandidate[turnId];
+        if (!candidate) throw new Error("Candidate not found");
+        return candidate;
+    }
+    private getCandidateByIndex(index: number) {
+        const candidate = Object.values(this.candidateIdToCandidate)[index];
+        if (!candidate) throw new Error("Candidate not found");
+        return candidate;
+    }
+    public getCandidates() {
+        // create copy to avoid modification
+        return {...this.candidateIdToCandidate};
+    }
+    // get primaryCandidate
 
     // primary_candidate_id
     @hiddenProperty
-    private primary_candidate_id = false;
-    @getterProperty
-    public get primaryCandidateId() { return this.primary_candidate_id; }
-    public set primaryCandidateId(value) { this.primary_candidate_id = value; }
+    private primary_candidate_id = "";
 
-    async edit(newContent: string) {
+    public get primaryCandidate() {
+        return this.getCandidateByTurnId(this.primary_candidate_id);
+    }
+
+    // use specific candidate id to change specific id or it will change the latest
+    async edit(newContent: string, specificCandidateId?: string) {
         this.client.checkAndThrow(CheckAndThrow.RequiresToBeConnected);
+        const candidateId = specificCandidateId ?? this.primaryCandidate.candidateId;
 
-        const request = await this.client.sendDMWebsocketCommandAsync();
+        let request;
+        switch (this.client.connectionType) {
+            case CAIWebsocketConnectionType.DM:
+                request = await this.client.sendDMWebsocketCommandAsync({
+                    command: "edit_turn_candidate",
+                    originId: "Android",
+                    streaming: true,
+                    waitForAIResponse: false,
+                    
+                    payload: {
+                        turn_key: this.turn_key,
+                        current_candidate_id: candidateId,
+                        new_candidate_raw_content: newContent
+                    }
+                })
+                break;
+            case CAIWebsocketConnectionType.GroupChat:
+                break;
+        }
+
+        // todo add candidate
+        console.log("");
+        
+    }
+    // next/previous/candidate_id
+    async switchToCandidate(candidate: 'next' | 'previous' | string) {
+
     }
     async pin() {
 
@@ -98,10 +166,11 @@ export class Message extends Specable {
     async delete() {
 
     }
-    
+
     constructor(client: CharacterAI, turn: any) {
         super();
         this.client = client;
         ObjectPatcher.patch(this.client, this, turn);
+        this.indexCandidates();
     }
 }

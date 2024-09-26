@@ -22,7 +22,8 @@ export enum ConversationVisibility {
 
 export interface ICAIMessageSending {
     manualTurn: boolean,
-    image?: CAIImage
+    image?: CAIImage,
+    getMyMessageInstead: boolean
 };
 
 export class Conversation extends Specable {
@@ -129,7 +130,7 @@ export class Conversation extends Specable {
         
         this.frozen = false;
     }
-    async sendMessage(content: string, options?: ICAIMessageSending): Promise<Message | undefined> {
+    async sendMessage(content: string, options?: ICAIMessageSending): Promise<Message> {
         return new Message(this.client, {});
     }
 
@@ -140,6 +141,9 @@ export class Conversation extends Specable {
 
     }
     async rename() {
+
+    }
+    async deleteMessagesInBulk() {
 
     }
 

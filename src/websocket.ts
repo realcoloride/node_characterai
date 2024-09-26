@@ -28,6 +28,7 @@ export interface ICAIWebsocketCommand {
     command: string,
     expectedReturnCommand?: string,
     originId: 'Android' | 'web-next',
+    waitForAIResponse?: boolean,
     streaming: boolean
     payload: any,
 }

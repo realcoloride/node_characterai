@@ -56,13 +56,10 @@ const generateBaseSendingPayload = (
 }};
 
 export default class DMConversation extends Conversation {
-
-    async sendMessage(content: string, options?: ICAIMessageSending): Promise<Message | undefined> {
+    async sendMessage(content: string, options?: ICAIMessageSending): Promise<Message> {
         this.client.checkAndThrow(CheckAndThrow.RequiresToBeInDM);
-        if (this.frozen) {
+        if (this.frozen)
             Warnings.show("sendingFrozen");
-            return;
-        }
         
         // manual turn is FALSE by default
         const request = await this.client.sendDMWebsocketCommandAsync({
@@ -82,7 +79,7 @@ export default class DMConversation extends Conversation {
             )
         })
         
-        // todo
+        // here we should receive OUR message not theirs if selected. im not sure how to do this but i will see
         return this.addMessage(new Message(this.client, request.turn));
     }
 };
