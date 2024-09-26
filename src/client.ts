@@ -14,9 +14,10 @@ import { GroupChats } from './groupchat/groupChats';
 export enum CheckAndThrow {
     RequiresAuthentication = 0,
     RequiresNoAuthentication,
+    RequiresToBeConnected,
     RequiresToBeInDM,
     RequiresToBeInGroupChat,
-    RequiresToBeInNoConversation
+    RequiresToNotBeConnected
 }
 
 export default class CharacterAI extends EventEmitter {
@@ -279,14 +280,14 @@ WARNING: CharacterAI has changed its authentication methods again.
         requiresAuthenticatedMessage: string = "You must be authenticated to do this."
     ) {
         if ((argument == CheckAndThrow.RequiresAuthentication || 
-             argument >= CheckAndThrow.RequiresToBeInDM) && !this.authenticated) 
+             argument >= CheckAndThrow.RequiresToBeConnected) && !this.authenticated) 
             throw Error(requiresAuthenticatedMessage);
 
         if (argument == CheckAndThrow.RequiresNoAuthentication && this.authenticated) 
             throw Error("Already authenticated");
 
         const { connectionType } = this;
-        if (argument == CheckAndThrow.RequiresToBeInNoConversation && connectionType != CAIWebsocketConnectionType.Disconnected)
+        if (argument == CheckAndThrow.RequiresToNotBeConnected && connectionType != CAIWebsocketConnectionType.Disconnected)
             throw Error(`You are already in a ${(connectionType == CAIWebsocketConnectionType.DM ? "DM" : "group chat")} conversation. Please disconnect from your current conversation (using characterAI.currentConversation.close()) to create and follow a new one.`);
         
         if (argument == CheckAndThrow.RequiresToBeInDM && connectionType != CAIWebsocketConnectionType.DM) 

@@ -84,8 +84,10 @@ export class Message extends Specable {
     public get primaryCandidateId() { return this.primary_candidate_id; }
     public set primaryCandidateId(value) { this.primary_candidate_id = value; }
 
-    async edit() {
+    async edit(newContent: string) {
+        this.client.checkAndThrow(CheckAndThrow.RequiresToBeConnected);
 
+        const request = await this.client.sendDMWebsocketCommandAsync();
     }
     async pin() {
 
