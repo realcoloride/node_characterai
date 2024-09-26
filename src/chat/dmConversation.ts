@@ -77,6 +77,6 @@ export default class DMConversation extends Conversation {
         })
 
         console.log(request);
-        return new Message(); // todo
+        return new Message(this.client, {}); // todo
     }
 };

@@ -2,7 +2,7 @@ import Jimp from 'jimp';
 import CharacterAI, { CheckAndThrow } from '../client';
 import Parser from '../parser';
 import { PathLike } from 'fs';
-import { getterProperty, hiddenProperty } from '../character/character';
+import { getterProperty, hiddenProperty } from '../utils/specable';
 const baseEndpoint = "https://characterai.io/i/200/static/avatars/";
 
 // class to contain cai related images

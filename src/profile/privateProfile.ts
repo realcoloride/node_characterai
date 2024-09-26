@@ -6,7 +6,7 @@ import { CAIImage, EditableCAIImage } from "../utils/image";
 import { PrivateProfileCharacter, PublicProfileCharacter } from "./profileCharacter";
 import { PublicProfile } from "./publicProfile";
 import ObjectPatcher from "../utils/patcher";
-import { getterProperty, hiddenProperty } from "../character/character";
+import { getterProperty, hiddenProperty } from "../utils/specable";
 
 export interface IProfileModification {
     // username

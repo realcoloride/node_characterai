@@ -1,7 +1,9 @@
-import { getterProperty, hiddenProperty } from "../character/character";
+import { getterProperty, hiddenProperty, Specable } from "../utils/specable";
 import CharacterAI, { CheckAndThrow } from "../client";
+import Parser from "../parser";
 import { CAIImage } from "../utils/image";
 import ObjectPatcher from "../utils/patcher";
+import Warnings from "../warnings";
 import { Message } from "./message";
 
 export interface ICAIConversationCreation {
@@ -23,11 +25,13 @@ export interface ICAIMessageSending {
     image?: CAIImage
 };
 
-export class Conversation {
+export class Conversation extends Specable {
     @hiddenProperty
     protected client: CharacterAI;
 
-    public maxMessagesStored = 200; // max messages stored before it enters into a snake like thing to delete the oldest messages from memory
+    // max messages stored before it enters into a snake like thing to delete the oldest messages from memory. 
+    // must be a multiple of 50.
+    public maxMessagesStored = 200;
     public messages: Message[] = [];
 
     // chat_id
@@ -75,12 +79,60 @@ export class Conversation {
         return await this.client.fetchProfileByUsername(this.creator_id)
     }
 
-    // keeps up to date with messages
-    async fetchMessages() {
+    private frozen = false; // <- if refreshing, operations will be frozen
 
+    private async getTurnsBatch(nextToken?: string) {
+        const query = encodeURIComponent(nextToken ? `?next_token=${nextToken}}` : "");
+        console.log("THIS:", this)
+        const request = await this.client.requester.request(`https://neo.character.ai/chats/recent/${this.chatId}/${query}`, {
+            method: 'GET',
+            includeAuthorization: true
+        });
+        const response = await Parser.parseJSON(request);
+        if (!request.ok) throw new Error(response);
+        console.log(response);
+
+        return response;
+    }
+    
+    // responsible for checking if we reached the limit to avoid too much memory usage
+    private async addMessage(message: Message) {
+        // messages are always ranked from more recent to oldest
+        if (this.messages.length == this.maxMessagesStored) {
+            Warnings.show("reachedMaxMessages");
+            // remove last
+            this.messages.pop();
+        }
+
+        // add to front
+        this.messages.unshift(message);
+    }
+
+    // keeps up to date with messages. this WILL wipe old messages
+    async refreshMessages() {
+        const { maxMessagesStored } = this;
+        if (maxMessagesStored % 50 != 0) 
+            throw Error("Max messages to store must be a multiple of 50.");
+        
+        this.frozen = true;
+        this.messages = [];
+
+        let nextToken: string | undefined = undefined;
+
+        for (let i = 0; i < maxMessagesStored; i += 50) {
+            const response = await this.getTurnsBatch();
+            const { turns } = response;
+            if (!turns) break;
+            nextToken = response?.meta?.next_token;
+            
+            for (let j = 0; j < turns.length; j++) 
+                this.addMessage(new Message(this.client, turns[i]));
+        }  
+        
+        this.frozen = false;
     }
     async sendMessage(message: string, options?: ICAIMessageSending): Promise<Message> {
-        return new Message();
+        return new Message(this.client, {});
     }
 
     async archive() {
@@ -99,6 +151,7 @@ export class Conversation {
     }
 
     constructor(client: CharacterAI, information: any) {
+        super();
         this.client = client;
         ObjectPatcher.patch(this.client, this, information);
         console.log("creating from ", information)

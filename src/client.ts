@@ -114,6 +114,7 @@ export default class CharacterAI extends EventEmitter {
             // todo checking
             this._connectionType = CAIWebsocketConnectionType.GroupChat;
             this._currentConversation = new GroupChatConversation(this, request);
+            await this._currentConversation.refreshMessages();
             return this._currentConversation;
         }
 
@@ -124,10 +125,8 @@ export default class CharacterAI extends EventEmitter {
                 includeAuthorization: true
             });
             const fetchRecentResponse = await Parser.parseJSON(fetchRecentRequest);
-            console.log("fetch rep" , fetchRecentResponse);
             if (!fetchRecentRequest.ok) throw new Error(fetchRecentResponse);
 
-            // todo set id from first AAAAA fetchRecentResponse.chats[];
             specificChatObject = fetchRecentResponse.chats[0];
         }
 
@@ -143,6 +142,7 @@ export default class CharacterAI extends EventEmitter {
         if (!resurectionRequest.ok) throw new Error(resurectionResponse);
 
         this._currentConversation = new DMConversation(this, specificChatObject);
+        await this._currentConversation.refreshMessages();
         return this._currentConversation;
     }
 
@@ -215,7 +215,10 @@ export default class CharacterAI extends EventEmitter {
         if (!request.ok) throw new Error(response);
         const data = response.chat;
 
-        return raw ? data : new Conversation(this, data);
+        const conversation = raw ? data : new Conversation(this, data);
+        if (!raw) await conversation.refreshMessages();
+
+        return conversation;
     }
 
     // authentication

@@ -1,7 +1,8 @@
-import { Character, hiddenProperty } from "../character/character";
+import { hiddenProperty } from "../utils/specable";
 import CharacterAI from "../client";
 import { EditableCAIImage } from "../utils/image";
 import { PrivateProfile } from "./privateProfile";
+import { Character } from "../character/character";
 
 export class PublicProfileCharacter extends Character {
 

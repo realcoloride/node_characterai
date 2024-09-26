@@ -3,7 +3,7 @@ import CharacterAI, { CheckAndThrow } from '../client';
 import { CAIImage as CAIImage } from '../utils/image';
 import ObjectPatcher from '../utils/patcher';
 import { PublicProfileCharacter } from './profileCharacter';
-import { getterProperty, hiddenProperty } from '../character/character';
+import { getterProperty, hiddenProperty } from '../utils/specable';
 
 class ProfileVoices {
 

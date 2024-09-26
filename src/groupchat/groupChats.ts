@@ -1,6 +1,8 @@
+import { hiddenProperty } from "../utils/specable";
 import CharacterAI from "../client";
 
 export class GroupChats {
+    @hiddenProperty
     private client: CharacterAI;
 
     // fetching
@@ -8,7 +10,7 @@ export class GroupChats {
 
     }
     async fetchGroupChats() {
-        
+
     }
 
     // management

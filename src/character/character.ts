@@ -1,37 +1,17 @@
 import DMConversation from "../chat/dmConversation";
 import CharacterAI, { CheckAndThrow } from "../client";
-import Parser from "../parser";
 import { PrivateProfile } from "../profile/privateProfile";
 import { PublicProfile } from "../profile/publicProfile";
 import { CAIImage as CAIImage } from "../utils/image";
 import ObjectPatcher from "../utils/patcher";
+import { getterProperty, hiddenProperty, Specable } from "../utils/specable";
 import { CharacterVisibility } from "../utils/visbility";
-import { CAIWebsocketConnectionType } from "../websocket";
 import { v4 as uuidv4 } from 'uuid';
 
 export enum CharacterVote {
     None,
     Like,
     Dislike
-};
-
-// makes it hidden from debug
-const serializableFieldsSymbol = Symbol('serializableFields');
-
-export function hiddenProperty(target: any, propertyKey: string) {
-    if (!target.constructor[serializableFieldsSymbol])
-        target.constructor[serializableFieldsSymbol] = [];
-
-    target.constructor[serializableFieldsSymbol].push({ propertyKey, show: false });
-};
-
-// for getters
-export function getterProperty(target: any, propertyKey: string) {
-    if (!target.constructor[serializableFieldsSymbol])
-        target.constructor[serializableFieldsSymbol] = [];
-
-    const fieldName = propertyKey;
-    target.constructor[serializableFieldsSymbol].push({ propertyKey, show: true, fieldName });
 };
 
 export interface ICharacterDMCreation {
@@ -48,7 +28,7 @@ export interface ICharacterGroupChatCreation {
     withGreeting: boolean
 };
 
-export class Character {
+export class Character extends Specable {
     @hiddenProperty
     protected client: CharacterAI;
 
@@ -212,7 +192,7 @@ export class Character {
                     with_greeting: options.withGreeting
                 }
             })
-            
+
             chatObject = request[0].chat;
         }
 
@@ -245,29 +225,9 @@ export class Character {
 
     // todo remember to load avatar
     constructor(client: CharacterAI, information: any) {
+        super();
         this.client = client;
         this.avatar = new CAIImage(client);
         ObjectPatcher.patch(this.client, this, information);
     }
-    [Symbol.for('nodejs.util.inspect.custom')]() {
-        const serializedData: any = {};
-        
-        const decoratedFields = (this as any).constructor[serializableFieldsSymbol] || [];
-        const allFields = Object.keys(this);
-    
-        for (const field of decoratedFields) {
-            if (!field.show) continue; 
-    
-            const fieldName = field.fieldName || field.propertyKey;
-            serializedData[fieldName] = (this as any)[field.propertyKey];
-        }
-    
-        for (const field of allFields) {
-            if (!decoratedFields.some((decorated: any) => decorated.propertyKey === field))
-                serializedData[field] = (this as any)[field];
-        }
-    
-        return serializedData;
-    }
 }
-
