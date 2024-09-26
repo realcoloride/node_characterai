@@ -119,7 +119,7 @@ export class Conversation extends Specable {
         let nextToken: string | undefined = undefined;
 
         for (let i = 0; i < maxMessagesStored / 50; i += 50) {
-            const response = await this.getTurnsBatch();
+            const response = await this.getTurnsBatch(nextToken);
             const { turns } = response;
             if (!turns) break;
             nextToken = response?.meta?.next_token;
@@ -134,22 +134,23 @@ export class Conversation extends Specable {
         return new CAIMessage(this.client, this, {});
     }
 
-    async archive() {
+    async getPinnedMessages() {
+        
+    }
+
+    async rename(newName: string) {
+        
+    }
+    async deleteMessagesInBulk(messages: number | string[] | CAIMessage[]) {
 
     }
-    async duplicate() {
-
-    }
-    async rename() {
-
-    }
-    async deleteMessagesInBulk() {
-
+    async reset() {
+        
     }
 
     // disconnects from room
     async close() {
-        
+        // todo
     }
 
     constructor(client: CharacterAI, information: any) {

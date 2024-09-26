@@ -1,4 +1,5 @@
 import { CheckAndThrow } from "../client";
+import Parser from "../parser";
 import Warnings from "../warnings";
 import { Conversation, ICAIMessageSending } from "./conversation";
 import { CAIMessage } from "./message";
@@ -56,6 +57,53 @@ const generateBaseSendingPayload = (
 }};
 
 export default class DMConversation extends Conversation {
+    async archive() {
+        this.client.checkAndThrow(CheckAndThrow.RequiresAuthentication);
+        
+        const request = await this.client.requester.request(`https://neo.character.ai/chat/${this.chatId}/archive`, {
+            method: 'PATCH',
+            includeAuthorization: true,
+            contentType: 'application/json'
+        });
+
+        const response = await Parser.parseJSON(request);
+        if (!request.ok) throw new Error(response);
+
+        await this.close();
+    }
+    async unarchive(openConversationRightAfter: boolean) {
+        this.client.checkAndThrow(CheckAndThrow.RequiresAuthentication);
+        
+        const request = await this.client.requester.request(`https://neo.character.ai/chat/${this.chatId}/unarchive`, {
+            method: 'PATCH',
+            includeAuthorization: true,
+            contentType: 'application/json'
+        });
+
+        const response = await Parser.parseJSON(request);
+        if (!request.ok) throw new Error(response);
+
+        if (!openConversationRightAfter) return;
+        await this.client.connectToDMConversationDirectly(this);
+    }
+    async duplicate() {
+        
+    }
+
+    async rename(newName: string) {
+        this.client.checkAndThrow(CheckAndThrow.RequiresAuthentication);
+        
+        const request = await this.client.requester.request(`https://neo.character.ai/chat/${this.chatId}/update_name`, {
+            method: 'PATCH',
+            includeAuthorization: true,
+            body: Parser.stringify({ name: newName }),
+            contentType: 'application/json'
+        });
+
+        const response = await Parser.parseJSON(request);
+        if (!request.ok) throw new Error(response);
+    }
+
     async sendMessage(content: string, options?: ICAIMessageSending): Promise<CAIMessage> {
         this.client.checkAndThrow(CheckAndThrow.RequiresToBeInDM);
         if (this.frozen)

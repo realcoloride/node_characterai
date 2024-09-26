@@ -151,19 +151,23 @@ export default class CharacterAI extends EventEmitter {
             specificChatObject = fetchRecentResponse.chats[0];
         }
 
-        this._connectionType = CAIWebsocketConnectionType.DM;
-
+        return await this.connectToDMConversationDirectly(new DMConversation(this, specificChatObject));
+    }
+    async connectToDMConversationDirectly(conversation: DMConversation) {
+        this.checkAndThrow(CheckAndThrow.RequiresToNotBeConnected);
+        
         // ressurect convo from the dead
-        const resurectionRequest = await this.requester.request(`https://neo.character.ai/chats/recent/${id}`, {
+        const resurectionRequest = await this.requester.request(`https://neo.character.ai/chats/recent/${conversation.chatId}`, {
             method: 'GET',
             includeAuthorization: true
         });
-
         const resurectionResponse = await Parser.parseJSON(resurectionRequest);
         if (!resurectionRequest.ok) throw new Error(resurectionResponse);
 
-        this._currentConversation = new DMConversation(this, specificChatObject);
+        this._currentConversation = conversation;
         await this._currentConversation.refreshMessages();
+        this._connectionType = CAIWebsocketConnectionType.DM;
+
         return this._currentConversation;
     }
     disconnectFromConversation() {

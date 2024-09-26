@@ -1,3 +1,4 @@
+import IDMCollection from "../chat/dmCollection";
 import DMConversation from "../chat/dmConversation";
 import CharacterAI, { CheckAndThrow } from "../client";
 import { PrivateProfile } from "../profile/privateProfile";
@@ -167,6 +168,12 @@ export class Character extends Specable {
     public upvotes = 0;
 
     /// features
+    async getDMs(): Promise<IDMCollection> {
+        // todo
+        return {
+
+        }
+    }
     async DM(options: ICharacterDMCreation): Promise<DMConversation> {
         this.client.checkAndThrow(CheckAndThrow.RequiresAuthentication);
 
@@ -196,7 +203,7 @@ export class Character extends Specable {
             chatObject = request[0].chat;
         }
 
-        return await this.client.connectToConversation(this.characterId, false, chatObject);
+        return await this.client.connectToConversation(this.characterId, false, chatObject) as DMConversation;
     }
     async createGroupChat(options: ICharacterGroupChatCreation) {
         this.client.checkAndThrow(CheckAndThrow.RequiresAuthentication);

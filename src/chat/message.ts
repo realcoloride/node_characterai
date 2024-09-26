@@ -169,7 +169,13 @@ export class CAIMessage extends Specable {
     async pin() {
 
     }
+    async unpin() {
+        
+    }
     async copyFromHere() {
+
+    }
+    async rewindFromHere() {
 
     }
     async delete() {
