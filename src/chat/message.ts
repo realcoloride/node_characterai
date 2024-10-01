@@ -166,11 +166,14 @@ export class CAIMessage extends Specable {
     async getMessageAfter() {
 
     }
+    async isPinned() {
+        
+    }
     async pin() {
 
     }
     async unpin() {
-        
+
     }
     async copyFromHere() {
 
