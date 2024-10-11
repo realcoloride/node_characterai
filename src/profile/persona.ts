@@ -1,22 +1,10 @@
 import { Character } from "../character/character";
+import CharacterAI from "../client";
+import Parser from "../parser";
 import { CAIImage } from "../utils/image";
+import { hiddenProperty, Specable } from "../utils/specable";
+import { CharacterVisibility } from "../utils/visbility";
 
-class ProfilePersonas {
-    getPersonas() {
-
-    }
-
-    setDefaultPersona(persona: Persona) {
-
-    }
-    setDefaultPersonaWithIdentifier(identifier: string) {
-        
-    }
-
-    addPersona(persona: Persona, makeDefaultForChats: boolean) {
-
-    }
-}
 
 interface IPersona extends IDefaultCharacter {
     background?: string,
@@ -28,7 +16,67 @@ interface IPersonaCreationOptions {
     picture?: CAIImage
 }
 
-class Persona extends Character {
+class ProfilePersonas extends Specable {
+    @hiddenProperty
+    private client: CharacterAI;
+
+    constructor(client: CharacterAI) {
+        super();
+        this.client = client;
+    }
+
+    async getPersonas() {
+
+    }
+
+    async setDefaultPersona(persona: Persona) {
+        return await this.setDefaultPersonaWithIdentifier(persona.identifier);
+    }
+    async setDefaultPersonaWithIdentifier(identifier: string) {
+        const request = await this.client.requester.request(`https://neo.character.ai/chats/recent/${conversation.chatId}`, {
+            method: 'POST',
+            includeAuthorization: true,
+            body: Parser.stringify({
+                
+            })
+        });
+    }
+
+    createPersona(persona: IPersonaCreationOptions, makeDefaultForChats: boolean) {
+
+    }
+    removePersona(persona: Persona) {
+
+    }
+}
+
+class Persona extends Specable {
+    @hiddenProperty
+    private client: CharacterAI;
+
+    // avatar_file_name
+    public avatar: CAIImage;
+
+    // copyable
+    @hiddenProperty
+    private copyable = false;
+
+    // default_voice_id
+    private default_voice_id = "";
+
+    // definition
+    definition;
+    external_id;
+    greeting;
+    img_gen_enabled = false;
+    is_persona = true;
+    participant__name = "";
+    participant__num_interactions = 0;
+    title = "";
+    user__id;
+    user__username;
+    visibility: string = "PRIVATE";
+
 
     /* persona fields */ 
     categories = []; // TODO: type this
@@ -36,10 +84,22 @@ class Persona extends Character {
 
     background = "";
 
+    async edit() {
+        const resurectionRequest = await this.requester.request(``, {
+            method: 'GET',
+            includeAuthorization: true
+        });
+    }
+
+    async makeDefault() {
+
+    }
+    async remove() {
+
+    }
+
     constructor(options: IPersonaCreationOptions | IPersona) {
         super();
-        this.load(options);
-        this.setIfExists("background", options.background);
 
         if (!options.picture) return;
 

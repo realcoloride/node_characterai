@@ -62,7 +62,7 @@ export class Character extends Specable {
     public avatar: CAIImage;
 
     // songs (no type found)
-    public songs = [];
+    public songs: any[] = [];
 
     // img_gen_enabled
     @hiddenProperty
