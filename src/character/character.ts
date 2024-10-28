@@ -1,6 +1,8 @@
 import IDMCollection from "../chat/dmCollection";
 import DMConversation from "../chat/dmConversation";
+import { PreviewDMConversation } from "../chat/previewDMConversation";
 import CharacterAI, { CheckAndThrow } from "../client";
+import Parser from "../parser";
 import { PrivateProfile } from "../profile/privateProfile";
 import { PublicProfile } from "../profile/publicProfile";
 import { CAIImage as CAIImage } from "../utils/image";
@@ -8,6 +10,7 @@ import ObjectPatcher from "../utils/patcher";
 import { getterProperty, hiddenProperty, Specable } from "../utils/specable";
 import { CharacterVisibility } from "../utils/visbility";
 import { v4 as uuidv4 } from 'uuid';
+import { ReportCharacterReason } from "./reportCharacter";
 
 export enum CharacterVote {
     None,
@@ -116,7 +119,8 @@ export class Character extends Specable {
     // short_hash
     public usage = "default";
 
-    //definition: string = "";
+    // definition
+    public definition = "";
 
     // default_voice_id TODO SWITCH TO VOICE INSTANCE
     @hiddenProperty
@@ -168,11 +172,29 @@ export class Character extends Specable {
     public upvotes = 0;
 
     /// features
-    async getDMs(): Promise<IDMCollection> {
-        // todo
-        return {
+    async getDMs(turnPreviewCount: number = 2, refreshChats: boolean = false): Promise<PreviewDMConversation[]> {
+        // refresh chats refreshes for get dms, might make longer
+        const request = await this.client.requester.request(`https://neo.character.ai/chats/?character_ids=${this.characterId}?num_preview_turns=${turnPreviewCount}`, {
+            method: 'GET',
+            includeAuthorization: true,
+            contentType: 'application/json'
+        });
 
+        const response = await Parser.parseJSON(request);
+        if (!request.ok) throw new Error(response);
+
+        const { chats } = response;
+        const dms: PreviewDMConversation[] = [];
+
+        for (let i = 0; i < chats.length; i++) {
+            const conversation = new PreviewDMConversation(this.client, chats[i]);
+            dms.push(conversation);
+
+            if (!refreshChats) continue;
+            await conversation.refreshMessages();
         }
+        
+        return dms;
     }
     async DM(options: ICharacterDMCreation): Promise<DMConversation> {
         this.client.checkAndThrow(CheckAndThrow.RequiresAuthentication);
@@ -208,6 +230,7 @@ export class Character extends Specable {
     async createGroupChat(options: ICharacterGroupChatCreation) {
         this.client.checkAndThrow(CheckAndThrow.RequiresAuthentication);
 
+        
         // todo
     }
     async getAuthorProfile(): Promise<PublicProfile | PrivateProfile> {
@@ -228,6 +251,25 @@ export class Character extends Specable {
     async hide() { // /chat/character/hide
         this.client.checkAndThrow(CheckAndThrow.RequiresAuthentication);
 
+    }
+
+    async report(reason: ReportCharacterReason, additionalDetails = ""): Promise<string> {
+        const request = await this.client.requester.request(`https://neo.character.ai/report/create`, {
+            method: 'POST',
+            body: Parser.stringify({
+                category: reason as string,
+                comments: additionalDetails,
+                reported_resource_id: this.characterId,
+                type: "CHARACTER"
+            }),
+            includeAuthorization: true,
+            contentType: 'application/json'
+        });
+
+        const response = await Parser.parseJSON(request);
+        if (!request.ok) throw new Error(response);
+
+        return response.report.report_id;
     }
 
     // todo remember to load avatar

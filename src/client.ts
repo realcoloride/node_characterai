@@ -201,9 +201,26 @@ export default class CharacterAI extends EventEmitter {
         this.throwBecauseNotAvailableYet();
     }
     // character fetching
-    async searchCharacter(query: string, suggested: boolean = false) {
+    async searchCharacter(query: string, suggested: boolean = false): Promise<Character[]> {
         this.checkAndThrow(CheckAndThrow.RequiresAuthentication);
 
+        const encodedQuery = encodeURIComponent(Parser.stringify({
+            "0": {"json": {"searchQuery": "character"}}
+        }));
+
+        const request = await this.requester.request(`https://character.ai/api/trpc/search.search?batch=1&input=${encodedQuery}`, {
+            method: 'GET',
+            includeAuthorization: true,
+            contentType: 'application/json'
+        });
+
+        const response = await Parser.parseJSON(request);
+        if (!request.ok) throw new Error(response);
+
+        let characters: Character[] = [];
+
+
+        return characters;
     }
     async fetchCharacter(characterId: string) {
         this.checkAndThrow(CheckAndThrow.RequiresAuthentication);
