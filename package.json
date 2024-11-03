@@ -35,8 +35,8 @@
   "dependencies": {
     "@types/json-bigint": "^1.0.4",
     "@types/uuid": "^10.0.0",
-    "jimp": "^0.22.12",
     "json-bigint": "^1.0.0",
+    "sharp": "^0.33.5",
     "uuid": "^10.0.0",
     "ws": "^8.18.0"
   }

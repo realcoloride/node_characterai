@@ -209,7 +209,7 @@ export default class CharacterAI extends EventEmitter {
             "0": {"json": {"searchQuery": "character"}}
         }));
 
-        /* TODO!
+        /* TODO! 
         const request = await this.requester.request(`https://character.ai/api/trpc/search.search?batch=1&input=${encodedQuery}`, {
             method: 'GET',
             includeAuthorization: true,
@@ -322,6 +322,8 @@ WARNING: CharacterAI has changed its authentication methods again.
 
         // connect to endpoints
         await this.openWebsockets();
+
+        this.emit('ready');
     }
 
     unauthenticate() {

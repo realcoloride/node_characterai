@@ -1,8 +1,9 @@
-import Jimp from 'jimp';
 import CharacterAI, { CheckAndThrow } from '../client';
 import Parser from '../parser';
 import { PathLike } from 'fs';
 import { getterProperty, hiddenProperty } from '../utils/specable';
+import sharp from 'sharp';
+
 const baseEndpoint = "https://characterai.io/i/200/static/avatars/";
 
 // class to contain cai related images
@@ -24,17 +25,17 @@ export class CAIImage {
 
     // cannot be set
     @hiddenProperty
-    private jimpImage?: Jimp = undefined;
+    private sharpImage?: sharp.Sharp = undefined;
     // if image is loaded
     @hiddenProperty
     private loaded: boolean = false;
     
     // to do image operations
-    async getJimpImage() {
-        if (this.loaded) return this.jimpImage;
+    async getSharpImage() {
+        if (this.loaded) return this.sharpImage;
 
         await this.load();
-        return this.jimpImage;
+        return this.sharpImage;
     }
 
     getFullUrl() { return `${baseEndpoint}${this.endpointUrl}`; }
@@ -73,10 +74,16 @@ export class CAIImage {
         if (this.changeCallback) await this.changeCallback();
     }
     
+    private async makeSharpImage(url: string): Promise<sharp.Sharp> {
+        const response = await fetch(url);
+        const imageBuffer = await response.arrayBuffer();
+        return sharp(imageBuffer);
+    }
+
     async changeToUrl(pathOrUrl: string) {
         this.loaded = false;
 
-        this.jimpImage = await Jimp.read(pathOrUrl);
+        this.sharpImage = await this.makeSharpImage(pathOrUrl);
         this._endpointUrl = await this.upload();
         this.loaded = true;
 
@@ -100,7 +107,7 @@ export class CAIImage {
     private async load() {
         this.client.checkAndThrow(CheckAndThrow.RequiresAuthentication);
 
-        this.jimpImage = await Jimp.read(this.getFullUrl());
+        this.sharpImage = await this.makeSharpImage(this.getFullUrl());
         this.loaded = true;
     }
 

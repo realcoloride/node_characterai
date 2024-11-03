@@ -1,4 +1,3 @@
-import Jimp from "jimp";
 import { ICharacterCreation } from "../character/modification";
 import CharacterAI, { CheckAndThrow } from "../client";
 import Parser from "../parser";
