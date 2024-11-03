@@ -1,4 +1,4 @@
-export enum ReportCharacter {
+export enum ReportCharacterReason {
     ThreatsAndHarassment = "ABUSE",
     ExcessiveViolence = "VIOLENCE",
     FalseStatements = "FALSITY",

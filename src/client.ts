@@ -10,6 +10,7 @@ import GroupChatConversation from './groupchat/groupChatConversation';
 import { Character } from './character/character';
 import { v4 as uuidv4 } from 'uuid';
 import { GroupChats } from './groupchat/groupChats';
+import { RecentCharacter } from './character/recentCharacter';
 
 export enum CheckAndThrow {
     RequiresAuthentication = 0,
@@ -208,6 +209,7 @@ export default class CharacterAI extends EventEmitter {
             "0": {"json": {"searchQuery": "character"}}
         }));
 
+        /* TODO!
         const request = await this.requester.request(`https://character.ai/api/trpc/search.search?batch=1&input=${encodedQuery}`, {
             method: 'GET',
             includeAuthorization: true,
@@ -217,10 +219,9 @@ export default class CharacterAI extends EventEmitter {
         const response = await Parser.parseJSON(request);
         if (!request.ok) throw new Error(response);
 
-        let characters: Character[] = [];
+        let characters: Character[] = [];*/
 
-
-        return characters;
+        return [];
     }
     async fetchCharacter(characterId: string) {
         this.checkAndThrow(CheckAndThrow.RequiresAuthentication);
@@ -237,19 +238,41 @@ export default class CharacterAI extends EventEmitter {
         return new Character(this, response.character);
     }
 
+    // https://neo.character.ai/recommendation/v1/
+    private async automateCharactersRecommendation<T extends Character>(
+        endpoint: string,
+        CharacterClass: new (...args: any[]) => T,
+        key: string = "characters",
+        baseEndpoint: string = "https://neo.character.ai/recommendation/v1/"
+    ): Promise<T[]> {
+        const request = await this.requester.request(`${baseEndpoint}${endpoint}`, {
+            method: 'GET',
+            includeAuthorization: true,
+            contentType: 'application/json'
+        });
+
+        const response = await Parser.parseJSON(request);
+        if (!request.ok) throw new Error(response);
+
+        const characters = response[key];
+        let targetCharacters: T[] = [];
+        
+        for (let id = 0; id < characters.length; id++) 
+            targetCharacters.push(new CharacterClass(this, characters[id]))
+
+        return targetCharacters;
+    }
+
     // suggestions/discover
-    async getFeaturedCharacters() {
 
-    }
-    async getRecommendedCharactersForYou() {
-
-    }
-    async getCharacterCategories() {
-
-    }
-    async getRecentCharacters() {
-
-    }
+    // /featured
+    async getFeaturedCharacters() { return await this.automateCharactersRecommendation("featured", Character); }
+    // /user
+    async getRecommendedCharactersForYou() { return await this.automateCharactersRecommendation("user", Character); }
+    // TODO
+    async getCharacterCategories() { return this.throwBecauseNotAvailableYet(); }
+    // https://neo.character.ai/chats/recent/
+    async getRecentCharacters() { return await this.automateCharactersRecommendation("https://neo.character.ai/chats/recent/", RecentCharacter, "chats", ""); }
 
     // conversations
     // raw is the raw output else the convo instance

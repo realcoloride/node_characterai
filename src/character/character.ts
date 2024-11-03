@@ -36,9 +36,12 @@ export class Character extends Specable {
     @hiddenProperty
     protected client: CharacterAI;
 
-    // external_id
+    // external_id / character_id
     @hiddenProperty
     private external_id = "";
+    @hiddenProperty
+    private set character_id(value: any) { this.external_id = value; }
+
     public get characterId() { return this.external_id; }
     public set characterId(value) { this.external_id = value; }
 
@@ -51,8 +54,11 @@ export class Character extends Specable {
     // identifier
     public identifier: string = "";
 
-    // visbility
+    // character_visibility / visbility
     public visibility: CharacterVisibility = CharacterVisibility.Public;
+
+    @hiddenProperty
+    private set character_visibility(value: CharacterVisibility) { this.visibility = value; }
 
     // copyable
     public copyable = false;
@@ -137,12 +143,15 @@ export class Character extends Specable {
     private name?: string = undefined;
     @hiddenProperty
     private participant__user__username?: string = undefined;
+    @hiddenProperty
+    private character_name?: string = undefined;
     @getterProperty
-    public get displayName() { return this.participant__name ?? this.name ?? this.participant__user__username; }
+    public get displayName() { return this.participant__name ?? this.name ?? this.participant__user__username ?? this.character_name; }
     public set displayName(value) { 
         if (this.participant__name) this.participant__name = value;
         if (this.name) this.name = value;
-        if (this.participant__user__username) this.participant__user__username == value;
+        if (this.participant__user__username) this.participant__user__username = value;
+        if (this.character_name) this.character_name = value;
     }
 
     // user__username / aka author
@@ -162,14 +171,22 @@ export class Character extends Specable {
         if (this.num_interactions) this.num_interactions = value;
     }
 
-    // user_id
+    // user_id / creator_id
     @hiddenProperty
     private user__id = 0;
+    @hiddenProperty
+    private set creator_id(value: any) { this.user__id = value;}
+
     public get userId() { return this.user__id; }
     public set userId(value) { this.user__id = value; }
 
     // upvotes
     public upvotes = 0;
+
+    // translations / character_translations
+    public translations: any = null;
+    @hiddenProperty
+    private set character_translations(value: any) { this.translations = value; }
 
     /// features
     async getDMs(turnPreviewCount: number = 2, refreshChats: boolean = false): Promise<PreviewDMConversation[]> {
@@ -275,6 +292,7 @@ export class Character extends Specable {
     // todo remember to load avatar
     constructor(client: CharacterAI, information: any) {
         super();
+        console.log(information);
         this.client = client;
         this.avatar = new CAIImage(client);
         ObjectPatcher.patch(this.client, this, information);
