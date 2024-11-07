@@ -175,10 +175,14 @@ export class Character extends Specable {
     @hiddenProperty
     private user__id = 0;
     @hiddenProperty
-    private set creator_id(value: any) { this.user__id = value;}
+    private set creator_id(value: any) { this.user__id = value; }
 
     public get userId() { return this.user__id; }
     public set userId(value) { this.user__id = value; }
+
+    // is_licensed_professional
+    @hiddenProperty
+    private is_licensed_professional = false;
 
     // upvotes
     public upvotes = 0;
@@ -289,10 +293,8 @@ export class Character extends Specable {
         return response.report.report_id;
     }
 
-    // todo remember to load avatar
     constructor(client: CharacterAI, information: any) {
         super();
-        console.log(information);
         this.client = client;
         this.avatar = new CAIImage(client);
         ObjectPatcher.patch(this.client, this, information);

@@ -6,6 +6,7 @@ import { CAIWebsocketConnectionType } from "../websocket";
 import { v4 as uuidv4 } from 'uuid';
 import { Candidate, EditedCandidate } from "./candidate";
 import { Conversation } from "./conversation";
+import Parser from "../parser";
 
 export class CAIMessage extends Specable {
     @hiddenProperty
@@ -23,6 +24,11 @@ export class CAIMessage extends Specable {
         chatId: this.turn_key.chat_id,
         turnId: this.turn_key.turn_id,
     }; }
+
+    @getterProperty
+    public get turnId() { return this.turnKey.turnId; }
+    @getterProperty
+    public get chatId() { return this.turnKey.chatId; }
 
     // create_time
     @hiddenProperty
@@ -175,8 +181,22 @@ export class CAIMessage extends Specable {
     async unpin() {
 
     }
-    async copyFromHere() {
+    // https://neo.character.ai/chat/id/copy
+    async copyFromHere(): Promise<Conversation> {
+        this.client.checkAndThrow(CheckAndThrow.RequiresAuthentication);
 
+        const request = await this.client.requester.request(`https://neo.character.ai/chat/${this.conversation.chatId}/copy`, {
+            method: 'POST',
+            contentType: 'application/json',
+            body: Parser.stringify({ end_turn_id: this.turnId }),
+            includeAuthorization: true
+        });
+
+        const response = await Parser.parseJSON(request);
+        if (!request.ok) throw new Error();
+        
+        const { new_chat_id } = response;
+        return await this.client.fetchConversation(new_chat_id) as Conversation;
     }
     async rewindFromHere() {
 

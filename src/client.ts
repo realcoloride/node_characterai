@@ -276,7 +276,7 @@ export default class CharacterAI extends EventEmitter {
 
     // conversations
     // raw is the raw output else the convo instance
-    async fetchConversation(chatId: string, raw: boolean = false) {
+    async fetchConversation(chatId: string, raw: boolean = false): Promise<Conversation | any> {
         this.checkAndThrow(CheckAndThrow.RequiresAuthentication);
 
         const request = await this.requester.request(`https://neo.character.ai/chat/${chatId}/`, {
