@@ -276,7 +276,7 @@ export default class CharacterAI extends EventEmitter {
 
     // conversations
     // raw is the raw output else the convo instance
-    async fetchConversation(chatId: string, raw: boolean = false): Promise<Conversation | any> {
+    async fetchRawConversation(chatId: string) {
         this.checkAndThrow(CheckAndThrow.RequiresAuthentication);
 
         const request = await this.requester.request(`https://neo.character.ai/chat/${chatId}/`, {
@@ -285,10 +285,14 @@ export default class CharacterAI extends EventEmitter {
         });
         const response = await Parser.parseJSON(request);
         if (!request.ok) throw new Error(response);
-        const data = response.chat;
 
-        const conversation = raw ? data : new Conversation(this, data);
-        if (!raw) await conversation.refreshMessages();
+        return response.chat;
+    }
+    async fetchConversation(chatId: string): Promise<Conversation> {
+        this.checkAndThrow(CheckAndThrow.RequiresAuthentication);
+
+        const conversation = new Conversation(this, await this.fetchRawConversation(chatId));
+        await conversation.refreshMessages();
 
         return conversation;
     }

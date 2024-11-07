@@ -105,7 +105,7 @@ export class Candidate extends Specable {
     }
     async setPrimary() {
         if (this.message.primaryCandidate == this) return;
-        await this.message.switchToCandidate(this.candidateId);
+        await this.message.switchPrimaryCandidate(this.candidateId);
     }
 
     constructor(client: CharacterAI, message: CAIMessage, information: any) {

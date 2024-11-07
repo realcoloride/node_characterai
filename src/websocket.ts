@@ -77,7 +77,7 @@ export class CAIWebsocket extends EventEmitter {
                     return;
                 }
 
-                // console.log("RECEIVED", message);
+                console.log("RECEIVED", message);
                 this.emit("rawMessage", message);
             });
         });
@@ -106,11 +106,12 @@ export class CAIWebsocket extends EventEmitter {
                 // turns will allow you to know the end for streaming (is final)
                 // ws requests are turn based
                 const { request_id: requestId, command } = message;
-                const { expectedReturnCommand } = message;
+                const { expectedReturnCommand } = options;
 
                 // check for requestId (if specified)
                 if (requestId && requestId != options.expectedRequestId) return;
 
+                let isFinal = undefined;
                 try {
                     // get turn
                     switch (options.messageType) {
@@ -118,15 +119,16 @@ export class CAIWebsocket extends EventEmitter {
                         case CAIWebsocketConnectionType.GroupChat: turn = message.push?.data?.turn; break;
                     }
                     
-                    const isFinal = turn.candidates[0].is_final;
-                    const condition = options.waitForAIResponse ? !turn.author.is_human && isFinal : isFinal;
+                    isFinal = turn.candidates[0].is_final;
+                } catch {
+                    // if turn is NOT present, push to queue
+                    streamedMessage?.push(message);
+                } finally {
+                    const condition = options.waitForAIResponse ? !turn?.author?.is_human && isFinal : isFinal;
                     
                     // if expectedReturnCommand or condition is met
                     if ((expectedReturnCommand && command == expectedReturnCommand) || condition)
                         disconnectHandlerAndResolve();
-                } catch {
-                    // if turn is NOT present, push to queue
-                    streamedMessage?.push(message);
                 }
             });
             

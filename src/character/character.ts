@@ -223,7 +223,7 @@ export class Character extends Specable {
         // todo greeting
         let chatObject;
         if (options.specificChatId)
-            chatObject = await this.client.fetchConversation(options.specificChatId, true);
+            chatObject = await this.client.fetchRawConversation(options.specificChatId);
 
         // create conversation
         if (options.createNewConversation) {

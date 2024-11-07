@@ -32,8 +32,10 @@ export class Conversation extends Specable {
 
     // max messages stored before it enters into a snake like thing to delete the oldest messages from memory. 
     // must be a multiple of 50.
+    @hiddenProperty
     public maxMessagesStored = 200;
     public messages: CAIMessage[] = [];
+    @hiddenProperty
     public messageIds: string[] = [];
 
     // chat_id
@@ -234,6 +236,5 @@ export class Conversation extends Specable {
         super();
         this.client = client;
         ObjectPatcher.patch(this.client, this, information);
-        console.log("creating from ", information)
     }
 };

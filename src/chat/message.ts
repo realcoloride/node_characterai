@@ -127,7 +127,7 @@ export class CAIMessage extends Specable {
         if (!candidate) throw new Error("Candidate not found");
         return candidate;
     }
-    public getCandidates() {
+    public getCandidates(): Record<string, Candidate> {
         // create copy to avoid modification
         return {...this.candidateIdToCandidate};
     }
@@ -174,8 +174,46 @@ export class CAIMessage extends Specable {
         
     }
     // next/previous/candidate_id
-    async switchToCandidate(candidate: 'next' | 'previous' | string) {
+    async switchPrimaryCandidate(candidate: 'next' | 'previous' | string) {
+        this.client.checkAndThrow(CheckAndThrow.RequiresAuthentication);
+
+        let candidateId = candidate;
+
+        let candidates = this.getCandidates();
+        const candidateValues = Object.values(candidates);
+        const primaryCandidateIndex = Object.keys(candidates).indexOf(this.primary_candidate_id);
+
+        if (primaryCandidateIndex != -1) {
+            if (candidate == 'next') candidateId = candidateValues[primaryCandidateIndex + 1]?.candidateId ?? "";
+            if (candidate == 'previous') candidateId = candidateValues[primaryCandidateIndex - 1]?.candidateId ?? "";
+        }
         
+        if (candidateId.trim() == "") throw new Error("Cannot find the message, it is invalid or it is out of range.")
+
+        const firstRequest = await this.client.requester.request(`https://neo.character.ai/annotations/${this.conversation.chatId}/${this.turnId}/${candidateId}`, {
+            method: 'POST',
+            contentType: 'application/json',
+            body: '{}',
+            includeAuthorization: true
+        });
+        const firstResponse = await Parser.parseJSON(firstRequest);
+        if (!firstRequest.ok) throw new Error(firstResponse);
+
+        await this.client.sendDMWebsocketCommandAsync({
+            command: "update_primary_candidate",
+            originId: "Android",
+            streaming: false,
+            waitForAIResponse: true,
+            expectedReturnCommand: "ok",
+            
+            payload: {
+                candidate_id: candidateId,
+                turn_key: this.turn_key,
+            }
+        });
+
+        this.primary_candidate_id = candidate;
+        this.indexCandidates();
     }
     private getConversationMessageAfterIndex(offset: number): CAIMessage | null {
         const conversationMessageIds = this.conversation.messageIds;
@@ -203,7 +241,8 @@ export class CAIMessage extends Specable {
         return messagesAfter;
     }
 
-    async handlePin(isPinned: boolean) {
+    private async handlePin(isPinned: boolean) {
+        this.client.checkAndThrow(CheckAndThrow.RequiresAuthentication);
         if (this.isPinned == isPinned) return;
 
         await this.client.sendDMWebsocketCommandAsync({
@@ -211,7 +250,7 @@ export class CAIMessage extends Specable {
             originId: "Android",
             streaming: false,
             waitForAIResponse: false,
-            
+
             payload: {
                 turn_key: this.turn_key,
                 is_pinned: isPinned
