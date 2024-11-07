@@ -127,6 +127,6 @@ export class EditedCandidate extends Candidate {
     // editor { author_id }?
     @hiddenProperty
     private editor: any = {};
-    @getterProperty
+    @hiddenProperty
     public get editorAuthorId() { return { authorId: this.editor.author_id }; }
 };

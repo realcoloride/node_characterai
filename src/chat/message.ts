@@ -146,11 +146,12 @@ export class CAIMessage extends Specable {
 
     // use specific candidate id to change specific id or it will change the latest
     async edit(newContent: string, specificCandidateId?: string) {
-        this.client.checkAndThrow(CheckAndThrow.RequiresToBeConnected);
+        this.client.checkAndThrow(CheckAndThrow.RequiresAuthentication);
         const candidateId = specificCandidateId ?? this.primaryCandidate.candidateId;
 
         let request;
         switch (this.client.connectionType) {
+            default:
             case CAIWebsocketConnectionType.DM:
                 request = await this.client.sendDMWebsocketCommandAsync({
                     command: "edit_turn_candidate",
@@ -169,9 +170,8 @@ export class CAIMessage extends Specable {
                 break;
         }
 
-        // todo add candidate
-        console.log("");
-        
+        this.candidates = request.pop().turn.candidates;
+        this.indexCandidates();
     }
     // next/previous/candidate_id
     async switchPrimaryCandidate(candidate: 'next' | 'previous' | string) {

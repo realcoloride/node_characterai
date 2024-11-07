@@ -120,10 +120,10 @@ export class CAIWebsocket extends EventEmitter {
                     }
                     
                     isFinal = turn.candidates[0].is_final;
-                } catch {
+                } finally {
                     // if turn is NOT present, push to queue
                     streamedMessage?.push(message);
-                } finally {
+
                     const condition = options.waitForAIResponse ? !turn?.author?.is_human && isFinal : isFinal;
                     
                     // if expectedReturnCommand or condition is met
