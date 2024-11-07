@@ -11,6 +11,7 @@ import { Character } from './character/character';
 import { v4 as uuidv4 } from 'uuid';
 import { GroupChats } from './groupchat/groupChats';
 import { RecentCharacter } from './character/recentCharacter';
+import { CAICall, ICharacterCallOptions } from './character/call';
 
 export enum CheckAndThrow {
     RequiresAuthentication = 0,
@@ -177,6 +178,17 @@ export default class CharacterAI extends EventEmitter {
 
         this.dmChatWebsocket?.close();
         this.groupChatWebsocket?.close();
+    }
+    
+    public currentCall?: CAICall = undefined;
+    async connectToCall(options: ICharacterCallOptions): Promise<CAICall> {
+        const call = new CAICall(this);
+        await call.connectToSession(options, this.token, this.myProfile.username);
+
+        return call;
+    }
+    async disconnectFromCall() {
+        // todo
     }
 
     constructor() {

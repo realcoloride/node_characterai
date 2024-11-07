@@ -177,7 +177,7 @@ export class Conversation extends Specable {
         // This is an abstract placeholder for higher level conversations (DM/Group), do not touch
     }
     async reset() {
-            
+
     }
     
     private async deleteTurns(turnIds: string[], refreshMessages: boolean) {

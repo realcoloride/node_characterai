@@ -1,3 +1,4 @@
+import { CAICall, ICharacterCallOptions } from "../character/call";
 import { CheckAndThrow } from "../client";
 import Parser from "../parser";
 import Warnings from "../warnings";
@@ -102,6 +103,11 @@ export default class DMConversation extends Conversation {
 
         const response = await Parser.parseJSON(request);
         if (!request.ok) throw new Error(response);
+    }
+
+    async call(options: ICharacterCallOptions): Promise<CAICall> {
+        // oh boy im hyped for this
+        return await this.client.connectToCall(options);
     }
 
     async sendMessage(content: string, options?: ICAIMessageSending): Promise<CAIMessage> {

@@ -1,3 +1,4 @@
+import { EventEmitter } from "stream";
 
 // makes it hidden from debug
 const serializableFieldsSymbol = Symbol('serializableFields');
@@ -46,4 +47,4 @@ function autoSpec(this: any) {
 }
 
 export class Specable { [Symbol.for('nodejs.util.inspect.custom')]() { return autoSpec.bind(this)(); } }
-export class EventEmitterSpecable { [Symbol.for('nodejs.util.inspect.custom')]() { return autoSpec.bind(this)(); } }
+export class EventEmitterSpecable extends EventEmitter { [Symbol.for('nodejs.util.inspect.custom')]() { return autoSpec.bind(this)(); } }

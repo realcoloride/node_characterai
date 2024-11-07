@@ -57,8 +57,8 @@ export class CAIWebsocket extends EventEmitter {
                 websocket.send(payload);
             })
             websocket.on('close', (code: number, reason: Buffer) => reject(`Websocket connection failed (${code}): ${reason}`));
-            websocket.on('error', (error) => reject(error.message));
-            websocket.on('message', async(data) => {
+            websocket.on('error', error => reject(error.message));
+            websocket.on('message', async data => {
                 const message = data.toString('utf-8');
                 
                 if (withCheck) {
@@ -83,7 +83,7 @@ export class CAIWebsocket extends EventEmitter {
         });
     }
     async sendAsync(options: ICAIWebsocketMessage): Promise<string | any> {
-        return new Promise((resolve) => {
+        return new Promise(resolve => {
             let streamedMessage: any[] | undefined = options.streaming ? [] : undefined;
             let turn: any;
 
