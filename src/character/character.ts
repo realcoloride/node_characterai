@@ -18,12 +18,6 @@ export enum CharacterVote {
     Dislike
 };
 
-export interface ICharacterDMCreation {
-    withGreeting: boolean,
-    specificChatId?: string,
-    createNewConversation: boolean
-};
-
 export interface ICharacterGroupChatCreation {
     name: string,
     characters: Character[] | string[],
@@ -217,16 +211,17 @@ export class Character extends Specable {
         
         return dms;
     }
-    async DM(options: ICharacterDMCreation): Promise<DMConversation> {
+    // create new converstaion to false will fetch the latest conversation
+    async DM(createNewConversation: boolean, withGreeting?: boolean, specificChatId?: string): Promise<DMConversation> {
         this.client.checkAndThrow(CheckAndThrow.RequiresAuthentication);
 
         // todo greeting
         let chatObject;
-        if (options.specificChatId)
-            chatObject = await this.client.fetchRawConversation(options.specificChatId);
+        if (specificChatId)
+            chatObject = await this.client.fetchRawConversation(specificChatId);
 
         // create conversation
-        if (options.createNewConversation) {
+        if (createNewConversation) {
             const request = await this.client.sendDMWebsocketCommandAsync({
                 command: "create_chat",
                 originId: "Android",
@@ -239,7 +234,7 @@ export class Character extends Specable {
                         character_id: this.characterId,
                         type: "TYPE_ONE_ON_ONE"
                     },
-                    with_greeting: options.withGreeting
+                    with_greeting: withGreeting ?? true
                 }
             })
 

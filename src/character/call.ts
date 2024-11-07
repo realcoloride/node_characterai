@@ -1,11 +1,10 @@
 import { exec, spawn } from "child_process";
-import { Conversation } from "../chat/conversation";
 import CharacterAI, { CheckAndThrow } from "../client";
 import Parser from "../parser";
 import { EventEmitterSpecable, hiddenProperty } from "../utils/specable";
 import Ffmpeg, { FfmpegCommand } from "fluent-ffmpeg";
 import { PassThrough } from "stream";
-import { AudioFrame, AudioSource, AudioStream, LocalAudioTrack, RemoteParticipant, RemoteTrack, RemoteTrackPublication, Room, RoomEvent, TrackKind, TrackPublishOptions, TrackSource } from '@livekit/rtc-node';
+import { AudioFrame, AudioSource, AudioStream, LocalAudioTrack, Room, TrackKind, TrackPublishOptions, TrackSource } from '@livekit/rtc-node';
 
 export interface ICharacterCallOptions {
     // will record the input from the default system device
@@ -16,7 +15,7 @@ export interface ICharacterCallOptions {
     
     voiceId?: string,
     voiceQuery?: string,
-    useAutomaticSpeechRecognition: boolean
+    useAutomaticSpeechRecognition?: boolean
 }
 
 function checkIfFfmpegIsInstalled() {
@@ -84,7 +83,7 @@ Ffplay is necessary to play out the audio on your speakers without dependencies.
                 rtcBackend: "lk",
                 userAuthToken: token,
                 username,
-                enableASR: options.useAutomaticSpeechRecognition,
+                enableASR: options.useAutomaticSpeechRecognition ?? true,
             }),
             contentType: 'application/json'
         });
@@ -139,11 +138,11 @@ Ffplay is necessary to play out the audio on your speakers without dependencies.
                 }
 
                 this.inputFfmpeg
-                .audioChannels(1)
-                .audioFrequency(48000)
-                .audioCodec('pcm_s16le') 
-                .format('s16le')
-                .pipe(this.liveKitInputStream);
+                    .audioChannels(1)
+                    .audioFrequency(48000)
+                    .audioCodec('pcm_s16le') 
+                    .format('s16le')
+                    .pipe(this.liveKitInputStream);
 
                 // god, this is awful. i wish i didn't have to do this.
                 this.liveKitInputStream.on('data', async data => {
@@ -170,11 +169,11 @@ Ffplay is necessary to play out the audio on your speakers without dependencies.
                 if (options.useDefaultSpeakerDevice) {
                     // use ffplay
                     const ffplayProcess = spawn('ffplay', [
-                        '-f', 's16le',      
-                        '-ar', '48000',      
-                        '-ac', '1',          
-                        '-nodisp',           
-                        '-'         
+                        '-f', 's16le',    
+                        '-ar', '48000', 
+                        '-ac', '1', 
+                        '-nodisp', 
+                        '-' 
                     ]);
 
                     this.outputFfmpeg = Ffmpeg()
