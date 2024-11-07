@@ -175,7 +175,7 @@ export class CAIMessage extends Specable {
     }
     // next/previous/candidate_id
     async switchToCandidate(candidate: 'next' | 'previous' | string) {
-
+        
     }
     private getConversationMessageAfterIndex(offset: number): CAIMessage | null {
         const conversationMessageIds = this.conversation.messageIds;
@@ -209,7 +209,7 @@ export class CAIMessage extends Specable {
         await this.client.sendDMWebsocketCommandAsync({
             command: "set_turn_pin",
             originId: "Android",
-            streaming: true,
+            streaming: false,
             waitForAIResponse: false,
             
             payload: {
@@ -248,7 +248,7 @@ export class CAIMessage extends Specable {
         return await this.conversation.deleteMessagesInBulk(await this.getAllMessagesAfter());
     }
     async delete() {
-        
+        return await this.conversation.deleteMessage(this);
     }
 
     constructor(client: CharacterAI, conversation: Conversation, turn: any) {

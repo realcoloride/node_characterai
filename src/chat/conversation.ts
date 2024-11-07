@@ -150,6 +150,7 @@ export class Conversation extends Specable {
         
         this.frozen = true;
         this.messages = [];
+        this.messageIds = [];
 
         const messages = await this.fetchMessagesViaQuery(false);
         for (let i = 0; i < messages.length; i++)
@@ -173,12 +174,56 @@ export class Conversation extends Specable {
     async rename(newName: string) {
         
     }
-    async deleteMessagesInBulk(messages: number | string[] | CAIMessage[], refreshMessages: boolean = true) {
-        
-    }
     async reset() {
         
     }
+    
+    private async deleteTurns(turnIds: string[], refreshMessages: boolean) {
+        await this.client.sendDMWebsocketCommandAsync({
+            command: "remove_turns",
+            originId: "Android",
+            streaming: false,
+            waitForAIResponse: false,
+            
+            payload: {
+                chat_id: this.chatId,
+                turn_ids: turnIds
+            }
+        });
+
+        if (refreshMessages) await this.refreshMessages();
+    }
+    async deleteMessagesInBulk(input: number | string[] | CAIMessage[], refreshMessages: boolean = true) {
+        this.client.checkAndThrow(CheckAndThrow.RequiresAuthentication);
+
+        let turnIds: string[] = [];
+        if (typeof input == 'number') {
+            if (input <= 0 || input >= this.maxMessagesStored) throw new Error("Invalid deletion range. The input number must be positive and reach within your messageCache limit.");
+
+            // 200 - 50 for example
+            const messageCount = this.messages.length;
+            const fetchedMessages = this.messages.slice(messageCount - input, messageCount);
+            turnIds = fetchedMessages.map(message => message.turnId);
+            
+        } else if (!Array.isArray(input)) {
+            // if its a string instance, just copy and paste
+            let assumedArray = input as any[];
+            if (assumedArray.every(item => typeof item === 'string')) 
+                turnIds = assumedArray;
+
+            // if instance, get all ids
+            if (assumedArray.every(item => item instanceof CAIMessage)) 
+                turnIds = assumedArray.map(message => message.turnId);
+        }
+        
+        if (turnIds.length == 0) return;
+        return await this.deleteTurns(turnIds, refreshMessages);
+    }
+    async deleteMessageById(turnId: string, refreshMessages: boolean = true) {
+        this.client.checkAndThrow(CheckAndThrow.RequiresAuthentication);
+        return await this.deleteMessagesInBulk([turnId], refreshMessages);
+    }
+    async deleteMessage(message: CAIMessage, refreshMessages: boolean = true) { return this.deleteMessageById(message.turnId, refreshMessages); }
 
     // disconnects from room
     async close() {
