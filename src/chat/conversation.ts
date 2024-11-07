@@ -34,6 +34,7 @@ export class Conversation extends Specable {
     // must be a multiple of 50.
     public maxMessagesStored = 200;
     public messages: CAIMessage[] = [];
+    public messageIds: string[] = [];
 
     // chat_id
     @hiddenProperty
@@ -80,9 +81,17 @@ export class Conversation extends Specable {
         return await this.client.fetchProfileByUsername(this.creator_id)
     }
 
+    // (in cache)
+    getLastMessage() {
+        return this.messages.length > 0 ? this.messages[this.messages.length - 1] : null;
+    }
+    
     protected frozen = false; // <- if refreshing, operations will be frozen
-    private async getTurnsBatch(nextToken?: string) {
-        const query = encodeURIComponent(nextToken ? `?next_token=${nextToken}}` : "");
+    private async getTurnsBatch(nextToken?: string, pinnedOnly?: boolean) {
+        let query = "";
+        if (nextToken) query = encodeURIComponent(`?next_token=${nextToken}`) // }
+        if (pinnedOnly) query = "?pinned_only=true";
+        
         const request = await this.client.requester.request(`https://neo.character.ai/turns/${this.chatId}/${query}`, {
             method: 'GET',
             includeAuthorization: true
@@ -99,12 +108,38 @@ export class Conversation extends Specable {
         if (this.messages.length >= this.maxMessagesStored) {
             // remove last & show warning
             this.messages.pop();
+            this.messageIds.pop();
             Warnings.show("reachedMaxMessages");
         }
 
         // add to front
         this.messages.unshift(message);
+        this.messageIds.unshift(message.turnId);
         return message;
+    }
+    protected async removeMessage() {
+        // TODO
+    }
+
+    private async fetchMessagesViaQuery(pinnedOnly: boolean) {
+        const { maxMessagesStored } = this;
+        if (maxMessagesStored % 50 != 0) 
+            throw Error("Max messages to store must be a multiple of 50.");
+        
+        let messages: CAIMessage[] = [];
+        let nextToken: string | undefined = undefined;
+
+        for (let i = 0; i < maxMessagesStored / 50; i += 50) {
+            const response = await this.getTurnsBatch(nextToken, pinnedOnly);
+            const { turns } = response;
+            if (!turns) break;
+            nextToken = response?.meta?.next_token;
+            
+            for (let j = 0; j < turns.length; j++) 
+                messages.push(new CAIMessage(this.client, this, turns[j]));
+        }
+
+        return messages;
     }
 
     // keeps up to date with messages. this WILL wipe old messages
@@ -116,33 +151,30 @@ export class Conversation extends Specable {
         this.frozen = true;
         this.messages = [];
 
-        let nextToken: string | undefined = undefined;
+        const messages = await this.fetchMessagesViaQuery(false);
+        for (let i = 0; i < messages.length; i++)
+            this.addMessage(messages[i]);
 
-        for (let i = 0; i < maxMessagesStored / 50; i += 50) {
-            const response = await this.getTurnsBatch(nextToken);
-            const { turns } = response;
-            if (!turns) break;
-            nextToken = response?.meta?.next_token;
-            
-            for (let j = 0; j < turns.length; j++) 
-                this.addMessage(new CAIMessage(this.client, this, turns[j]));
-        }  
+        const pinnedMessages = await this.getPinnedMessages();
+        for (let i = 0; i < pinnedMessages.length; i++)
+            this.messages[i].isPinned = true;
         
         this.frozen = false;
     }
     async sendMessage(content: string, options?: ICAIMessageSending): Promise<CAIMessage> {
+        // DO NOT touch this. This is abstract/virtual behavior for higher level conversations (DM/Group)
         return new CAIMessage(this.client, this, {});
     }
 
     async getPinnedMessages() {
-        
+        return await this.fetchMessagesViaQuery(true);
     }
 
     async rename(newName: string) {
         
     }
-    async deleteMessagesInBulk(messages: number | string[] | CAIMessage[]) {
-
+    async deleteMessagesInBulk(messages: number | string[] | CAIMessage[], refreshMessages: boolean = true) {
+        
     }
     async reset() {
         

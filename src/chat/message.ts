@@ -26,7 +26,7 @@ export class CAIMessage extends Specable {
     }; }
 
     @getterProperty
-    public get turnId() { return this.turnKey.turnId; }
+    public get turnId(): string { return this.turnKey.turnId; }
     @getterProperty
     public get chatId() { return this.turnKey.chatId; }
 
@@ -54,6 +54,14 @@ export class CAIMessage extends Specable {
     public get isHuman() { return this.author.is_human ?? false; }
     @getterProperty
     public get name() { return this.author.name; }
+
+    // is_pinned
+    @hiddenProperty
+    private is_pinned: boolean = false;
+
+    @getterProperty
+    public get isPinned() { return this.is_pinned; }
+    public set isPinned(value) { this.is_pinned = value; }
 
     async getAuthorProfile() {
         this.client.checkAndThrow(CheckAndThrow.RequiresAuthentication);
@@ -125,6 +133,9 @@ export class CAIMessage extends Specable {
     }
     // get primaryCandidate
 
+    // content is influenced by the primary candidate to save time/braincells
+    public get content() { return this.primaryCandidate?.content ?? ""; }
+
     // primary_candidate_id
     @hiddenProperty
     private primary_candidate_id = "";
@@ -152,7 +163,7 @@ export class CAIMessage extends Specable {
                         current_candidate_id: candidateId,
                         new_candidate_raw_content: newContent
                     }
-                })
+                });
                 break;
             case CAIWebsocketConnectionType.GroupChat:
                 break;
@@ -166,21 +177,51 @@ export class CAIMessage extends Specable {
     async switchToCandidate(candidate: 'next' | 'previous' | string) {
 
     }
-    async getMessageBefore() {
+    private getConversationMessageAfterIndex(offset: number): CAIMessage | null {
+        const conversationMessageIds = this.conversation.messageIds;
+        let index = conversationMessageIds.indexOf(this.turnId);
+        if (index == -1) return null;
 
-    }
-    async getMessageAfter() {
+        index += offset;
+        if (index < 0 || index >= conversationMessageIds.length) return null;
 
+        return this.conversation.messages[index];
     }
-    async isPinned() {
+    
+    getMessageBefore() { return this.getConversationMessageAfterIndex(-1); }
+    getMessageAfter() { return this.getConversationMessageAfterIndex(1); }
+    private async getAllMessagesAfter() {
+        const conversationMessageIds = this.conversation.messageIds;
+        const index = conversationMessageIds.indexOf(this.turnId);
+        if (index == -1) return [];
+
+        let messagesAfter: CAIMessage[] = [];
+
+        for (let i = index; i < conversationMessageIds.length; i++) 
+            messagesAfter.push(this.conversation.messages[i]);
         
+        return messagesAfter;
     }
-    async pin() {
 
-    }
-    async unpin() {
+    async handlePin(isPinned: boolean) {
+        if (this.isPinned == isPinned) return;
 
+        await this.client.sendDMWebsocketCommandAsync({
+            command: "set_turn_pin",
+            originId: "Android",
+            streaming: true,
+            waitForAIResponse: false,
+            
+            payload: {
+                turn_key: this.turn_key,
+                is_pinned: isPinned
+            }
+        });
+        
+        this.isPinned = isPinned;
     }
+    async pin() { await this.handlePin(true); }
+    async unpin() { await this.handlePin(false); }
     // https://neo.character.ai/chat/id/copy
     async copyFromHere(): Promise<Conversation> {
         this.client.checkAndThrow(CheckAndThrow.RequiresAuthentication);
@@ -199,7 +240,12 @@ export class CAIMessage extends Specable {
         return await this.client.fetchConversation(new_chat_id) as Conversation;
     }
     async rewindFromHere() {
+        this.client.checkAndThrow(CheckAndThrow.RequiresAuthentication);
 
+        if (this.conversation.getLastMessage()?.turnId == this.turnId) 
+            throw new Error("You cannot rewind from the last message in the conversation.");
+
+        return await this.conversation.deleteMessagesInBulk(await this.getAllMessagesAfter());
     }
     async delete() {
         
