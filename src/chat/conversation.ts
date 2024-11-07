@@ -82,7 +82,7 @@ export class Conversation extends Specable {
     }
 
     // (in cache)
-    getLastMessage() {
+    public getLastMessage() {
         return this.messages.length > 0 ? this.messages[this.messages.length - 1] : null;
     }
     

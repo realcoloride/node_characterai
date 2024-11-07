@@ -38,7 +38,7 @@ export class CAIImage {
         return this.sharpImage;
     }
 
-    getFullUrl() { return `${baseEndpoint}${this.endpointUrl}`; }
+    public getFullUrl() { return `${baseEndpoint}${this.endpointUrl}`; }
 
     protected changeCallback?: Function;
 
@@ -98,7 +98,7 @@ export class CAIImage {
         if (this.changeCallback) await this.changeCallback();
     }
     // remains unloaded however and no callbacks will be called
-    changeToEndpointUrlSync(endpointUrl: string) {
+    public changeToEndpointUrlSync(endpointUrl: string) {
         this.loaded = false;        
         this._endpointUrl = endpointUrl;
     }

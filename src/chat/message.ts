@@ -188,8 +188,8 @@ export class CAIMessage extends Specable {
         return this.conversation.messages[index];
     }
     
-    getMessageBefore() { return this.getConversationMessageAfterIndex(-1); }
-    getMessageAfter() { return this.getConversationMessageAfterIndex(1); }
+    public getMessageBefore() { return this.getConversationMessageAfterIndex(-1); }
+    public getMessageAfter() { return this.getConversationMessageAfterIndex(1); }
     private async getAllMessagesAfter() {
         const conversationMessageIds = this.conversation.messageIds;
         const index = conversationMessageIds.indexOf(this.turnId);
