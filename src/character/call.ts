@@ -90,6 +90,7 @@ export class CAICall extends EventEmitterSpecable {
 
     public isCharacterSpeaking: boolean = false;
     private liveKitInputStream: PassThrough = new PassThrough();
+    private dataReceivedCallback: any;
 
     private hasBeenShutDownNormally: boolean = false;
 
@@ -163,7 +164,7 @@ Ffplay is necessary to play out the audio on your speakers without dependencies.
         this.liveKitRoom = liveKitRoom;
         await liveKitRoom.connect(lkUrl, lkToken, { autoSubscribe: true, dynacast: true });
 
-        liveKitRoom.on('dataReceived', async payload => {
+        this.dataReceivedCallback = async (payload: any) => {
             const decoder = new TextDecoder();
             const data = decoder.decode(payload);
             
@@ -203,7 +204,9 @@ Ffplay is necessary to play out the audio on your speakers without dependencies.
                 // 'ParticipantDisconnected'
                 // 'TurnState'
             }
-        });
+        };
+
+        liveKitRoom.on('dataReceived', this.dataReceivedCallback);
         liveKitRoom.on('disconnected', async (disconnectReason: DisconnectReason) => await this.internalHangup(disconnectReason.toString()));
 
         return new Promise((resolve, reject) => {
@@ -347,6 +350,8 @@ Ffplay is necessary to play out the audio on your speakers without dependencies.
         this.outputFfmpeg?.kill();
         this.outputFfplay?.kill();
         
+        this.liveKitRoom?.off('dataReceived', this.dataReceivedCallback);
+        delete this.dataReceivedCallback;
         delete this.liveKitRoom;
     }
 
