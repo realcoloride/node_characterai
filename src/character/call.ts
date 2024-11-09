@@ -347,7 +347,6 @@ Ffplay is necessary to play out the audio on your speakers without dependencies.
 
     private async internalHangup(errorReason?: string) {
         if (this.hasBeenShutDownNormally) return;
-        console.trace("something fucked up: ", errorReason);
 
         this.client.currentCall = undefined;
         await this.liveKitRoom?.disconnect();
