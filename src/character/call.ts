@@ -2,8 +2,8 @@ import { exec, spawn } from "child_process";
 import CharacterAI, { CheckAndThrow } from "../client";
 import Parser from "../parser";
 import { EventEmitterSpecable, hiddenProperty } from "../utils/specable";
-import internal, { PassThrough } from "stream";
-import { AudioFrame, AudioSource, AudioStream, LocalAudioTrack, Room, TrackKind, TrackPublishOptions, TrackSource } from '@livekit/rtc-node';
+import { PassThrough } from "stream";
+import { AudioFrame, AudioSource, AudioStream, LocalAudioTrack, RemoteTrack, Room, Track, TrackKind, TrackPublishOptions, TrackSource } from '@livekit/rtc-node';
 import path from "path";
 import { fileURLToPath } from 'url';
 import { platform } from "process";
@@ -18,8 +18,7 @@ export interface ICharacterCallOptions {
     useSpeakerForPlayback: boolean,
     
     voiceId?: string,
-    voiceQuery?: string,
-    useAutomaticSpeechRecognition?: boolean
+    voiceQuery?: string
 }
 
 function checkIfFfmpegIsInstalled() {
@@ -46,15 +45,15 @@ function getDefaultWindowsDevices(): any {
 function spawnFF(command: string, ffDebug: boolean) {
     const childProcess = spawn(command, {
         shell: true,
-        stdio: ['pipe', 'pipe', 'pipe'] // ignore stdin, pipe stdout, ignore stderr
+        stdio: ['pipe', 'pipe', 'pipe']
     });
 
-    childProcess.stderr.on('data', (data) => {
-        if (ffDebug) console.error(`ff stderr: ${data.toString()}`);
-    });
+    if (ffDebug)
+        childProcess.stderr.on('data', (data) => console.error(`ff stderr: ${data.toString()}`));
 
     // events
-    childProcess.on('error', error => console.error(`Error executing command: ${error}`));
+    if (ffDebug)
+        childProcess.on('error', error => console.error(`Error executing command: ${error}`));
 
     return childProcess;
 }
@@ -64,13 +63,7 @@ const platformInputFormats: any = {
     darwin: 'avfoundation',
     linux: 'pulse'
 };
-const platformDefaultInputFormats: any = {
-    win32: 'audio="default"',
-    darwin: '0',
-    linux: 'default'
-};
 
-// 48000 Hz, 16 bit mono
 export class CAICall extends EventEmitterSpecable {    
     @hiddenProperty
     private client: CharacterAI;
@@ -90,9 +83,12 @@ export class CAICall extends EventEmitterSpecable {
 
     public isCharacterSpeaking: boolean = false;
     private liveKitInputStream: PassThrough = new PassThrough();
+
     private dataReceivedCallback: any;
+    private dataProcessCallback: any;
 
     private hasBeenShutDownNormally: boolean = false;
+    public ready: boolean = false;
 
     private resetStreams() {
         this.inputStream = new PassThrough();
@@ -108,6 +104,7 @@ export class CAICall extends EventEmitterSpecable {
         this.client.checkAndThrow(CheckAndThrow.RequiresToBeInDM);
         if (this.liveKitRoom) throw new Error("You are already connected to a call.");
         
+        this.ready = false;
         this.hasBeenShutDownNormally = false;
 
         console.log("[node_characterai] Call - WARNING: Experimental feature ahead! Report issues in the GitHub.");
@@ -143,9 +140,10 @@ Ffplay is necessary to play out the audio on your speakers without dependencies.
                     ? { voices: { [character.characterId]: options.voiceId } } 
                     : { voiceQueries: { [character.characterId]: voiceQuery } }),
                 rtcBackend: "lk",
+                platform: "web",
                 userAuthToken: token,
                 username,
-                enableASR: options.useAutomaticSpeechRecognition ?? true,
+                enableASR: true
             }),
             contentType: 'application/json'
         });
@@ -155,6 +153,8 @@ Ffplay is necessary to play out the audio on your speakers without dependencies.
 
         const { lkUrl, lkToken, session } = response;
         const liveKitRoom = new Room();
+        
+        await liveKitRoom.connect(lkUrl, lkToken, { autoSubscribe: true, dynacast: true });
 
         const { id, roomId } = session;
         this.id = id; this.roomId = roomId;
@@ -162,17 +162,18 @@ Ffplay is necessary to play out the audio on your speakers without dependencies.
         console.log("[node_characterai] Call - Connecting to room...");
 
         this.liveKitRoom = liveKitRoom;
-        await liveKitRoom.connect(lkUrl, lkToken, { autoSubscribe: true, dynacast: true });
+        this.dataReceivedCallback = null;
 
-        this.dataReceivedCallback = async (payload: any) => {
+        liveKitRoom.on('dataReceived', async (payload: any) => {
             const decoder = new TextDecoder();
             const data = decoder.decode(payload);
             
             const jsonData = JSON.parse(data);
             const { event } = jsonData;
-            let isUtteranceCandidateFinal;
-            let isSpeechStarted;
+            let isUtteranceCandidateFinal = true;
+            let isSpeechStarted = false;
 
+            // console.log(jsonData);
             switch (event) {
                 // when we talk
                 case 'UtteranceCandidate': isUtteranceCandidateFinal = false;
@@ -180,16 +181,13 @@ Ffplay is necessary to play out the audio on your speakers without dependencies.
                     isUtteranceCandidateFinal = true;
                     const { text, timestamp, userStopSpeakingTime, ted_confidence: tedConfidence, interruption_confidence: interruptionConfidence} = jsonData;
 
-                    this.emit('userSpeechCandidate', {
-                        text, timestamp, userStopSpeakingTime, tedConfidence, interruptionConfidence,
-                        isUtteranceCandidateFinal
+                    this.emit(isUtteranceCandidateFinal ? 'userSpeechProgress' : 'userSpeechEnded', {
+                        text, timestamp, userStopSpeakingTime, tedConfidence, interruptionConfidence
                     });
                     break;
 
                 case 'speechStarted': isSpeechStarted = true;
                 case 'speechEnded':
-                    isSpeechStarted = false;
-
                     const { candidateId } = jsonData;
                     this.latestCandidateId = candidateId;
 
@@ -199,19 +197,31 @@ Ffplay is necessary to play out the audio on your speakers without dependencies.
                     // call for message refresh when that happens in a separate context
                     if (!isSpeechStarted) this.callForBackgroundConversationRefresh();
                     break;
-                
+                case 'TurnState':
+                    if (this.ready) break;
+
+                    this.ready = true;
+                    this.emit('ready');
+                    break;
+                case 'ParticipantDisconnected':
+                    await this.internalHangup("Participant disconnected");
+                    break;
+                case 'WaitingForASRUserTrackAcquisition':
+
+                    break;
+
                 // other events:
                 // 'ParticipantDisconnected'
                 // 'TurnState'
+                // 'WaitingForASRUserTrackAcquisition'
             }
-        };
-
-        liveKitRoom.on('dataReceived', this.dataReceivedCallback);
+        });
         liveKitRoom.on('disconnected', async (disconnectReason: DisconnectReason) => await this.internalHangup(disconnectReason.toString()));
 
         return new Promise((resolve, reject) => {
-            liveKitRoom.once('trackSubscribed', async track => {
-                if (track.kind != TrackKind.KIND_AUDIO) return;
+            liveKitRoom.once('trackSubscribed', async (track: RemoteTrack) => {
+                if (track.kind != TrackKind.KIND_VIDEO &&
+                    track.kind != TrackKind.KIND_AUDIO) return;
                 
                 const cleanReject = (reason: any) => {
                     this.clean();
@@ -222,7 +232,12 @@ Ffplay is necessary to play out the audio on your speakers without dependencies.
                 const audioSource = new AudioSource(48000, 1);
                 const audioTrack = LocalAudioTrack.createAudioTrack('audio', audioSource);
                 
-                await liveKitRoom.localParticipant?.publishTrack(
+                if (!liveKitRoom.localParticipant) {
+                    await this.internalHangup("Could not find local participant");
+                    return;
+                }
+
+                await liveKitRoom.localParticipant.publishTrack(
                     audioTrack,
                     new TrackPublishOptions({ source: TrackSource.SOURCE_MICROPHONE })
                 );
@@ -266,40 +281,44 @@ Ffplay is necessary to play out the audio on your speakers without dependencies.
                 // console.log(ffmpegInputCommand);
 
                 const inputFfmpeg = spawnFF(ffmpegInputCommand, false);
-                inputFfmpeg.on('exit', async (code, signal) => await this.internalHangup(`Ffmpeg exited (code ${code}) with signal ${signal}`));
+                inputFfmpeg.once('exit', async (code, signal) => await this.internalHangup(`Ffmpeg exited (code ${code}) with signal ${signal}`));
                 inputFfmpeg.stdin.pipe(this.inputStream);
                 inputFfmpeg.stdout.pipe(this.liveKitInputStream);
                 this.inputFfmpeg = inputFfmpeg;
 
                 // god, this is awful. i wish i didn't have to do this.
-                this.liveKitInputStream.on('data', async data => {
+                this.dataProcessCallback = async (data: any) => {
                     if (this.mute) return;
+
                     // convert to int16 array & send 
                     const int16Array = new Int16Array(data.buffer, data.byteOffset, data.byteLength / Int16Array.BYTES_PER_ELEMENT);
                     const frame = new AudioFrame(int16Array, 48000, 1, int16Array.length);
                     
                     // final audio frame here
                     await audioSource.captureFrame(frame);
-                });
+                };
+
+                this.liveKitInputStream.on('data', this.dataProcessCallback);
                 
                 if (useSpeakerForPlayback) {
                     // use ffplay
-                    const outputFfplay = spawnFF(`ffplay -f s16le -ar 48000 -nodisp -`, false);
-                    outputFfplay.on('exit', async (code, signal) => await this.internalHangup(`Ffplay exited (code ${code}) with signal ${signal}`));
+                    const outputFfplay = spawnFF(`ffplay -fflags nobuffer -f s16le -ar 48000 -nodisp -`, false);
+                    outputFfplay.once('exit', async (code, signal) => await this.internalHangup(`Ffplay exited (code ${code}) with signal ${signal}`));
                     this.outputFfplay = outputFfplay;
 
                     this.outputStream.pipe(outputFfplay.stdin);
                 }
 
-                const stream = new AudioStream(track);
                 // start audio processing in different async context
+                const stream = new AudioStream(track);
                 (async () => {
                     for await (const frame of stream)
                         // send to output ffmpeg
                         this.outputStream.write(frame.data);
                 })();
 
-                console.log("[node_characterai] Call - Call is ready.");
+                // this.outputStream.on('data', data => console.log(data));
+                console.log("[node_characterai] Call - Call is ready!");
                 resolve();
             });
         });
@@ -328,6 +347,7 @@ Ffplay is necessary to play out the audio on your speakers without dependencies.
 
     private async internalHangup(errorReason?: string) {
         if (this.hasBeenShutDownNormally) return;
+        console.trace("something fucked up: ", errorReason);
 
         this.client.currentCall = undefined;
         await this.liveKitRoom?.disconnect();
@@ -337,10 +357,13 @@ Ffplay is necessary to play out the audio on your speakers without dependencies.
 
         if (errorReason) throw new Error(`Call error: ${errorReason}`);
     }
-    async hangUp() {  await this.internalHangup(); }
+    async hangUp() { await this.internalHangup(); }
 
     private clean() {
         this.hasBeenShutDownNormally = true;
+
+        this.liveKitInputStream?.off('data', this.dataProcessCallback);
+        this.liveKitRoom?.off('dataReceived', this.dataReceivedCallback);
 
         this.inputStream?.destroy();
         this.outputStream?.destroy();
@@ -350,7 +373,6 @@ Ffplay is necessary to play out the audio on your speakers without dependencies.
         this.outputFfmpeg?.kill();
         this.outputFfplay?.kill();
         
-        this.liveKitRoom?.off('dataReceived', this.dataReceivedCallback);
         delete this.dataReceivedCallback;
         delete this.liveKitRoom;
     }
