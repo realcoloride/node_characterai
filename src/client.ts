@@ -282,6 +282,8 @@ export default class CharacterAI extends EventEmitter {
     async fetchSystemVoices() { return await this.internalFetchCharacters("system"); }
     // v1/voices/user
     async fetchMyVoices() { return await this.internalFetchCharacters("user"); }
+    // v1/voices/search?creatorInfo.username=
+    async fetchVoicesFromUser(username: string) { return await this.internalFetchCharacters("search?creatorInfo.username=", username); }
 
     // v1/voices/voiceId
     async fetchVoice(voiceId: string): Promise<CAIVoice> {

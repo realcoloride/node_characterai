@@ -6,7 +6,7 @@ export enum VoiceGender {
     Unknown = "",
     Neutral = "neutral"
 }
-export enum VoiceVisbility {
+export enum VoiceVisibility {
     Public = "public",
     Private = "private"
 }
@@ -17,6 +17,7 @@ export enum InternalVoiceStatus {
 }
 
 export class CAIVoice extends Specable {
+    @hiddenProperty
     private client: CharacterAI;
 
     // id
@@ -32,7 +33,7 @@ export class CAIVoice extends Specable {
     public gender: VoiceGender = VoiceGender.Unknown;
 
     // visibility
-    public visibility: VoiceVisbility = VoiceVisbility.Public;
+    public visibility: VoiceVisibility = VoiceVisibility.Public;
 
     @hiddenProperty
     private creatorInfo: any = {};
@@ -40,7 +41,7 @@ export class CAIVoice extends Specable {
     //  "source": "user",
     //  "username": ""
 
-    @hiddenProperty
+    @getterProperty
     private get creatorUsername() { return this.creatorInfo.user; }
     @getterProperty
     public get creatorSource() { return this.creatorInfo.source; }

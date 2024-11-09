@@ -6,7 +6,7 @@ import { PrivateProfileCharacter, PublicProfileCharacter } from "./profileCharac
 import { PublicProfile } from "./publicProfile";
 import { getterProperty, hiddenProperty } from "../utils/specable";
 import { Character } from "../character/character";
-import { CAIVoice, VoiceGender, VoiceVisbility } from "../voice";
+import { CAIVoice, VoiceGender, VoiceVisibility } from "../voice";
 
 export interface IProfileModification {
     // username
@@ -120,7 +120,8 @@ export class PrivateProfile extends PublicProfile {
         name: string,
         description: string, 
         makeVoicePublic: boolean, 
-        audioFile: File | Blob,
+        previewText: string,
+        audioFile: Blob,
         gender?: VoiceGender
     ): Promise<CAIVoice> {
         this.client.checkAndThrow(CheckAndThrow.RequiresAuthentication);
@@ -131,32 +132,44 @@ export class PrivateProfile extends PublicProfile {
                 name,
                 description,
                 gender,
-                previewText: 'Test',
-                visbility: makeVoicePublic ? VoiceVisbility.Public : VoiceVisbility.Private
+                previewText,
+                visibility: makeVoicePublic ? VoiceVisibility.Public : VoiceVisibility.Private,
+                audioSourceType: 'file'
             }
         };
 
-        const request = await this.client.requester.request("https://neo.character.ai/multimodal/api/v1/voices/", {
+        // create first, upload later
+        const creationRequest = await this.client.requester.request("https://neo.character.ai/multimodal/api/v1/voices/", {
             method: 'POST',
-            contentType: 'application/x-www-form-urlencoded',
-            formData: { json: Parser.stringify(payload) },
-            file: audioFile
+            formData: { json: Parser.stringify(payload), file: audioFile },
+            includeAuthorization: true
         });
 
-        const response = await Parser.parseJSON(request);
-        if (!request.ok) throw new Error(String(response));
+        const creationResponse = await Parser.parseJSON(creationRequest);
+        if (!creationRequest.ok) throw new Error(creationResponse.message ?? String(creationResponse));
         
+        const voiceId = creationResponse.voice.id;
+
+        // publish character now
+        const publishRequest = await this.client.requester.request(`https://neo.character.ai/multimodal/api/v1/voices/${voiceId}`, {
+            method: 'PUT',
+            body: Parser.stringify(creationResponse),
+            contentType: 'application/json',
+            includeAuthorization: true
+        });
+        console.log(Parser.stringify(creationResponse), publishRequest);
+
+        const publishResponse = await Parser.parseJSON(publishRequest);
+        console.log('r', publishResponse);
+        if (!publishRequest.ok) throw new Error(publishResponse.message ?? String(publishResponse));
+
         await this.refreshProfile();
-        return new CAIVoice(this.client, response.voice);
+        return new CAIVoice(this.client, publishResponse.voice);
     }
 
-    private async fetchHiddenCharacters() {
-
-    }
     // v1/voices/user
     async getVoices(): Promise<CAIVoice[]> {
-        // todo
-        return [];
+        return await this.client.fetchMyVoices();
     }
 
     async refreshProfile() {
@@ -173,6 +186,5 @@ export class PrivateProfile extends PublicProfile {
 
         this.loadFromInformation(user);
         this.loadFromInformation(user.user);
-        console.log("uinfo", user);
     }
 }

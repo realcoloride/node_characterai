@@ -3,7 +3,7 @@ import CharacterAI from "../client";
 import Parser from "../parser";
 import { CAIImage } from "../utils/image";
 import { hiddenProperty, Specable } from "../utils/specable";
-import { CharacterVisibility } from "../utils/visbility";
+import { CharacterVisibility } from "../utils/visibility";
 
 
 interface IPersona extends IDefaultCharacter {

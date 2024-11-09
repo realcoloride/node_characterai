@@ -3,9 +3,8 @@ interface RequesterOptions {
     method: 'GET' | 'POST' | 'PATCH' | 'PUT';
     includeAuthorization?: boolean;
     body?: string;
-    contentType?: 'application/json' | 'application/x-www-form-urlencoded';
-    formData?: Record<string, string>;
-    file?: File | Blob;
+    contentType?: 'application/json' | 'application/x-www-form-urlencoded' | 'multipart/form-data';
+    formData?: Record<string, string | Blob>;
     fileFieldName?: string;
 }
 
@@ -35,29 +34,18 @@ export default class Requester {
         if (options.includeAuthorization) headers["Authorization"] = this.authorization;
         if (options.contentType) headers["Content-Type"] = options.contentType;
 
-        if (options.file) {
-            const formData = new FormData();
-            formData.append(options.fileFieldName || "file", options.file);
-            Object.entries(options.formData || {}).forEach(([key, value]) => formData.append(key, value));
+        if (options.formData) {
+            const formData = options.contentType == 'application/x-www-form-urlencoded' ? new URLSearchParams() : new FormData();
+            Object.entries(options.formData).forEach((entry) => formData.append(entry[0], entry[1] as any));
             body = formData;
-        }
-
-        if (!body && options.formData) {
-            headers["Content-Type"] = "application/x-www-form-urlencoded";
-            body = new URLSearchParams(options.formData).toString();
-        }
-
-        if (!body && options.contentType && options.body) {
-            headers["Content-Type"] = options.contentType;
-            body = options.body;
         }
         
         if (typeof body === "string") headers["Content-Length"] = body.length;
-
+        
         return await fetch(url, {
             headers,
             method: options.method,
-            body: options.body
+            body
         });
     }
 }

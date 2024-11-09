@@ -8,7 +8,6 @@ import { PublicProfile } from "../profile/publicProfile";
 import { CAIImage as CAIImage } from "../utils/image";
 import ObjectPatcher from "../utils/patcher";
 import { getterProperty, hiddenProperty, Specable } from "../utils/specable";
-import { CharacterVisibility } from "../utils/visbility";
 import { v4 as uuidv4 } from 'uuid';
 import { ReportCharacterReason } from "./reportCharacter";
 
@@ -17,6 +16,11 @@ export enum CharacterVote {
     Like,
     Dislike
 };
+
+export enum CharacterVisibility {
+    Private = "PRIVATE",
+    Public = "PUBLIC",
+}
 
 export interface ICharacterGroupChatCreation {
     name: string,
@@ -48,7 +52,7 @@ export class Character extends Specable {
     // identifier
     public identifier: string = "";
 
-    // character_visibility / visbility
+    // character_visibility / visibility
     public visibility: CharacterVisibility = CharacterVisibility.Public;
 
     @hiddenProperty

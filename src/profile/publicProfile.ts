@@ -156,9 +156,6 @@ export class PublicProfile {
 
         })
         const image = await Jimp.read(target);
-
-        
-
         
     }
     async getProfilePicture() {
@@ -167,8 +164,7 @@ export class PublicProfile {
 
     // voice
     async getVoices(): Promise<CAIVoice[]> {
-        // todo
-        return [];
+        return await this.client.fetchVoicesFromUser(this.username);
     }
 
     // updates profile or fetches it for the first time
