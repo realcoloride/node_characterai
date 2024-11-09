@@ -62,7 +62,7 @@ export class Conversation extends Specable {
     @hiddenProperty
     private character_id = "";
     @getterProperty
-    protected get characterId() { return this.character_id; }
+    public get characterId() { return this.character_id; }
     protected set characterId(value) { this.character_id = value; }
 
     // state

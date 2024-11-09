@@ -1,9 +1,12 @@
 
 interface RequesterOptions {
-    method: 'GET' | 'POST' | 'PATCH';
+    method: 'GET' | 'POST' | 'PATCH' | 'PUT';
     includeAuthorization?: boolean;
     body?: string;
-    contentType?: 'application/json';
+    contentType?: 'application/json' | 'application/x-www-form-urlencoded';
+    formData?: Record<string, string>;
+    file?: File | Blob;
+    fileFieldName?: string;
 }
 
 // responsible for requests
@@ -27,9 +30,29 @@ export default class Requester {
             "TE": "trailers",
         }
         
+        let body: any = options.body;
+
         if (options.includeAuthorization) headers["Authorization"] = this.authorization;
-        if (options.body) headers["Content-Length"] = options.body.length;
         if (options.contentType) headers["Content-Type"] = options.contentType;
+
+        if (options.file) {
+            const formData = new FormData();
+            formData.append(options.fileFieldName || "file", options.file);
+            Object.entries(options.formData || {}).forEach(([key, value]) => formData.append(key, value));
+            body = formData;
+        }
+
+        if (!body && options.formData) {
+            headers["Content-Type"] = "application/x-www-form-urlencoded";
+            body = new URLSearchParams(options.formData).toString();
+        }
+
+        if (!body && options.contentType && options.body) {
+            headers["Content-Type"] = options.contentType;
+            body = options.body;
+        }
+        
+        if (typeof body === "string") headers["Content-Length"] = body.length;
 
         return await fetch(url, {
             headers,

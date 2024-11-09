@@ -12,6 +12,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { GroupChats } from './groupchat/groupChats';
 import { RecentCharacter } from './character/recentCharacter';
 import { CAICall, ICharacterCallOptions } from './character/call';
+import { CAIVoice } from './voice';
 
 export enum CheckAndThrow {
     RequiresAuthentication = 0,
@@ -182,13 +183,16 @@ export default class CharacterAI extends EventEmitter {
     
     public currentCall?: CAICall = undefined;
     async connectToCall(options: ICharacterCallOptions): Promise<CAICall> {
+        this.checkAndThrow(CheckAndThrow.RequiresToBeInDM);
+
         const call = new CAICall(this);
         await call.connectToSession(options, this.token, this.myProfile.username);
 
         return call;
     }
     async disconnectFromCall() {
-        // todo
+        this.checkAndThrow(CheckAndThrow.RequiresToBeInDM);
+        return await this.currentCall?.hangUp();
     }
 
     constructor() {
@@ -203,7 +207,7 @@ export default class CharacterAI extends EventEmitter {
         this.checkAndThrow(CheckAndThrow.RequiresAuthentication);
 
         const profile = new PublicProfile(this, { username });
-        await profile.fetch();
+        await profile.refreshProfile();
         
         return profile;
     }
@@ -250,6 +254,50 @@ export default class CharacterAI extends EventEmitter {
         return new Character(this, response.character);
     }
 
+    // voice
+    private async internalFetchCharacters(endpoint: string, query?: string) {
+        this.checkAndThrow(CheckAndThrow.RequiresAuthentication);
+
+        const encodedQuery = encodeURIComponent(query ?? "");
+        const request = await this.requester.request(`https://neo.character.ai/multimodal/api/v1/voices/${endpoint}${encodedQuery}`, {
+            method: 'GET',
+            includeAuthorization: true
+        });
+
+        const response = await Parser.parseJSON(request);
+        if (!request.ok) throw new Error(String(response));
+
+        const { voices: responseVoices } = response;
+        let voices: CAIVoice[] = [];
+
+        for (let i = 0; i < responseVoices.length; i++) 
+            voices.push(new CAIVoice(this, responseVoices[i]));
+
+        return voices;
+    }
+
+    // v1/voices/search?characterName=
+    async searchCharacterVoices(query: string) { return await this.internalFetchCharacters("search?characterName=", query); }
+    // v1/voices/system
+    async fetchSystemVoices() { return await this.internalFetchCharacters("system"); }
+    // v1/voices/user
+    async fetchMyVoices() { return await this.internalFetchCharacters("user"); }
+
+    // v1/voices/voiceId
+    async fetchVoice(voiceId: string): Promise<CAIVoice> {
+        this.checkAndThrow(CheckAndThrow.RequiresAuthentication);
+
+        const request = await this.requester.request(`https://neo.character.ai/multimodal/api/v1/voices/${voiceId}`, {
+            method: 'GET',
+            includeAuthorization: true
+        });
+
+        const response = await Parser.parseJSON(request);
+        if (!request.ok) throw new Error(String(response));
+        
+        return new CAIVoice(this, response.voice);
+    }
+
     // https://neo.character.ai/recommendation/v1/
     private async automateCharactersRecommendation<T extends Character>(
         endpoint: string,
@@ -281,10 +329,22 @@ export default class CharacterAI extends EventEmitter {
     async getFeaturedCharacters() { return await this.automateCharactersRecommendation("featured", Character); }
     // /user
     async getRecommendedCharactersForYou() { return await this.automateCharactersRecommendation("user", Character); }
-    // TODO
-    async getCharacterCategories() { return this.throwBecauseNotAvailableYet(); }
     // https://neo.character.ai/chats/recent/
     async getRecentCharacters() { return await this.automateCharactersRecommendation("https://neo.character.ai/chats/recent/", RecentCharacter, "chats", ""); }
+    // /category
+    async getCharacterCategories(): Promise<string[]> {
+        this.checkAndThrow(CheckAndThrow.RequiresAuthentication);
+
+        const request = await this.requester.request("https://neo.character.ai/recommendation/v1/category", {
+            method: 'GET',
+            includeAuthorization: true
+        });
+
+        const response = await Parser.parseJSON(request);
+        if (!request.ok) throw new Error(String(response));
+        
+        return response.categories;
+    }
 
     // conversations
     // raw is the raw output else the convo instance
@@ -334,7 +394,7 @@ WARNING: CharacterAI has changed its authentication methods again.
         this.token = sessionToken;
 
         // reload info
-        await this.myProfile.fetch();
+        await this.myProfile.refreshProfile();
 
         // connect to endpoints
         await this.openWebsockets();

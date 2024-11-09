@@ -4,8 +4,9 @@ import Parser from "../parser";
 import { CAIImage, EditableCAIImage } from "../utils/image";
 import { PrivateProfileCharacter, PublicProfileCharacter } from "./profileCharacter";
 import { PublicProfile } from "./publicProfile";
-import ObjectPatcher from "../utils/patcher";
 import { getterProperty, hiddenProperty } from "../utils/specable";
+import { Character } from "../character/character";
+import { CAIVoice, VoiceGender, VoiceVisbility } from "../voice";
 
 export interface IProfileModification {
     // username
@@ -108,29 +109,57 @@ export class PrivateProfile extends PublicProfile {
         this.avatar = new EditableCAIImage(client, async() => await this.edit({ avatar: this.avatar }));
     }
 
-    // characters
-    async createCharacter(options: ICharacterCreation) {
+    // creation
+    async createCharacter(options: ICharacterCreation): Promise<Character> {
+        // todo
+        return new Character(this.client, {});
+    }
+
+    // https://neo.character.ai/multimodal/api/v1/voices/
+    async createVoice(
+        name: string,
+        description: string, 
+        makeVoicePublic: boolean, 
+        audioFile: File | Blob,
+        gender?: VoiceGender
+    ): Promise<CAIVoice> {
         this.client.checkAndThrow(CheckAndThrow.RequiresAuthentication);
 
-        const request = await this.client.requester.request("https://plus.character.ai/chat/user/", {
+        gender ??= VoiceGender.Neutral;
+        const payload = {
+            voice: {
+                name,
+                description,
+                gender,
+                previewText: 'Test',
+                visbility: makeVoicePublic ? VoiceVisbility.Public : VoiceVisbility.Private
+            }
+        };
+
+        const request = await this.client.requester.request("https://neo.character.ai/multimodal/api/v1/voices/", {
             method: 'POST',
-            includeAuthorization: true,
-            body: Parser.stringify({ 
-                avatar_rel_path: options.avatar.endpointUrl
-            })
+            contentType: 'application/x-www-form-urlencoded',
+            formData: { json: Parser.stringify(payload) },
+            file: audioFile
         });
+
         const response = await Parser.parseJSON(request);
-
-        if (!request.ok) throw new Error(response);
-        this.loadFromInformation(response);
+        if (!request.ok) throw new Error(String(response));
+        
+        await this.refreshProfile();
+        return new CAIVoice(this.client, response.voice);
     }
 
-
-    async fetchHiddenCharacters() {
+    private async fetchHiddenCharacters() {
 
     }
+    // v1/voices/user
+    async getVoices(): Promise<CAIVoice[]> {
+        // todo
+        return [];
+    }
 
-    async fetch() {
+    async refreshProfile() {
         this.client.checkAndThrow(CheckAndThrow.RequiresAuthentication);
 
         const request = await this.client.requester.request("https://plus.character.ai/chat/user/", {
@@ -144,5 +173,6 @@ export class PrivateProfile extends PublicProfile {
 
         this.loadFromInformation(user);
         this.loadFromInformation(user.user);
+        console.log("uinfo", user);
     }
 }

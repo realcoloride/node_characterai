@@ -4,10 +4,7 @@ import { CAIImage as CAIImage } from '../utils/image';
 import ObjectPatcher from '../utils/patcher';
 import { PublicProfileCharacter } from './profileCharacter';
 import { getterProperty, hiddenProperty } from '../utils/specable';
-
-class ProfileVoices {
-
-}
+import { CAIVoice } from '../voice';
 
 export class PublicProfile {
     // characters
@@ -168,8 +165,14 @@ export class PublicProfile {
         
     }*/
 
+    // voice
+    async getVoices(): Promise<CAIVoice[]> {
+        // todo
+        return [];
+    }
+
     // updates profile or fetches it for the first time
-    async fetch() {
+    async refreshProfile() {
         this.client.checkAndThrow(CheckAndThrow.RequiresAuthentication);
 
         const request = await this.client.requester.request("https://plus.character.ai/chat/user/public/", {

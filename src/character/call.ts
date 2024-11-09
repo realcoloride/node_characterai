@@ -86,10 +86,12 @@ export class CAICall extends EventEmitterSpecable {
     public mute: boolean = false;
     public id = "";
     public roomId = "";
-    private latestCandidateId = "";
+    private latestCandidateId: string | null = null;
 
     public isCharacterSpeaking: boolean = false;
     private liveKitInputStream: PassThrough = new PassThrough();
+
+    private hasBeenShutDownNormally: boolean = false;
 
     private resetStreams() {
         this.inputStream = new PassThrough();
@@ -97,9 +99,15 @@ export class CAICall extends EventEmitterSpecable {
         this.liveKitInputStream = new PassThrough();
     }
 
+    private callForBackgroundConversationRefresh() {
+        (async() => await this.client.currentConversation?.refreshMessages())();
+    }
+
     async connectToSession(options: ICharacterCallOptions, token: string, username: string): Promise<void> {
         this.client.checkAndThrow(CheckAndThrow.RequiresToBeInDM);
         if (this.liveKitRoom) throw new Error("You are already connected to a call.");
+        
+        this.hasBeenShutDownNormally = false;
 
         console.log("[node_characterai] Call - WARNING: Experimental feature ahead! Report issues in the GitHub.");
 
@@ -188,8 +196,7 @@ Ffplay is necessary to play out the audio on your speakers without dependencies.
                     this.emit(isSpeechStarted ? 'characterBeganSpeaking' : 'characterEndedSpeaking');
 
                     // call for message refresh when that happens in a separate context
-                    if (!isSpeechStarted)
-                        (async() => await this.client.currentConversation?.refreshMessages())();
+                    if (!isSpeechStarted) this.callForBackgroundConversationRefresh();
                     break;
                 
                 // other events:
@@ -252,12 +259,10 @@ Ffplay is necessary to play out the audio on your speakers without dependencies.
                     }
                 } 
                 
-                console.log("[node_characterai] Call - Creating input source");
-
                 // input mic/arbitrary data -> pipe:0 -> output pipe:1 pcm data in stdout
                 // console.log(ffmpegInputCommand);
 
-                const inputFfmpeg = spawnFF(ffmpegInputCommand, true);
+                const inputFfmpeg = spawnFF(ffmpegInputCommand, false);
                 inputFfmpeg.on('exit', async (code, signal) => await this.internalHangup(`Ffmpeg exited (code ${code}) with signal ${signal}`));
                 inputFfmpeg.stdin.pipe(this.inputStream);
                 inputFfmpeg.stdout.pipe(this.liveKitInputStream);
@@ -274,9 +279,6 @@ Ffplay is necessary to play out the audio on your speakers without dependencies.
                     await audioSource.captureFrame(frame);
                 });
                 
-                // this.inputStream.on('data', data => console.log(data));
-
-                console.log("[node_characterai] Call - Creating output source");
                 if (useSpeakerForPlayback) {
                     // use ffplay
                     const outputFfplay = spawnFF(`ffplay -f s16le -ar 48000 -nodisp -`, false);
@@ -304,28 +306,39 @@ Ffplay is necessary to play out the audio on your speakers without dependencies.
     async interruptCharacter() {
         this.client.checkAndThrow(CheckAndThrow.RequiresToBeInDM);
 
+        if (this.latestCandidateId == null) return;
+
         const conversation = this.client.currentConversation;
         if (!conversation) throw new Error("No conversation");
-        const character = await conversation.getCharacter();
 
         const request = await this.client.requester.request("https://neo.character.ai/multimodal/api/v1/sessions/discardCandidate", {
             method: 'POST',
             contentType: 'application/json',
-            body: Parser.stringify({ candidateId: this.latestCandidateId, characterId: character.characterId, roomId: this.roomId }),
+            body: Parser.stringify({ candidateId: this.latestCandidateId, characterId: conversation.characterId, roomId: this.roomId }),
             includeAuthorization: true
         });
-        if (!request.ok) throw new Error("Could not interrupt character call");
+        if (!request.ok) throw new Error("Could not interrupt character talking");
+
+        this.latestCandidateId = null;
+        this.callForBackgroundConversationRefresh();
     }
 
     private async internalHangup(errorReason?: string) {
+        if (this.hasBeenShutDownNormally) return;
+
+        this.client.currentCall = undefined;
         await this.liveKitRoom?.disconnect();
         this.clean();
 
+        console.log("[node_characterai] Call - Call hung up.");
+
         if (errorReason) throw new Error(`Call error: ${errorReason}`);
     }
-    async hangUp() { await this.internalHangup(); }
+    async hangUp() {  await this.internalHangup(); }
 
     private clean() {
+        this.hasBeenShutDownNormally = true;
+
         this.inputStream?.destroy();
         this.outputStream?.destroy();
         this.liveKitInputStream?.destroy();
@@ -333,6 +346,8 @@ Ffplay is necessary to play out the audio on your speakers without dependencies.
         this.inputFfmpeg?.kill();
         this.outputFfmpeg?.kill();
         this.outputFfplay?.kill();
+        
+        delete this.liveKitRoom;
     }
 
     constructor(client: CharacterAI) {

@@ -273,7 +273,7 @@ export class CAIMessage extends Specable {
         });
 
         const response = await Parser.parseJSON(request);
-        if (!request.ok) throw new Error();
+        if (!request.ok) throw new Error(String(response));
         
         const { new_chat_id } = response;
         return await this.client.fetchConversation(new_chat_id) as Conversation;
