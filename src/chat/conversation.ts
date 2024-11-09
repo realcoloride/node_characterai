@@ -146,6 +146,8 @@ export class Conversation extends Specable {
 
     // keeps up to date with messages. this WILL wipe old messages
     async refreshMessages() {
+        if (this.frozen) return;
+
         const { maxMessagesStored } = this;
         if (maxMessagesStored % 50 != 0) 
             throw Error("Max messages to store must be a multiple of 50.");

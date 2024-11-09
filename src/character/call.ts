@@ -2,11 +2,12 @@ import { exec, spawn } from "child_process";
 import CharacterAI, { CheckAndThrow } from "../client";
 import Parser from "../parser";
 import { EventEmitterSpecable, hiddenProperty } from "../utils/specable";
-import { PassThrough } from "stream";
+import internal, { PassThrough } from "stream";
 import { AudioFrame, AudioSource, AudioStream, LocalAudioTrack, Room, TrackKind, TrackPublishOptions, TrackSource } from '@livekit/rtc-node';
 import path from "path";
 import { fileURLToPath } from 'url';
 import { platform } from "process";
+import { DisconnectReason } from "@livekit/rtc-node/dist/proto/room_pb";
 
 export interface ICharacterCallOptions {
     // will record the input from the default system device or following name
@@ -14,7 +15,7 @@ export interface ICharacterCallOptions {
     microphoneDevice: 'default' | string | false,
     // will output the audio onto the default system device
     // nothing means no speaker playback
-    speakerDevice: 'default' | string | false,
+    useSpeakerForPlayback: boolean,
     
     voiceId?: string,
     voiceQuery?: string,
@@ -74,22 +75,20 @@ export class CAICall extends EventEmitterSpecable {
     @hiddenProperty
     private client: CharacterAI;
 
-    public liveKitRoom?: Room = undefined;
+    private liveKitRoom?: Room = undefined;
     private inputStream: PassThrough = new PassThrough();
     private outputStream: PassThrough = new PassThrough();
 
-    public micFfmpeg: any;
-    public inputFfmpeg: any;
-    public outputFfmpeg: any;
+    private inputFfmpeg: any;
+    private outputFfmpeg: any;
+    private outputFfplay: any;
 
     public mute: boolean = false;
     public id = "";
     public roomId = "";
-
-    private latestCandidateId = {};
+    private latestCandidateId = "";
 
     public isCharacterSpeaking: boolean = false;
-
     private liveKitInputStream: PassThrough = new PassThrough();
 
     private resetStreams() {
@@ -100,6 +99,8 @@ export class CAICall extends EventEmitterSpecable {
 
     async connectToSession(options: ICharacterCallOptions, token: string, username: string): Promise<void> {
         this.client.checkAndThrow(CheckAndThrow.RequiresToBeInDM);
+        if (this.liveKitRoom) throw new Error("You are already connected to a call.");
+
         console.log("[node_characterai] Call - WARNING: Experimental feature ahead! Report issues in the GitHub.");
 
         if (!await checkIfFfmpegIsInstalled()) throw Error(
@@ -108,7 +109,7 @@ Ffmpeg is necessary to process the audio for the call.
 
 [INSERT GUIDE SOON]`);
 
-        if (!await checkIfFfplayIsInstalled() && options.speakerDevice) throw Error(
+        if (!await checkIfFfplayIsInstalled() && options.useSpeakerForPlayback) throw Error(
 `Ffplay is not present on this machine or not detected. Here's a guide to install it:
 Ffplay is necessary to play out the audio on your speakers without dependencies.
 
@@ -157,50 +158,55 @@ Ffplay is necessary to play out the audio on your speakers without dependencies.
         liveKitRoom.on('dataReceived', async payload => {
             const decoder = new TextDecoder();
             const data = decoder.decode(payload);
-
-            try {
-                const jsonData = JSON.parse(data);
-                console.log('livekit message', jsonData);
-                const { event } = jsonData;
-                
-                switch (event) {
-                    // when we talk
-                    case 'UtteranceCandidate':
-                        let isUtteranceCandidateFinal = false;
-                    case 'UtteranceFinalized':
-                        isUtteranceCandidateFinal = true;
-                        const { text, timestamp, userStopSpeakingTime, ted_confidence: tedConfidence, interruption_confidence: interruptionConfidence} = jsonData;
-
-                        this.emit('userSpeechCandidate', {
-                            text, timestamp, userStopSpeakingTime, tedConfidence, interruptionConfidence,
-                            isUtteranceCandidateFinal
-                        });
-                        break;
-
-                    case 'speechStarted':
-                        let isSpeechStarted = true;
-                    case 'speechEnded':
-                        isSpeechStarted = false;
-
-                        const { candidateId } = jsonData;
-                        this.latestCandidateId = candidateId;
-
-                        this.isCharacterSpeaking = isSpeechStarted;
-                        this.emit(isSpeechStarted ? 'characterSpeechStopped' : 'characterSpeechStarted');
-                        break;
-                    
-                    case 'ParticipantDisconnected':
-                        break;
-                }
-            } catch (error) {
-                
-            }
             
+            const jsonData = JSON.parse(data);
+            const { event } = jsonData;
+            
+            switch (event) {
+                // when we talk
+                case 'UtteranceCandidate':
+                    let isUtteranceCandidateFinal = false;
+                case 'UtteranceFinalized':
+                    isUtteranceCandidateFinal = true;
+                    const { text, timestamp, userStopSpeakingTime, ted_confidence: tedConfidence, interruption_confidence: interruptionConfidence} = jsonData;
+
+                    this.emit('userSpeechCandidate', {
+                        text, timestamp, userStopSpeakingTime, tedConfidence, interruptionConfidence,
+                        isUtteranceCandidateFinal
+                    });
+                    break;
+
+                case 'speechStarted':
+                    let isSpeechStarted = true;
+                case 'speechEnded':
+                    isSpeechStarted = false;
+
+                    const { candidateId } = jsonData;
+                    this.latestCandidateId = candidateId;
+
+                    this.isCharacterSpeaking = isSpeechStarted;
+                    this.emit(isSpeechStarted ? 'characterBeganSpeaking' : 'characterEndedSpeaking');
+
+                    // call for message refresh when that happens in a separate context
+                    if (!isSpeechStarted)
+                        (async() => await this.client.currentConversation?.refreshMessages())();
+                    break;
+                
+                // other events:
+                // 'ParticipantDisconnected'
+                // 'TurnState'
+            }
         });
+        liveKitRoom.on('disconnected', async (disconnectReason: DisconnectReason) => await this.internalHangup(disconnectReason.toString()));
 
         return new Promise((resolve, reject) => {
             liveKitRoom.once('trackSubscribed', async track => {
                 if (track.kind != TrackKind.KIND_AUDIO) return;
+                
+                const cleanReject = (reason: any) => {
+                    this.clean();
+                    reject(reason);
+                };
 
                 // 48000 PCM mono data
                 const audioSource = new AudioSource(48000, 1);
@@ -214,17 +220,16 @@ Ffplay is necessary to play out the audio on your speakers without dependencies.
                 console.log("[node_characterai] Call - Creating streams...");
                 this.resetStreams();
 
-                let { microphoneDevice, speakerDevice } = options;
+                let { microphoneDevice, useSpeakerForPlayback } = options;
                 const isDefaultMicrophoneDevice = microphoneDevice == 'default';
-                const isDefaultSpeakerDevice = speakerDevice == 'default';
 
                 var defaultDevices: any = {};
-                if ((isDefaultMicrophoneDevice || isDefaultSpeakerDevice) && platform == 'win32') {
+                if ((isDefaultMicrophoneDevice) && platform == 'win32') {
                     defaultDevices = await getDefaultWindowsDevices();
 
                     const { error } = defaultDevices;
                     if (error)
-                        throw new Error("Default devices could not be identified properly. Details: " + error);
+                        cleanReject(new Error("Default devices could not be identified properly. Details: " + error));
                 }
 
                 let ffmpegInputCommand = "ffmpeg -f wav -i pipe:0 -ac 1 -ar 48000 -f s16le pipe:1";
@@ -240,12 +245,10 @@ Ffplay is necessary to play out the audio on your speakers without dependencies.
                     microphoneDevice = `audio="${microphoneDevice}"`;
 
                     try {
-                        console.log('input format:', inputFormat);
-                        console.log('input device:', microphoneDevice);
-
                         ffmpegInputCommand = `ffmpeg -f ${inputFormat} -rtbufsize 256M -i ${microphoneDevice} -f lavfi -i anullsrc=r=48000:cl=mono -ar 48000 -filter_complex "[0:a][1:a]amix=inputs=2:duration=longest" -ac 1 -ar 48000 -f s16le pipe:1`;
                     } catch (error) {
-                        reject(new Error("Recording from the default microphone device is unsupported on this device or failed. Details: " + error));
+                        this.clean();
+                        cleanReject(new Error("Recording from the default microphone device is unsupported on this device or failed. Details: " + error));
                     }
                 } 
                 
@@ -255,7 +258,7 @@ Ffplay is necessary to play out the audio on your speakers without dependencies.
                 // console.log(ffmpegInputCommand);
 
                 const inputFfmpeg = spawnFF(ffmpegInputCommand, true);
-                inputFfmpeg.on('exit', (code, signal) => { throw new Error("FFplay crashed"); });
+                inputFfmpeg.on('exit', async (code, signal) => await this.internalHangup(`Ffmpeg exited (code ${code}) with signal ${signal}`));
                 inputFfmpeg.stdin.pipe(this.inputStream);
                 inputFfmpeg.stdout.pipe(this.liveKitInputStream);
                 this.inputFfmpeg = inputFfmpeg;
@@ -271,24 +274,19 @@ Ffplay is necessary to play out the audio on your speakers without dependencies.
                     await audioSource.captureFrame(frame);
                 });
                 
-                //this.onpu.on('data', data => console.log(data));
-                this.inputStream.on('data', data => console.log(data));
-                //this.outputStream.on('data', data => console.log(data));
+                // this.inputStream.on('data', data => console.log(data));
+
                 console.log("[node_characterai] Call - Creating output source");
-                if (speakerDevice) {
-                    // todo store this and do speaker device
-
-                    //`ffplay -f s16le -ar 48000 -nodisp -audio_device "${speakerDevice}" -`
+                if (useSpeakerForPlayback) {
                     // use ffplay
-                    const ffplayProcess = spawnFF(`ffplay -f s16le -ar 48000 -nodisp -`, false);
-                    // ffplayProcess.on('error', error => console.log("ffplay close", error))
-                    ffplayProcess.on('exit', (code, signal) => { throw new Error("FFplay crashed"); });
+                    const outputFfplay = spawnFF(`ffplay -f s16le -ar 48000 -nodisp -`, false);
+                    outputFfplay.on('exit', async (code, signal) => await this.internalHangup(`Ffplay exited (code ${code}) with signal ${signal}`));
+                    this.outputFfplay = outputFfplay;
 
-                    this.outputStream.pipe(ffplayProcess.stdin);
+                    this.outputStream.pipe(outputFfplay.stdin);
                 }
 
                 const stream = new AudioStream(track);
-
                 // start audio processing in different async context
                 (async () => {
                     for await (const frame of stream)
@@ -303,10 +301,8 @@ Ffplay is necessary to play out the audio on your speakers without dependencies.
     }
 
     // https://neo.character.ai/multimodal/api/v1/sessions/discardCandidate
-    async interrupt(candidateId?: string) {
+    async interruptCharacter() {
         this.client.checkAndThrow(CheckAndThrow.RequiresToBeInDM);
-
-        // TODO
 
         const conversation = this.client.currentConversation;
         if (!conversation) throw new Error("No conversation");
@@ -315,27 +311,31 @@ Ffplay is necessary to play out the audio on your speakers without dependencies.
         const request = await this.client.requester.request("https://neo.character.ai/multimodal/api/v1/sessions/discardCandidate", {
             method: 'POST',
             contentType: 'application/json',
-            body: Parser.stringify({ candidateId: null, characterId: character.characterId, roomId: this.roomId }),
+            body: Parser.stringify({ candidateId: this.latestCandidateId, characterId: character.characterId, roomId: this.roomId }),
             includeAuthorization: true
         });
-
-        const response = await Parser.parseJSON(request);
-        if (!request.ok) throw new Error();
-        
+        if (!request.ok) throw new Error("Could not interrupt character call");
     }
 
-    async hangUp() {
+    private async internalHangup(errorReason?: string) {
+        await this.liveKitRoom?.disconnect();
+        this.clean();
 
+        if (errorReason) throw new Error(`Call error: ${errorReason}`);
     }
-    public clean() {
-        this.inputStream.destroy();
-        this.liveKitInputStream.destroy();
+    async hangUp() { await this.internalHangup(); }
 
-        this.inputFfmpeg?.kill("");
-        this.outputFfmpeg?.kill("");
+    private clean() {
+        this.inputStream?.destroy();
+        this.outputStream?.destroy();
+        this.liveKitInputStream?.destroy();
+
+        this.inputFfmpeg?.kill();
+        this.outputFfmpeg?.kill();
+        this.outputFfplay?.kill();
     }
 
-    constructor(client: CharacterAI, ) {
+    constructor(client: CharacterAI) {
         super();
         this.client = client;
     }
