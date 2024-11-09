@@ -163,12 +163,18 @@ Ffplay is necessary to play out the audio on your speakers without dependencies.
                 console.log('livekit message', jsonData);
                 const { event } = jsonData;
                 
-                switch (jsonData) {
+                switch (event) {
                     // when we talk
                     case 'UtteranceCandidate':
-                        break;
+                        let isUtteranceCandidateFinal = false;
                     case 'UtteranceFinalized':
+                        isUtteranceCandidateFinal = true;
+                        const { text, timestamp, userStopSpeakingTime, ted_confidence: tedConfidence, interruption_confidence: interruptionConfidence} = jsonData;
 
+                        this.emit('userSpeechCandidate', {
+                            text, timestamp, userStopSpeakingTime, tedConfidence, interruptionConfidence,
+                            isUtteranceCandidateFinal
+                        });
                         break;
 
                     case 'speechStarted':
