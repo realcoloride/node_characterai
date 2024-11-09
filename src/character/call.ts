@@ -170,11 +170,12 @@ Ffplay is necessary to play out the audio on your speakers without dependencies.
             
             const jsonData = JSON.parse(data);
             const { event } = jsonData;
-            
+            let isUtteranceCandidateFinal;
+            let isSpeechStarted;
+
             switch (event) {
                 // when we talk
-                case 'UtteranceCandidate':
-                    let isUtteranceCandidateFinal = false;
+                case 'UtteranceCandidate': isUtteranceCandidateFinal = false;
                 case 'UtteranceFinalized':
                     isUtteranceCandidateFinal = true;
                     const { text, timestamp, userStopSpeakingTime, ted_confidence: tedConfidence, interruption_confidence: interruptionConfidence} = jsonData;
@@ -185,8 +186,7 @@ Ffplay is necessary to play out the audio on your speakers without dependencies.
                     });
                     break;
 
-                case 'speechStarted':
-                    let isSpeechStarted = true;
+                case 'speechStarted': isSpeechStarted = true;
                 case 'speechEnded':
                     isSpeechStarted = false;
 
