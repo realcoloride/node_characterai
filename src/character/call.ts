@@ -324,11 +324,13 @@ Ffplay is necessary to play out the audio on your speakers without dependencies.
         });
     }
 
+    public get canInterruptCharacter() { return this.latestCandidateId != null; }
+
     // https://neo.character.ai/multimodal/api/v1/sessions/discardCandidate
     async interruptCharacter() {
         this.client.checkAndThrow(CheckAndThrow.RequiresToBeInDM);
 
-        if (this.latestCandidateId == null) return;
+        if (!this.canInterruptCharacter) return;
 
         const conversation = this.client.currentConversation;
         if (!conversation) throw new Error("No conversation");
