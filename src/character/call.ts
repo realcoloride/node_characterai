@@ -2,7 +2,6 @@ import { exec, spawn } from "child_process";
 import CharacterAI, { CheckAndThrow } from "../client";
 import Parser from "../parser";
 import { EventEmitterSpecable, hiddenProperty } from "../utils/specable";
-import Ffmpeg, { FfmpegCommand } from "fluent-ffmpeg";
 import { PassThrough } from "stream";
 import { AudioFrame, AudioSource, AudioStream, LocalAudioTrack, Room, TrackKind, TrackPublishOptions, TrackSource } from '@livekit/rtc-node';
 import path from "path";
@@ -12,10 +11,10 @@ import { platform } from "process";
 export interface ICharacterCallOptions {
     // will record the input from the default system device or following name
     // nothing means no microphone recording
-    microphoneDevice?: 'default' | string,
+    microphoneDevice: 'default' | string | false,
     // will output the audio onto the default system device
     // nothing means no speaker playback
-    speakerDevice?: 'default' | string,
+    speakerDevice: 'default' | string | false,
     
     voiceId?: string,
     voiceQuery?: string,
@@ -43,6 +42,21 @@ function getDefaultWindowsDevices(): any {
         resolve(JSON.parse(deviceJson));
     }))
 }
+function spawnFF(command: string, ffDebug: boolean) {
+    const childProcess = spawn(command, {
+        shell: true,
+        stdio: ['pipe', 'pipe', 'pipe'] // ignore stdin, pipe stdout, ignore stderr
+    });
+
+    childProcess.stderr.on('data', (data) => {
+        if (ffDebug) console.error(`ff stderr: ${data.toString()}`);
+    });
+
+    // events
+    childProcess.on('error', error => console.error(`Error executing command: ${error}`));
+
+    return childProcess;
+}
 
 const platformInputFormats: any = {
     win32: 'dshow',
@@ -61,13 +75,20 @@ export class CAICall extends EventEmitterSpecable {
     private client: CharacterAI;
 
     public liveKitRoom?: Room = undefined;
-    private audioTrack?: LocalAudioTrack = undefined;
     private inputStream: PassThrough = new PassThrough();
     private outputStream: PassThrough = new PassThrough();
 
-    public micFfmpeg: FfmpegCommand | any;
-    public inputFfmpeg: FfmpegCommand | any;
-    public outputFfmpeg: FfmpegCommand | any;
+    public micFfmpeg: any;
+    public inputFfmpeg: any;
+    public outputFfmpeg: any;
+
+    public mute: boolean = false;
+    public id = "";
+    public roomId = "";
+
+    private latestCandidateId = {};
+
+    public isCharacterSpeaking: boolean = false;
 
     private liveKitInputStream: PassThrough = new PassThrough();
 
@@ -79,8 +100,8 @@ export class CAICall extends EventEmitterSpecable {
 
     async connectToSession(options: ICharacterCallOptions, token: string, username: string): Promise<void> {
         this.client.checkAndThrow(CheckAndThrow.RequiresToBeInDM);
+        console.log("[node_characterai] Call - WARNING: Experimental feature ahead! Report issues in the GitHub.");
 
-        console.log("[node_characterai] Call - Creating session...");
         if (!await checkIfFfmpegIsInstalled()) throw Error(
 `Ffmpeg is not present on this machine or not detected. Here's a guide to install it:
 Ffmpeg is necessary to process the audio for the call.
@@ -93,7 +114,7 @@ Ffplay is necessary to play out the audio on your speakers without dependencies.
 
 [INSERT GUIDE SOON]`);
 
-        console.log("[node_characterai] Call - WARNING: Experimental feature ahead! Report issues in the GitHub.");
+        console.log("[node_characterai] Call - Creating session...");
 
         const conversation = this.client.currentConversation;
         if (!conversation) throw Error("No conversation");
@@ -122,13 +143,54 @@ Ffplay is necessary to play out the audio on your speakers without dependencies.
         const response = await Parser.parseJSON(request);
         if (!request.ok) throw new Error(String(response));
 
-        const { lkUrl, lkToken } = response;
+        const { lkUrl, lkToken, session } = response;
         const liveKitRoom = new Room();
+
+        const { id, roomId } = session;
+        this.id = id; this.roomId = roomId;
 
         console.log("[node_characterai] Call - Connecting to room...");
 
         this.liveKitRoom = liveKitRoom;
         await liveKitRoom.connect(lkUrl, lkToken, { autoSubscribe: true, dynacast: true });
+
+        liveKitRoom.on('dataReceived', async payload => {
+            const decoder = new TextDecoder();
+            const data = decoder.decode(payload);
+
+            try {
+                const jsonData = JSON.parse(data);
+                console.log('livekit message', jsonData);
+                const { event } = jsonData;
+                
+                switch (jsonData) {
+                    // when we talk
+                    case 'UtteranceCandidate':
+                        break;
+                    case 'UtteranceFinalized':
+
+                        break;
+
+                    case 'speechStarted':
+                        let isSpeechStarted = true;
+                    case 'speechEnded':
+                        isSpeechStarted = false;
+
+                        const { candidateId } = jsonData;
+                        this.latestCandidateId = candidateId;
+
+                        this.isCharacterSpeaking = isSpeechStarted;
+                        this.emit(isSpeechStarted ? 'characterSpeechStopped' : 'characterSpeechStarted');
+                        break;
+                    
+                    case 'ParticipantDisconnected':
+                        break;
+                }
+            } catch (error) {
+                
+            }
+            
+        });
 
         return new Promise((resolve, reject) => {
             liveKitRoom.once('trackSubscribed', async track => {
@@ -137,7 +199,6 @@ Ffplay is necessary to play out the audio on your speakers without dependencies.
                 // 48000 PCM mono data
                 const audioSource = new AudioSource(48000, 1);
                 const audioTrack = LocalAudioTrack.createAudioTrack('audio', audioSource);
-                this.audioTrack = audioTrack;
                 
                 await liveKitRoom.localParticipant?.publishTrack(
                     audioTrack,
@@ -146,7 +207,6 @@ Ffplay is necessary to play out the audio on your speakers without dependencies.
 
                 console.log("[node_characterai] Call - Creating streams...");
                 this.resetStreams();
-                console.log("Connected to livekit");
 
                 let { microphoneDevice, speakerDevice } = options;
                 const isDefaultMicrophoneDevice = microphoneDevice == 'default';
@@ -154,26 +214,14 @@ Ffplay is necessary to play out the audio on your speakers without dependencies.
 
                 var defaultDevices: any = {};
                 if ((isDefaultMicrophoneDevice || isDefaultSpeakerDevice) && platform == 'win32') {
-                    console.log("fetching default devcs");
                     defaultDevices = await getDefaultWindowsDevices();
-                    console.log(defaultDevices);
 
                     const { error } = defaultDevices;
                     if (error)
                         throw new Error("Default devices could not be identified properly. Details: " + error);
                 }
 
-                // input mic/arbitrary data -> pipe:0 -> output pipe:1 pcm data in stdout
-                this.inputFfmpeg = Ffmpeg()
-                    .input('pipe:0')
-                    .outputOptions([
-                        '-ac 1',                      // Mono audio channel
-                        '-ar 48000',                  // 48kHz sample rate
-                        '-f s16le',                   // Raw PCM output in s16le format
-                        '-acodec pcm_s16le'           // Set audio codec to PCM s16le explicitly
-                    ])
-                    .output('pipe:1')               // Direct ffmpeg output to pipe:1
-                    .pipe(this.liveKitInputStream, { end: false });   
+                let ffmpegInputCommand = "ffmpeg -f wav -i pipe:0 -ac 1 -ar 48000 -f s16le pipe:1";
 
                 // input
                 if (microphoneDevice) {
@@ -188,19 +236,27 @@ Ffplay is necessary to play out the audio on your speakers without dependencies.
                     try {
                         console.log('input format:', inputFormat);
                         console.log('input device:', microphoneDevice);
-                        this.micFfmpeg = Ffmpeg() //`-f ${inputFormat} -i ${microphoneDevice}`)
-                            .input(microphoneDevice)
-                            .inputFormat(inputFormat)
-                            .outputOptions(['-f s16le'])
-                            .pipe(this.inputFfmpeg.stdin);
+
+                        ffmpegInputCommand = `ffmpeg -f ${inputFormat} -rtbufsize 256M -i ${microphoneDevice} -f lavfi -i anullsrc=r=48000:cl=mono -ar 48000 -filter_complex "[0:a][1:a]amix=inputs=2:duration=longest" -ac 1 -ar 48000 -f s16le pipe:1`;
                     } catch (error) {
                         reject(new Error("Recording from the default microphone device is unsupported on this device or failed. Details: " + error));
                     }
                 } 
-                console.log("created input");
+                
+                console.log("[node_characterai] Call - Creating input source");
+
+                // input mic/arbitrary data -> pipe:0 -> output pipe:1 pcm data in stdout
+                // console.log(ffmpegInputCommand);
+
+                const inputFfmpeg = spawnFF(ffmpegInputCommand, true);
+                inputFfmpeg.on('exit', (code, signal) => { throw new Error("FFplay crashed"); });
+                inputFfmpeg.stdin.pipe(this.inputStream);
+                inputFfmpeg.stdout.pipe(this.liveKitInputStream);
+                this.inputFfmpeg = inputFfmpeg;
 
                 // god, this is awful. i wish i didn't have to do this.
                 this.liveKitInputStream.on('data', async data => {
+                    if (this.mute) return;
                     // convert to int16 array & send 
                     const int16Array = new Int16Array(data.buffer, data.byteOffset, data.byteLength / Int16Array.BYTES_PER_ELEMENT);
                     const frame = new AudioFrame(int16Array, 48000, 1, int16Array.length);
@@ -209,15 +265,23 @@ Ffplay is necessary to play out the audio on your speakers without dependencies.
                     await audioSource.captureFrame(frame);
                 });
                 
-                const stream = new AudioStream(track);
+                //this.onpu.on('data', data => console.log(data));
+                this.inputStream.on('data', data => console.log(data));
+                //this.outputStream.on('data', data => console.log(data));
+                console.log("[node_characterai] Call - Creating output source");
+                if (speakerDevice) {
+                    // todo store this and do speaker device
 
-                const outputFfmpeg = Ffmpeg()
-                    .input(this.outputStream)
-                    .inputFormat('s16le')
-                    .audioFrequency(48000)  
-                    .audioChannels(1)       
-                    .audioCodec('pcm_s16le')
-                    .format('s16le');
+                    //`ffplay -f s16le -ar 48000 -nodisp -audio_device "${speakerDevice}" -`
+                    // use ffplay
+                    const ffplayProcess = spawnFF(`ffplay -f s16le -ar 48000 -nodisp -`, false);
+                    // ffplayProcess.on('error', error => console.log("ffplay close", error))
+                    ffplayProcess.on('exit', (code, signal) => { throw new Error("FFplay crashed"); });
+
+                    this.outputStream.pipe(ffplayProcess.stdin);
+                }
+
+                const stream = new AudioStream(track);
 
                 // start audio processing in different async context
                 (async () => {
@@ -226,22 +290,32 @@ Ffplay is necessary to play out the audio on your speakers without dependencies.
                         this.outputStream.write(frame.data);
                 })();
 
-                if (options.speakerDevice) {
-                    // use ffplay
-                    const ffplayProcess = spawn('ffplay', [
-                        '-f', 's16le',    
-                        '-ar', '48000', 
-                        '-ac', '1', 
-                        '-nodisp', 
-                        '-' 
-                    ]);
-
-                    outputFfmpeg.pipe(ffplayProcess.stdin);
-                }
-
+                console.log("[node_characterai] Call - Call is ready.");
                 resolve();
             });
         });
+    }
+
+    // https://neo.character.ai/multimodal/api/v1/sessions/discardCandidate
+    async interrupt(candidateId?: string) {
+        this.client.checkAndThrow(CheckAndThrow.RequiresToBeInDM);
+
+        // TODO
+
+        const conversation = this.client.currentConversation;
+        if (!conversation) throw new Error("No conversation");
+        const character = await conversation.getCharacter();
+
+        const request = await this.client.requester.request("https://neo.character.ai/multimodal/api/v1/sessions/discardCandidate", {
+            method: 'POST',
+            contentType: 'application/json',
+            body: Parser.stringify({ candidateId: null, characterId: character.characterId, roomId: this.roomId }),
+            includeAuthorization: true
+        });
+
+        const response = await Parser.parseJSON(request);
+        if (!request.ok) throw new Error();
+        
     }
 
     async hangUp() {

@@ -212,7 +212,7 @@ export class Character extends Specable {
         return dms;
     }
     // create new converstaion to false will fetch the latest conversation
-    async DM(createNewConversation: boolean, withGreeting?: boolean, specificChatId?: string): Promise<DMConversation> {
+    private async internalDM(createNewConversation: boolean, withGreeting?: boolean, specificChatId?: string): Promise<DMConversation> {
         this.client.checkAndThrow(CheckAndThrow.RequiresAuthentication);
 
         // todo greeting
@@ -243,6 +243,9 @@ export class Character extends Specable {
 
         return await this.client.connectToConversation(this.characterId, false, chatObject) as DMConversation;
     }
+    async newDM(withGreeting?: boolean) { return await this.internalDM(true, withGreeting); }
+    async DM(specificChatId?: string) { return await this.internalDM(false, false, specificChatId); }
+
     async createGroupChat(options: ICharacterGroupChatCreation) {
         this.client.checkAndThrow(CheckAndThrow.RequiresAuthentication);
 
