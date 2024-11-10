@@ -150,7 +150,7 @@ export class PublicProfile {
     }
     
     constructor(client: CharacterAI, options?: any) {
-        this.avatar = new CAIImage(client, () => false);
+        this.avatar = new CAIImage(client, false);
         this.client = client;
         this.loadFromInformation(options);
     }

@@ -7,6 +7,8 @@ import { getterProperty, hiddenProperty } from "../utils/specable";
 import { Character } from "../character/character";
 import { CAIVoice, VoiceGender, VoiceVisibility } from "../voice";
 import sharp, { Sharp } from "sharp";
+import { randomUUID } from "crypto";
+import { IPersonaExtraCreationOptions, Persona } from "./persona";
 
 export interface IProfileModification {
     // username
@@ -163,9 +165,67 @@ export class PrivateProfile extends PublicProfile {
         this.loadFromInformation(user);
         this.loadFromInformation(user.user);
     }
+
+    async fetchPersona(personaId: string) {
+
+    }
+    async getDefaultPersona(): Promise<Persona | undefined> {
+        
+    }
+    async setDefaultPersona(persona: Persona | string) {
+        return await this.setDefaultPersonaWithIdentifier(persona.identifier);
+    }
+    async createPersona(
+        name: string, 
+        description: string,
+        makeDefaultForChats: boolean,
+        extraOptions: IPersonaExtraCreationOptions
+    ) {
+        this.client.checkAndThrow(CheckAndThrow.RequiresAuthentication);
+
+        const greeting = extraOptions.greeting ?? "Hello! This is my persona";
+        const image = extraOptions.image;
+        const prompt = image?.prompt;
+        
+        const request = await this.client.requester.request(`https://plus.character.ai/chat/persona/create/`, {
+            method: 'POST',
+            contentType: 'application/json',
+            body: Parser.stringify({ 
+                title: name,
+                name,
+                identifier: `id:${randomUUID()}`,
+                categories: [],
+                visbility: "PRIVATE",
+                copyable: false,
+                description,
+                greeting,
+                definition: "background",
+                avatar_rel_path: image?.endpointUrl ?? '',
+                img_gen_enabled: prompt != undefined,
+                base_img_prompt: prompt ?? '',
+                avatar_file_name: '',
+                voice_id: '',
+                strip_img_prompt_from_msg: false
+            }),
+            includeAuthorization: true
+        });
+
+        const response = await Parser.parseJSON(request);
+        if (!request.ok) throw new Error(String(response));
+
+        const persona = new Persona(this.client, response.persona);
+
+        // todo
+        if (makeDefaultForChats) await this.setDefaultPersona();
+        
+        return persona;
+    }
+    async removePersona(personaId: string) {
+
+    }
     
     constructor(client: CharacterAI) {
         super(client);
-        this.avatar = new CAIImage(client, () => true);
+        this.avatar = new CAIImage(client);
     }
 }

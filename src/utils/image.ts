@@ -145,8 +145,9 @@ export class CAIImage {
         this.makeSharpImage(await this.downloadImageBuffer(url));
     }
 
-    constructor(client: CharacterAI, canUploadChanges: Function) {
+    constructor(client: CharacterAI, canUploadChanges: Function | boolean = true) {
         this.client = client;
-        this.canUploadChanges = canUploadChanges;
+        this.canUploadChanges = 
+            typeof canUploadChanges == 'boolean' ? () => canUploadChanges : canUploadChanges;
     }
 }

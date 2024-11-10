@@ -5,7 +5,7 @@ export default class ObjectPatcher {
     static patch(client: CharacterAI, instance: any, object: Record<string, any>) {
         const avatarFileName = object["avatar_file_name"] || object["character_avatar_uri"];
         if (avatarFileName) {
-            const avatar = new CAIImage(client, () => false);
+            const avatar = new CAIImage(client, false);
             avatar.changeToEndpointUrlSync(avatarFileName);
             instance.avatar = avatar;
         }
