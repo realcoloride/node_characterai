@@ -61,7 +61,6 @@ export default class CharacterAI extends EventEmitter {
     async sendGroupChatWebsocketAsync(options: ICAIWebsocketMessage) { this.groupChatWebsocket?.sendAsync(options); }
     async sendGroupChatWebsocketCommandAsync(options: ICAIWebsocketCommand) {
         const requestId = uuidv4();
-        // todo
         return await this.sendDMWebsocketAsync({
             parseJSON: true,
             expectedReturnCommand: options.expectedReturnCommand,
@@ -195,13 +194,6 @@ export default class CharacterAI extends EventEmitter {
     async disconnectFromCall() {
         this.checkAndThrow(CheckAndThrow.RequiresToBeInDM);
         return await this.currentCall?.hangUp();
-    }
-
-    constructor() {
-        super();
-        this.myProfile = new PrivateProfile(this);
-        this.requester = new Requester();
-        this.groupChats = new GroupChats(this);
     }
 
     // profile fetching
@@ -443,5 +435,12 @@ WARNING: CharacterAI has changed its authentication methods again.
 
         if (argument == CheckAndThrow.RequiresToBeInGroupChat && connectionType != CAIWebsocketConnectionType.GroupChat)
             throw Error("This action requires you to be connected to a Group Chat.");
+    }
+    
+    constructor() {
+        super();
+        this.myProfile = new PrivateProfile(this);
+        this.requester = new Requester();
+        this.groupChats = new GroupChats(this);
     }
 }

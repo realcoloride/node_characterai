@@ -26,14 +26,15 @@ export class CAIImage {
     // cannot be set
     @hiddenProperty
     private sharpImage?: sharp.Sharp = undefined;
-
     // if sharp image is loaded
-    @hiddenProperty
-    private get isSharpImageLoaded() { return this.sharpImage != undefined; }
+    @getterProperty
+    public get isSharpImageLoaded() { return this.sharpImage != undefined; }
 
     // if image is uploaded to cai
     @hiddenProperty
-    private isImageUploaded: boolean = false;
+    private _isImageUploaded: boolean = false;
+    @getterProperty
+    public get isImageUploaded() { return this._isImageUploaded; }
 
     public getFullUrl() { return `${baseEndpoint}${this.endpointUrl}`; }
 
@@ -43,10 +44,6 @@ export class CAIImage {
     // create image or load image:
     // get a buffer
     // * buffer makes SHARP IMAGE
-    //
-    // uploading changes:
-    // 
-    // 
 
     private clearSharpImage() {
         this.sharpImage?.destroy();
@@ -70,8 +67,11 @@ export class CAIImage {
 
     public async uploadChanges() {
         this.client.checkAndThrow(CheckAndThrow.RequiresAuthentication);
+        
+        // TODO: Weird issues with permissions are going on here and need a fix ASAP
+        this.client.throwBecauseNotAvailableYet();
 
-        this.isImageUploaded = false;
+        this._isImageUploaded = false;
 
         if (!this.canUploadChanges()) throw new Error("You cannot change this image.");
         if (!this.sharpImage) throw new Error("Image not available or not loaded");
@@ -81,6 +81,7 @@ export class CAIImage {
     
         // character ai deserves an award for the most batshit confusing endpoints to upload stuff ever
         const payload = { "0": { json: { imageDataUrl: base64 } } }
+        
         const request = await this.client.requester.request("https://character.ai/api/trpc/user.uploadAvatar?batch=1", {
             method: 'POST',
             includeAuthorization: true,
@@ -89,11 +90,10 @@ export class CAIImage {
         });
 
         const response = await Parser.parseJSON(request);
-        if (!request.ok) throw new Error(String(response));
+        if (!request.ok) throw new Error("Could not upload picture");
         
         this._endpointUrl = response[0].result.data.json;
-        this.isImageUploaded = true;
-        
+        this._isImageUploaded = true;
     }
 
     // THESE CHANGE THE SHARP IMAGE
@@ -125,14 +125,14 @@ export class CAIImage {
     }
 
     // extra
-    async changeToPrompt(prompt: string, avatarPrompt = false) {
+    async changeToPrompt(prompt: string, isAvatarPrompt: boolean) {
         this.client.checkAndThrow(CheckAndThrow.RequiresAuthentication);
 
-        this.sharpImage
-        const request = await this.client.requester.request(`https://plus.character.ai/chat/${(avatarPrompt ? "character/generate-avatar-options" : "chat/generate-image")}`, {
+        // TODO: check if generating works right since its cloudflare protected
+        const request = await this.client.requester.request(`https://plus.character.ai/chat/${(isAvatarPrompt ? "character/generate-avatar-options" : "chat/generate-image")}`, {
             method: 'POST',
             includeAuthorization: true,
-            body: Parser.stringify(avatarPrompt 
+            body: Parser.stringify(isAvatarPrompt 
                 ? { prompt, num_candidates: 4, model_version: "v1" }
                 : { image_description: prompt })
         });
@@ -140,7 +140,9 @@ export class CAIImage {
         if (!request.ok) throw new Error(response);
 
         this._prompt = prompt;
-        await this.changeToEndpointUrl(response[0].result[0].url);
+        
+        const url = response[0].result[0].url;
+        this.makeSharpImage(await this.downloadImageBuffer(url));
     }
 
     constructor(client: CharacterAI, canUploadChanges: Function) {

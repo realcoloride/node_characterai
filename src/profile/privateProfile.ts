@@ -16,7 +16,13 @@ export interface IProfileModification {
     displayName?: string,
 
     // bio
-    bio?: string
+    bio?: string,
+
+    /**
+     * Sends avatar to be updated or else uses the cached one.
+     * Make sure to uploadChanges() before calling this!
+     */
+    editAvatar?: boolean
 }
 
 export class PrivateProfile extends PublicProfile {
@@ -83,7 +89,7 @@ export class PrivateProfile extends PublicProfile {
                 username: options?.username ?? this.username,
                 name: options?.displayName ?? this.displayName,
                 avatar_type: "UPLOADED",
-                avatar_rel_path: this.avatar.endpointUrl,
+                avatar_rel_path: options?.editAvatar ?? this.avatar.endpointUrl,
                 bio: options?.bio ?? this.bio
             }),
             contentType: 'application/json'
