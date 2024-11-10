@@ -2,13 +2,13 @@ import Parser from '../parser';
 import CharacterAI, { CheckAndThrow } from '../client';
 import { CAIImage as CAIImage } from '../utils/image';
 import ObjectPatcher from '../utils/patcher';
-import { PublicProfileCharacter } from './profileCharacter';
 import { getterProperty, hiddenProperty } from '../utils/specable';
 import { CAIVoice } from '../voice';
+import { Character } from '../character/character';
 
 export class PublicProfile {
     // characters
-    public characters: PublicProfileCharacter[] = [];
+    public characters: Character[] = [];
 
     // username
     username = "";
@@ -50,12 +50,6 @@ export class PublicProfile {
     // for actions
     @hiddenProperty
     protected client: CharacterAI;
-
-    constructor(client: CharacterAI, options?: any) {
-        this.avatar = new CAIImage(client);
-        this.client = client;
-        this.loadFromInformation(options);
-    }
 
     // features
     async follow() {
@@ -130,10 +124,10 @@ export class PublicProfile {
         if (!characters) return;
         // reset old characters
         this.characters = [];
-        characters.forEach(characterInformation => this.characters.push(new PublicProfileCharacter(this.client, characterInformation)));
+        characters.forEach(characterInformation => this.characters.push(new Character(this.client, characterInformation)));
     }
 
-    async #setProfilePicture(image: any) {
+    private async setProfilePicture(image: any) {
         const base64 = await image.getBase64Async(-1);
 
         const request = await this.client.requester.request("https://character.ai/api/trpc/user.uploadAvatar?batch=1", {
@@ -163,9 +157,7 @@ export class PublicProfile {
     }*/
 
     // voice
-    async getVoices(): Promise<CAIVoice[]> {
-        return await this.client.fetchVoicesFromUser(this.username);
-    }
+    async getVoices(): Promise<CAIVoice[]> { return await this.client.fetchVoicesFromUser(this.username); }
 
     // updates profile or fetches it for the first time
     async refreshProfile() {
@@ -184,5 +176,12 @@ export class PublicProfile {
             throw new Error("Profile not found. Watch out! Profile names are case sensitive.");
 
         this.loadFromInformation(response.public_user);
+
+    }
+    
+    constructor(client: CharacterAI, options?: any) {
+        this.avatar = new CAIImage(client, () => { throw new Error("You can only change your avatar. Use client.myProfile instead"); });
+        this.client = client;
+        this.loadFromInformation(options);
     }
 }

@@ -140,9 +140,7 @@ export class CAIMessage extends Specable {
     @hiddenProperty
     private primary_candidate_id = "";
 
-    public get primaryCandidate() {
-        return this.getCandidateByTurnId(this.primary_candidate_id);
-    }
+    public get primaryCandidate() { return this.getCandidateByTurnId(this.primary_candidate_id); }
 
     // use specific candidate id to change specific id or it will change the latest
     async edit(newContent: string, specificCandidateId?: string) {

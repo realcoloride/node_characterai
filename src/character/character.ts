@@ -299,10 +299,15 @@ export class Character extends Specable {
         return response.report.report_id;
     }
 
+    async edit() {
+        // todo
+    }
+
     constructor(client: CharacterAI, information: any) {
         super();
         this.client = client;
-        this.avatar = new CAIImage(client);
+        this.avatar = new CAIImage(client, this.edit);
+
         ObjectPatcher.patch(this.client, this, information);
     }
 }

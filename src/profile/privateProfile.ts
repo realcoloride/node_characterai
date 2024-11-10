@@ -1,8 +1,7 @@
 import { ICharacterCreation } from "../character/modification";
 import CharacterAI, { CheckAndThrow } from "../client";
 import Parser from "../parser";
-import { CAIImage, EditableCAIImage } from "../utils/image";
-import { PrivateProfileCharacter, PublicProfileCharacter } from "./profileCharacter";
+import { CAIImage } from "../utils/image";
 import { PublicProfile } from "./publicProfile";
 import { getterProperty, hiddenProperty } from "../utils/specable";
 import { Character } from "../character/character";
@@ -15,19 +14,14 @@ export interface IProfileModification {
     // name
     displayName?: string,
 
-    // avatar_type (TODO FIGURE OUT)
-
-    // avatar_rel_path
-    avatar?: CAIImage,
-
     // bio
     bio?: string
 }
 
 export class PrivateProfile extends PublicProfile {
-    public characters: PrivateProfileCharacter[] = [];
+    public characters: Character[] = [];
     @hiddenProperty
-    public avatar: EditableCAIImage;
+    public avatar: CAIImage;
 
     // is_human
     @hiddenProperty
@@ -37,7 +31,7 @@ export class PrivateProfile extends PublicProfile {
     public set isHuman(value) { this.is_human = value; }
 
     // email
-    private email = "";
+    public email = "";
 
     // needs_to_aknowledge_policy
     @hiddenProperty
@@ -55,7 +49,7 @@ export class PrivateProfile extends PublicProfile {
 
     // hidden_characters
     @hiddenProperty
-    private hidden_characters: PublicProfileCharacter[] = []; // TODO
+    private hidden_characters: Character[] = []; // TODO
     @getterProperty
     public get hiddenCharacters() { return this.hidden_characters; }
     public set hiddenCharacters(value) { this.hidden_characters = value; }
@@ -77,29 +71,25 @@ export class PrivateProfile extends PublicProfile {
     public get userId() { return this.id; }
     public set userId(value) { this.id = value; }
 
-    async edit(options: IProfileModification) {
+    // edit without paramaters will just send an update
+    async edit(options?: IProfileModification) {
         this.client.checkAndThrow(CheckAndThrow.RequiresAuthentication);
 
         const request = await this.client.requester.request("https://plus.character.ai/chat/user/update/", {
             method: 'POST',
             includeAuthorization: true,
             body: Parser.stringify({ 
-                username: options.username ?? this.username,
-                name: options.displayName ?? this.displayName,
+                username: options?.username ?? this.username,
+                name: options?.displayName ?? this.displayName,
                 avatar_type: "UPLOADED",
-                avatar_rel_path: options.avatar?.endpointUrl ?? this.avatar.endpointUrl,
-                bio: options.bio ?? this.bio
+                avatar_rel_path: this.avatar.endpointUrl,
+                bio: options?.bio ?? this.bio
             }),
             contentType: 'application/json'
         });
         
         const response = await Parser.parseJSON(request);
         if (!request.ok) throw new Error(response.status);
-    }
-
-    constructor(client: CharacterAI) {
-        super(client);
-        this.avatar = new EditableCAIImage(client, async() => await this.edit({ avatar: this.avatar }));
     }
 
     // creation
@@ -149,9 +139,7 @@ export class PrivateProfile extends PublicProfile {
     }
 
     // v1/voices/user
-    async getVoices(): Promise<CAIVoice[]> {
-        return await this.client.fetchMyVoices();
-    }
+    async getVoices(): Promise<CAIVoice[]> { return await this.client.fetchMyVoices(); }
 
     async refreshProfile() {
         this.client.checkAndThrow(CheckAndThrow.RequiresAuthentication);
@@ -167,5 +155,10 @@ export class PrivateProfile extends PublicProfile {
 
         this.loadFromInformation(user);
         this.loadFromInformation(user.user);
+    }
+    
+    constructor(client: CharacterAI) {
+        super(client);
+        this.avatar = new CAIImage(client, this.edit);
     }
 }

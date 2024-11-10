@@ -11,8 +11,6 @@ export default class GroupChatConversation extends Conversation {
 
     }
 
-    
-
     async addCharacter() {
         
     }

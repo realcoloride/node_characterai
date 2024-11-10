@@ -40,7 +40,7 @@ export class CAIImage {
 
     public getFullUrl() { return `${baseEndpoint}${this.endpointUrl}`; }
 
-    protected changeCallback?: Function;
+    private changeCallback?: Function;
 
     private async upload() {
         if (!this.changeCallback) throw new Error("You cannot change this image.");
@@ -74,7 +74,7 @@ export class CAIImage {
         if (this.changeCallback) await this.changeCallback();
     }
     
-    private async makeSharpImage(url: string): Promise<sharp.Sharp> {
+    private async makeSharpImageFromUrl(url: string): Promise<sharp.Sharp> {
         const response = await fetch(url);
         const imageBuffer = await response.arrayBuffer();
         return sharp(imageBuffer);
@@ -83,10 +83,20 @@ export class CAIImage {
     async changeToUrl(pathOrUrl: string) {
         this.loaded = false;
 
-        this.sharpImage = await this.makeSharpImage(pathOrUrl);
+        this.sharpImage = await this.makeSharpImageFromUrl(pathOrUrl);
         this._endpointUrl = await this.upload();
         this.loaded = true;
 
+        if (this.changeCallback) await this.changeCallback();
+    }
+    async changeToBlobOrFile(blob: Blob) {
+        this.loaded = false;
+
+        const buffer = await blob.arrayBuffer();
+        this.sharpImage = sharp(buffer);
+        this._endpointUrl = await this.upload();
+        this.loaded = true;
+        
         if (this.changeCallback) await this.changeCallback();
     }
     async changeToEndpointUrl(endpointUrl: string) {
@@ -107,25 +117,15 @@ export class CAIImage {
     private async load() {
         this.client.checkAndThrow(CheckAndThrow.RequiresAuthentication);
 
-        this.sharpImage = await this.makeSharpImage(this.getFullUrl());
+        this.sharpImage = await this.makeSharpImageFromUrl(this.getFullUrl());
         this.loaded = true;
     }
 
-    constructor(client: CharacterAI) {
-        this.client = client;
-    }
-}
-
-
-// with extra callback to save and upload :)
-export class EditableCAIImage extends CAIImage {
-    // to call if you just changed something with the jimp image
-    async uploadChanges() {
-        if (this.changeCallback) await this.changeCallback();
-    }
+    // to call if you just changed something with the image
+    async uploadChanges() { if (this.changeCallback) await this.changeCallback(); }
 
     constructor(client: CharacterAI, changeCallback: Function) {
-        super(client);
+        this.client = client;
         this.changeCallback = changeCallback;
     }
 }

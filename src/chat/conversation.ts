@@ -81,13 +81,9 @@ export class Conversation extends Specable {
     public visibility: ConversationVisibility = ConversationVisibility.Private;
 
     // features
-    async getCharacter() {
-        return await this.client.fetchCharacter(this.character_id);
-    }
+    async getCharacter() { return await this.client.fetchCharacter(this.character_id); }
     // currently not available use creatorId instead
-    async getCreator() {
-        return await this.client.fetchProfileByUsername(this.creator_id)
-    }
+    async getCreator() { return await this.client.fetchProfileByUsername(this.creator_id); }
 
     // (in cache)
     public getLastMessage() {
@@ -127,9 +123,6 @@ export class Conversation extends Specable {
         
         this.cachedMessages = this.processingMessages;
         return message;
-    }
-    protected async removeMessage() {
-        // TODO
     }
 
     private async fetchMessagesViaQuery(pinnedOnly: boolean, maxMessages = this.maxMessagesStored) {
