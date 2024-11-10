@@ -287,9 +287,7 @@ export class CAIMessage extends Specable {
 
         return await this.conversation.deleteMessagesInBulk(await this.getAllMessagesAfter());
     }
-    async delete() {
-        return await this.conversation.deleteMessage(this);
-    }
+    async delete() { return await this.conversation.deleteMessage(this); }
 
     constructor(client: CharacterAI, conversation: Conversation, turn: any) {
         super();

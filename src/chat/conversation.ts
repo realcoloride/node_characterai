@@ -190,10 +190,7 @@ export class Conversation extends Specable {
     async rename(newName: string) {
         // This is an abstract placeholder for higher level conversations (DM/Group), do not touch
     }
-    async reset() {
-        console.log("[node_characterai] Warning: resetting a conversation, or deleting a lot of messages, can take some time.");
-        return await this.deleteMessagesInBulk(await this.fetchMessagesViaQuery(false, 999999));
-    }
+    async reset() { return await this.deleteMessagesInBulk(await this.fetchMessagesViaQuery(false, 999999)); }
     
     private async deleteTurns(turnIds: string[], refreshMessages: boolean) {
         await this.client.sendDMWebsocketCommandAsync({
@@ -212,6 +209,9 @@ export class Conversation extends Specable {
     }
     async deleteMessagesInBulk(input: number | string[] | CAIMessage[], refreshMessages: boolean = true) {
         this.client.checkAndThrow(CheckAndThrow.RequiresAuthentication);
+        Warnings.show('deletingInBulk');
+        
+        console.log("[node_characterai] Warning: resetting a conversation, or deleting a lot of messages, can take some time.");
 
         let turnIds: string[] = [];
         if (typeof input == 'number') {
@@ -232,7 +232,7 @@ export class Conversation extends Specable {
             if (assumedArray.every(item => item instanceof CAIMessage)) 
                 turnIds = assumedArray.map(message => message.turnId);
         }
-        
+
         if (turnIds.length == 0) return;
         return await this.deleteTurns(turnIds, refreshMessages);
     }
@@ -243,9 +243,7 @@ export class Conversation extends Specable {
     async deleteMessage(message: CAIMessage, refreshMessages: boolean = true) { return this.deleteMessageById(message.turnId, refreshMessages); }
 
     // disconnects from room
-    async close() {
-        // todo
-    }
+    public close() { this.client.disconnectFromConversation(); }
 
     constructor(client: CharacterAI, information: any) {
         super();

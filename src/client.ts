@@ -174,6 +174,8 @@ export default class CharacterAI extends EventEmitter {
         return this._currentConversation;
     }
     disconnectFromConversation() {
+        if (this._connectionType == CAIWebsocketConnectionType.Disconnected || !this._currentConversation) return;
+
         this._connectionType = CAIWebsocketConnectionType.Disconnected;
         this._currentConversation = undefined;
 
