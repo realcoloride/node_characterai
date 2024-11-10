@@ -262,19 +262,23 @@ export class Character extends Specable {
         const myProfile = this.client.myProfile;
         return username == myProfile.username ? myProfile : await this.client.fetchProfileByUsername(username);
     }
+
     async getVote() {
         this.client.checkAndThrow(CheckAndThrow.RequiresAuthentication);
-
+        // todo
     }
     async setVote(vote: CharacterVote) {
         this.client.checkAndThrow(CheckAndThrow.RequiresAuthentication);
-
+        // todo
     }
 
     async hide() { // /chat/character/hide
         this.client.checkAndThrow(CheckAndThrow.RequiresAuthentication);
 
     }
+
+    // https://neo.character.ai/recommendation/v1/character/id
+    async getSimilarCharacters() { return this.client.getSimilarCharactersTo(this.characterId); }
 
     async report(reason: ReportCharacterReason, additionalDetails = ""): Promise<string> {
         const request = await this.client.requester.request(`https://neo.character.ai/report/create`, {

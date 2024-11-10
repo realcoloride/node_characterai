@@ -255,7 +255,7 @@ export default class CharacterAI extends EventEmitter {
     }
 
     // voice
-    private async internalFetchCharacters(endpoint: string, query?: string) {
+    private async internalFetchCharacterVoices(endpoint: string, query?: string) {
         this.checkAndThrow(CheckAndThrow.RequiresAuthentication);
 
         const encodedQuery = encodeURIComponent(query ?? "");
@@ -277,13 +277,13 @@ export default class CharacterAI extends EventEmitter {
     }
 
     // v1/voices/search?characterName=
-    async searchCharacterVoices(query: string) { return await this.internalFetchCharacters("search?characterName=", query); }
+    async searchCharacterVoices(query: string) { return await this.internalFetchCharacterVoices("search?characterName=", query); }
     // v1/voices/system
-    async fetchSystemVoices() { return await this.internalFetchCharacters("system"); }
+    async fetchSystemVoices() { return await this.internalFetchCharacterVoices("system"); }
     // v1/voices/user
-    async fetchMyVoices() { return await this.internalFetchCharacters("user"); }
+    async fetchMyVoices() { return await this.internalFetchCharacterVoices("user"); }
     // v1/voices/search?creatorInfo.username=
-    async fetchVoicesFromUser(username: string) { return await this.internalFetchCharacters("search?creatorInfo.username=", username); }
+    async fetchVoicesFromUser(username: string) { return await this.internalFetchCharacterVoices("search?creatorInfo.username=", username); }
 
     // v1/voices/voiceId
     async fetchVoice(voiceId: string): Promise<CAIVoice> {
@@ -347,6 +347,7 @@ export default class CharacterAI extends EventEmitter {
         
         return response.categories;
     }
+    async getSimilarCharactersTo(characterId: string) { return await this.automateCharactersRecommendation(`character/${characterId}`, Character); }
 
     // conversations
     // raw is the raw output else the convo instance
