@@ -85,10 +85,7 @@ class Persona extends Specable {
     background = "";
 
     async edit() {
-        const resurectionRequest = await this.requester.request(``, {
-            method: 'GET',
-            includeAuthorization: true
-        });
+        
     }
 
     async makeDefault() {

@@ -1,8 +1,8 @@
 import CharacterAI, { CheckAndThrow } from '../client';
 import Parser from '../parser';
-import { PathLike } from 'fs';
+import fs from 'fs';
 import { getterProperty, hiddenProperty } from '../utils/specable';
-import sharp from 'sharp';
+import sharp, { Sharp } from 'sharp';
 
 const baseEndpoint = "https://characterai.io/i/200/static/avatars/";
 
@@ -19,45 +19,116 @@ export class CAIImage {
 
     // prompt used to generate the image
     @hiddenProperty
-    private _prompt = "";
+    private _prompt?: string = undefined;
     @getterProperty
     public get prompt() { return this._prompt; }
 
     // cannot be set
     @hiddenProperty
     private sharpImage?: sharp.Sharp = undefined;
-    // if image is loaded
-    @hiddenProperty
-    private loaded: boolean = false;
-    
-    // to do image operations
-    async getSharpImage() {
-        if (this.loaded) return this.sharpImage;
 
-        await this.load();
-        return this.sharpImage;
-    }
+    // if sharp image is loaded
+    @hiddenProperty
+    private get isSharpImageLoaded() { return this.sharpImage != undefined; }
+
+    // if image is uploaded to cai
+    @hiddenProperty
+    private isImageUploaded: boolean = false;
 
     public getFullUrl() { return `${baseEndpoint}${this.endpointUrl}`; }
 
-    private changeCallback?: Function;
+    private canUploadChanges: Function;
+    
+    // pipeline:
+    // create image or load image:
+    // get a buffer
+    // * buffer makes SHARP IMAGE
+    //
+    // uploading changes:
+    // 
+    // 
 
-    private async upload() {
-        if (!this.changeCallback) throw new Error("You cannot change this image.");
-        
-        this.client.checkAndThrow(CheckAndThrow.RequiresAuthentication);
-        this.loaded = false;
-        
-        const endpointUrl = await this.changeCallback();
-        this.loaded = true;
+    private clearSharpImage() {
+        this.sharpImage?.destroy();
+        delete this.sharpImage;
+    }
+    async getSharpImage(): Promise<Sharp> {
+        if (this.isSharpImageLoaded) return this.sharpImage as Sharp;
 
-        return endpointUrl;
+        await this.reloadImage();
+        return this.sharpImage as Sharp;
     }
 
-    // these change the image / avatarPrompt will do avatar options
-    async changeToPrompt(prompt: string, avatarPrompt = false) {
-        this.loaded = false;
+    // LOADING methods
+    private makeSharpImage(target: Buffer | ArrayBuffer | string) {
+        this.clearSharpImage();
+        this.sharpImage = sharp(target);
+    }
+    private async downloadImageBuffer(url: string, headers?: Record<string, string>) {
+        return (await fetch(url, { headers })).arrayBuffer();
+    }
 
+    public async uploadChanges() {
+        this.client.checkAndThrow(CheckAndThrow.RequiresAuthentication);
+
+        this.isImageUploaded = false;
+
+        if (!this.canUploadChanges()) throw new Error("You cannot change this image.");
+        if (!this.sharpImage) throw new Error("Image not available or not loaded");
+
+        const buffer = await this.sharpImage.toBuffer();
+        const base64 = buffer.toString('base64');
+    
+        // character ai deserves an award for the most batshit confusing endpoints to upload stuff ever
+        const payload = { "0": { json: { imageDataUrl: base64 } } }
+        const request = await this.client.requester.request("https://character.ai/api/trpc/user.uploadAvatar?batch=1", {
+            method: 'POST',
+            includeAuthorization: true,
+            contentType: 'application/json',
+            body: Parser.stringify(payload)
+        });
+
+        const response = await Parser.parseJSON(request);
+        if (!request.ok) throw new Error(String(response));
+        
+        this._endpointUrl = response[0].result.data.json;
+        this.isImageUploaded = true;
+        
+    }
+
+    // THESE CHANGE THE SHARP IMAGE
+    async changeToUrl(url: string, headers?: Record<string, string>) {
+        this.makeSharpImage(await this.downloadImageBuffer(url, headers));
+    }
+    public changeToFilePath(path: fs.PathOrFileDescriptor) { this.makeSharpImage(fs.readFileSync(path)); }
+    async changeToBlobOrFile(blobOrFile: Blob | File) { this.makeSharpImage(await blobOrFile.arrayBuffer()); }
+    public changeToBuffer(buffer: Buffer | ArrayBuffer) { this.makeSharpImage(buffer); }
+    async changeToEndpointUrl(endpointUrl: string) {
+        // first off do this then load the sharpImage
+        this._endpointUrl = endpointUrl;
+
+        // then we download the picture in question
+        const url = this.getFullUrl();
+        this.makeSharpImage(await this.downloadImageBuffer(url));
+    }
+
+    // this pre loads the image by storing the endpoint url to later load it
+    public changeToEndpointUrlSync(endpointUrl: string) {
+        this.clearSharpImage();
+        this._endpointUrl = endpointUrl;
+    }
+
+    // use this if you fucked up the sharp image and you need a brand new one
+    async reloadImage() {
+        // just redownload the image
+        await this.changeToEndpointUrl(this._endpointUrl);
+    }
+
+    // extra
+    async changeToPrompt(prompt: string, avatarPrompt = false) {
+        this.client.checkAndThrow(CheckAndThrow.RequiresAuthentication);
+
+        this.sharpImage
         const request = await this.client.requester.request(`https://plus.character.ai/chat/${(avatarPrompt ? "character/generate-avatar-options" : "chat/generate-image")}`, {
             method: 'POST',
             includeAuthorization: true,
@@ -68,64 +139,12 @@ export class CAIImage {
         const response = await Parser.parseJSON(request);
         if (!request.ok) throw new Error(response);
 
-        this._endpointUrl = response[0].result[0].url;
-        await this.load();
-        
-        if (this.changeCallback) await this.changeCallback();
-    }
-    
-    private async makeSharpImageFromUrl(url: string): Promise<sharp.Sharp> {
-        const response = await fetch(url);
-        const imageBuffer = await response.arrayBuffer();
-        return sharp(imageBuffer);
+        this._prompt = prompt;
+        await this.changeToEndpointUrl(response[0].result[0].url);
     }
 
-    async changeToUrl(pathOrUrl: string) {
-        this.loaded = false;
-
-        this.sharpImage = await this.makeSharpImageFromUrl(pathOrUrl);
-        this._endpointUrl = await this.upload();
-        this.loaded = true;
-
-        if (this.changeCallback) await this.changeCallback();
-    }
-    async changeToBlobOrFile(blob: Blob) {
-        this.loaded = false;
-
-        const buffer = await blob.arrayBuffer();
-        this.sharpImage = sharp(buffer);
-        this._endpointUrl = await this.upload();
-        this.loaded = true;
-        
-        if (this.changeCallback) await this.changeCallback();
-    }
-    async changeToEndpointUrl(endpointUrl: string) {
-        this.loaded = false;        
-
-        this._endpointUrl = endpointUrl;
-        await this.load();
-
-        if (this.changeCallback) await this.changeCallback();
-    }
-    // remains unloaded however and no callbacks will be called
-    public changeToEndpointUrlSync(endpointUrl: string) {
-        this.loaded = false;        
-        this._endpointUrl = endpointUrl;
-    }
-
-    // loads the image it hasn't been loaded yet from the endpoint
-    private async load() {
-        this.client.checkAndThrow(CheckAndThrow.RequiresAuthentication);
-
-        this.sharpImage = await this.makeSharpImageFromUrl(this.getFullUrl());
-        this.loaded = true;
-    }
-
-    // to call if you just changed something with the image
-    async uploadChanges() { if (this.changeCallback) await this.changeCallback(); }
-
-    constructor(client: CharacterAI, changeCallback: Function) {
+    constructor(client: CharacterAI, canUploadChanges: Function) {
         this.client = client;
-        this.changeCallback = changeCallback;
+        this.canUploadChanges = canUploadChanges;
     }
 }

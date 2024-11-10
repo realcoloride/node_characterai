@@ -6,6 +6,7 @@ import { PublicProfile } from "./publicProfile";
 import { getterProperty, hiddenProperty } from "../utils/specable";
 import { Character } from "../character/character";
 import { CAIVoice, VoiceGender, VoiceVisibility } from "../voice";
+import sharp, { Sharp } from "sharp";
 
 export interface IProfileModification {
     // username
@@ -159,6 +160,6 @@ export class PrivateProfile extends PublicProfile {
     
     constructor(client: CharacterAI) {
         super(client);
-        this.avatar = new CAIImage(client, this.edit);
+        this.avatar = new CAIImage(client, () => true);
     }
 }

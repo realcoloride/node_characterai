@@ -11,6 +11,7 @@ import { getterProperty, hiddenProperty, Specable } from "../utils/specable";
 import { v4 as uuidv4 } from 'uuid';
 import { ReportCharacterReason } from "./reportCharacter";
 import { RecentCharacter } from "./recentCharacter";
+import { Sharp } from "sharp";
 
 export enum CharacterVote {
     None,
@@ -302,11 +303,16 @@ export class Character extends Specable {
     async edit() {
         // todo
     }
-
+    
     constructor(client: CharacterAI, information: any) {
         super();
         this.client = client;
-        this.avatar = new CAIImage(client, this.edit);
+
+        // can edit profile picture
+        this.avatar = new CAIImage(client, () => 
+            this.creator_id != this.client.myProfile.userId &&
+            this.user__username != this.client.myProfile.username
+        );
 
         ObjectPatcher.patch(this.client, this, information);
     }

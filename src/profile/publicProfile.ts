@@ -55,8 +55,8 @@ export class PublicProfile {
     async follow() {
         // sad
         this.client.throwBecauseNotAvailableYet();
-
         this.client.checkAndThrow(CheckAndThrow.RequiresAuthentication);
+
         if (this.username == this.client.myProfile.username) throw new Error("You cannot follow yourself!");
 
         const request = await this.client.requester.request("https://plus.character.ai/chat/user/follow", {
@@ -70,8 +70,8 @@ export class PublicProfile {
     async unfollow() {
         // sad
         this.client.throwBecauseNotAvailableYet();
-
         this.client.checkAndThrow(CheckAndThrow.RequiresAuthentication);
+
         if (this.username == this.client.myProfile.username) throw new Error("You cannot unfollow or follow yourself!");
 
         const request = await this.client.requester.request("https://plus.character.ai/chat/user/unfollow", {
@@ -127,35 +127,6 @@ export class PublicProfile {
         characters.forEach(characterInformation => this.characters.push(new Character(this.client, characterInformation)));
     }
 
-    private async setProfilePicture(image: any) {
-        const base64 = await image.getBase64Async(-1);
-
-        const request = await this.client.requester.request("https://character.ai/api/trpc/user.uploadAvatar?batch=1", {
-            method: 'GET',
-            includeAuthorization: true,
-            body: Parser.stringify({
-                "0": {
-                    json: {
-                        imageDataUrl: base64
-                    }
-                }
-            })
-        });
-    }
-
-    /*async setProfilePicture(target: string | Buffer | Jimp) {
-        
-        await this.#setProfilePicture();
-        Jimp.read("", (e) => {
-
-        })
-        const image = await Jimp.read(target);
-        
-    }
-    async getProfilePicture() {
-        
-    }*/
-
     // voice
     async getVoices(): Promise<CAIVoice[]> { return await this.client.fetchVoicesFromUser(this.username); }
 
@@ -176,11 +147,10 @@ export class PublicProfile {
             throw new Error("Profile not found. Watch out! Profile names are case sensitive.");
 
         this.loadFromInformation(response.public_user);
-
     }
     
     constructor(client: CharacterAI, options?: any) {
-        this.avatar = new CAIImage(client, () => { throw new Error("You can only change your avatar. Use client.myProfile instead"); });
+        this.avatar = new CAIImage(client, () => false);
         this.client = client;
         this.loadFromInformation(options);
     }
