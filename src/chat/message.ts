@@ -235,6 +235,7 @@ export class CAIMessage extends Specable {
 
         let messagesAfter: CAIMessage[] = [];
 
+        // FIXME: might wanna not use the cache for that one
         for (let i = index; i < conversationMessageIds.length; i++) 
             messagesAfter.push(this.conversation.messages[i]);
         

@@ -119,7 +119,8 @@ export class CAIWebsocket extends EventEmitter {
                         case CAIWebsocketConnectionType.GroupChat: turn = message.push?.data?.turn; break;
                     }
                     
-                    isFinal = turn.candidates[0].is_final;
+                    if (turn)
+                        isFinal = turn.candidates[0].is_final;
                 } finally {
                     // if turn is NOT present, push to queue
                     streamedMessage?.push(message);

@@ -88,7 +88,8 @@ export default class DMConversation extends Conversation {
         await this.client.connectToDMConversationDirectly(this);
     }
     async duplicate() {
-        
+        await this.refreshMessages();
+        return this.getLastMessage();
     }
 
     async rename(newName: string) {

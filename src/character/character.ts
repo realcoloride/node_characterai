@@ -10,6 +10,7 @@ import ObjectPatcher from "../utils/patcher";
 import { getterProperty, hiddenProperty, Specable } from "../utils/specable";
 import { v4 as uuidv4 } from 'uuid';
 import { ReportCharacterReason } from "./reportCharacter";
+import { RecentCharacter } from "./recentCharacter";
 
 export enum CharacterVote {
     None,
@@ -219,7 +220,6 @@ export class Character extends Specable {
     private async internalDM(createNewConversation: boolean, withGreeting?: boolean, specificChatId?: string): Promise<DMConversation> {
         this.client.checkAndThrow(CheckAndThrow.RequiresAuthentication);
 
-        // todo greeting
         let chatObject;
         if (specificChatId)
             chatObject = await this.client.fetchRawConversation(specificChatId);
@@ -274,7 +274,7 @@ export class Character extends Specable {
 
     async hide() { // /chat/character/hide
         this.client.checkAndThrow(CheckAndThrow.RequiresAuthentication);
-
+        // todo
     }
 
     // https://neo.character.ai/recommendation/v1/character/id

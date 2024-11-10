@@ -1,5 +1,5 @@
 import { CAIImage } from "../utils/image";
-import { CharacterVisibility } from "../utils/visibility";
+import { CharacterVisibility } from "./character";
 
 export interface ICharacterCreation {
     // avatar_rel_path

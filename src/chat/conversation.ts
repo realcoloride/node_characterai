@@ -34,9 +34,15 @@ export class Conversation extends Specable {
     // must be a multiple of 50.
     @hiddenProperty
     public maxMessagesStored = 200;
-    public messages: CAIMessage[] = [];
+
+    @hiddenProperty
+    private cachedMessages: CAIMessage[] = [];
+    @hiddenProperty
+    private processingMessages: CAIMessage[] = [];
     @hiddenProperty
     public messageIds: string[] = [];
+    
+    public get messages() { return {...this.cachedMessages}; }
 
     // chat_id
     @hiddenProperty
@@ -91,9 +97,10 @@ export class Conversation extends Specable {
     protected frozen = false; // <- if refreshing, operations will be frozen
     private async getTurnsBatch(nextToken?: string, pinnedOnly?: boolean) {
         let query = "";
-        if (nextToken) query = encodeURIComponent(`?next_token=${nextToken}`) // }
+        if (nextToken) query = `?next_token=${encodeURIComponent(nextToken)}`; // }
         if (pinnedOnly) query = "?pinned_only=true";
         
+        // console.log(`https://neo.character.ai/turns/${this.chatId}/${query}`);
         const request = await this.client.requester.request(`https://neo.character.ai/turns/${this.chatId}/${query}`, {
             method: 'GET',
             includeAuthorization: true
@@ -107,23 +114,25 @@ export class Conversation extends Specable {
     // responsible for checking if we reached the limit to avoid too much memory usage
     protected addMessage(message: CAIMessage) {
         // messages are always ranked from more recent to oldest
-        if (this.messages.length >= this.maxMessagesStored) {
+        if (this.processingMessages.length >= this.maxMessagesStored) {
             // remove last & show warning
-            this.messages.pop();
-            this.messageIds.pop();
+            this.processingMessages.pop();
+            this.processingMessages.pop();
             Warnings.show("reachedMaxMessages");
         }
 
         // add to front
-        this.messages.unshift(message);
+        this.processingMessages.unshift(message);
         this.messageIds.unshift(message.turnId);
+        
+        this.cachedMessages = this.processingMessages;
         return message;
     }
     protected async removeMessage() {
         // TODO
     }
 
-    private async fetchMessagesViaQuery(pinnedOnly: boolean) {
+    private async fetchMessagesViaQuery(pinnedOnly: boolean, maxMessages = this.maxMessagesStored) {
         const { maxMessagesStored } = this;
         if (maxMessagesStored % 50 != 0) 
             throw Error("Max messages to store must be a multiple of 50.");
@@ -131,10 +140,12 @@ export class Conversation extends Specable {
         let messages: CAIMessage[] = [];
         let nextToken: string | undefined = undefined;
 
-        for (let i = 0; i < maxMessagesStored / 50; i += 50) {
+        for (let i = 0; i < maxMessages / 50; i += 50) {
             const response = await this.getTurnsBatch(nextToken, pinnedOnly);
             const { turns } = response;
+
             if (!turns) break;
+            if (turns["length"] == 0) break;
             nextToken = response?.meta?.next_token;
             
             for (let j = 0; j < turns.length; j++) 
@@ -153,7 +164,7 @@ export class Conversation extends Specable {
             throw Error("Max messages to store must be a multiple of 50.");
         
         this.frozen = true;
-        this.messages = [];
+        this.processingMessages = [];
         this.messageIds = [];
 
         const messages = await this.fetchMessagesViaQuery(false);
@@ -162,8 +173,9 @@ export class Conversation extends Specable {
 
         const pinnedMessages = await this.getPinnedMessages();
         for (let i = 0; i < pinnedMessages.length; i++)
-            this.messages[i].isPinned = true;
+            this.processingMessages[i].isPinned = true;
         
+        this.cachedMessages = this.processingMessages;
         this.frozen = false;
     }
     async sendMessage(content: string, options?: ICAIMessageSending): Promise<CAIMessage> {
@@ -179,7 +191,8 @@ export class Conversation extends Specable {
         // This is an abstract placeholder for higher level conversations (DM/Group), do not touch
     }
     async reset() {
-
+        console.log("[node_characterai] Warning: resetting a conversation, or deleting a lot of messages, can take some time.");
+        return await this.deleteMessagesInBulk(await this.fetchMessagesViaQuery(false, 999999));
     }
     
     private async deleteTurns(turnIds: string[], refreshMessages: boolean) {
@@ -209,7 +222,7 @@ export class Conversation extends Specable {
             const fetchedMessages = this.messages.slice(messageCount - input, messageCount);
             turnIds = fetchedMessages.map(message => message.turnId);
             
-        } else if (!Array.isArray(input)) {
+        } else if (Array.isArray(input)) {
             // if its a string instance, just copy and paste
             let assumedArray = input as any[];
             if (assumedArray.every(item => typeof item === 'string')) 
