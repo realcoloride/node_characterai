@@ -1,6 +1,6 @@
 
 interface RequesterOptions {
-    method: 'GET' | 'POST' | 'PATCH' | 'PUT';
+    method: 'GET' | 'POST' | 'PATCH' | 'PUT' | 'DELETE';
     includeAuthorization?: boolean;
     body?: string;
     contentType?: 'application/json' | 'application/x-www-form-urlencoded' | 'multipart/form-data';

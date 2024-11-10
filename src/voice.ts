@@ -1,4 +1,5 @@
-import CharacterAI from "./client";
+import CharacterAI, { CheckAndThrow } from "./client";
+import Parser from "./parser";
 import ObjectPatcher from "./utils/patcher";
 import { getterProperty, hiddenProperty, Specable } from "./utils/specable";
 
@@ -19,6 +20,9 @@ export enum InternalVoiceStatus {
 export class CAIVoice extends Specable {
     @hiddenProperty
     private client: CharacterAI;
+
+    @hiddenProperty
+    private rawInformation: any = {};
 
     // id
     public id = "";
@@ -72,13 +76,47 @@ export class CAIVoice extends Specable {
         return await this.client.fetchProfileByUsername(this.creatorUsername);
     }
 
-    async edit() {
-        // TODO
+    async edit(name: string, description: string, makeVoicePublic: boolean, previewText: string) {
+        this.client.checkAndThrow(CheckAndThrow.RequiresAuthentication);
+
+        const payload = this.rawInformation;
+        payload.name = name;
+        payload.description = description;
+        payload.visibility = makeVoicePublic ? VoiceVisibility.Public : VoiceVisibility.Private;
+        payload.previewText = previewText;
+
+        // publish character now/edit
+        const request = await this.client.requester.request(`https://neo.character.ai/multimodal/api/v1/voices/${this.id}`, {
+            method: 'PUT',
+            body: Parser.stringify({ voice: payload }),
+            contentType: 'application/json',
+            includeAuthorization: true
+        });
+
+        const response = await Parser.parseJSON(request);
+        if (!request.ok) throw new Error(response.message ?? String(response));
+
+        const information = response.voice;
+        this.rawInformation = information;
+        ObjectPatcher.patch(this.client, this, information);
+    }
+    async delete() {
+        this.client.checkAndThrow(CheckAndThrow.RequiresAuthentication);
+
+        if (this.client.myProfile.username != this.creatorUsername) return new Error("You do not have the permission to do this");
+        
+        const request = await this.client.requester.request(`https://neo.character.ai/multimodal/api/v1/voices/${this.id}`, {
+            method: 'DELETE',
+            includeAuthorization: true
+        });
+        const response = await Parser.parseJSON(request);
+        if (!request.ok) throw new Error(response.message ?? String(response));
     }
 
     constructor(client: CharacterAI, information: any) {
         super();
         this.client = client;
+        this.rawInformation = information;
         ObjectPatcher.patch(client, this, information);
     }
 }

@@ -94,13 +94,6 @@ export class PrivateProfile extends PublicProfile {
         });
         
         const response = await Parser.parseJSON(request);
-        console.log({ 
-            username: options.username ?? this.username,
-            name: options.displayName ?? this.displayName,
-            avatar_type: "UPLOADED",
-            avatar_rel_path: options.avatar?.endpointUrl ?? this.avatar.endpointUrl,
-            bio: options.bio ?? this.bio
-        });
         if (!request.ok) throw new Error(response.status);
     }
 
@@ -147,24 +140,12 @@ export class PrivateProfile extends PublicProfile {
 
         const creationResponse = await Parser.parseJSON(creationRequest);
         if (!creationRequest.ok) throw new Error(creationResponse.message ?? String(creationResponse));
-        
-        const voiceId = creationResponse.voice.id;
 
-        // publish character now
-        const publishRequest = await this.client.requester.request(`https://neo.character.ai/multimodal/api/v1/voices/${voiceId}`, {
-            method: 'PUT',
-            body: Parser.stringify(creationResponse),
-            contentType: 'application/json',
-            includeAuthorization: true
-        });
-        console.log(Parser.stringify(creationResponse), publishRequest);
+        // publish character now by editing (same endpoint)
+        const voice = new CAIVoice(this.client, creationResponse.voice);
+        await voice.edit(name, description, makeVoicePublic, previewText);
 
-        const publishResponse = await Parser.parseJSON(publishRequest);
-        console.log('r', publishResponse);
-        if (!publishRequest.ok) throw new Error(publishResponse.message ?? String(publishResponse));
-
-        await this.refreshProfile();
-        return new CAIVoice(this.client, publishResponse.voice);
+        return voice;
     }
 
     // v1/voices/user
