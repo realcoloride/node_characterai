@@ -104,12 +104,16 @@ export class PublicProfile {
     }
     async getLikedCharacters() {
         this.client.checkAndThrow(CheckAndThrow.RequiresAuthentication);
+        
         const request = await this.client.requester.request("https://plus.character.ai/chat/user/characters/upvoted/", {
             method: 'GET',
             includeAuthorization: true
         });
 
         if (!request.ok) throw new Error(await Parser.parseJSON(request));
+
+        // .characters
+        // todo
     }
     
     // character management

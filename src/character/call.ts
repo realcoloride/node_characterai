@@ -69,8 +69,8 @@ export class CAICall extends EventEmitterSpecable {
     private client: CharacterAI;
 
     private liveKitRoom?: Room = undefined;
-    private inputStream: PassThrough = new PassThrough();
-    private outputStream: PassThrough = new PassThrough();
+    public inputStream: PassThrough = new PassThrough();
+    public outputStream: PassThrough = new PassThrough();
 
     private inputFfmpeg: any;
     private outputFfmpeg: any;

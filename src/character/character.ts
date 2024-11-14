@@ -12,6 +12,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { ReportCharacterReason } from "./reportCharacter";
 import { RecentCharacter } from "./recentCharacter";
 import { Sharp } from "sharp";
+import { CAIVoice } from "../voice";
 
 export enum CharacterVote {
     None,
@@ -248,7 +249,7 @@ export class Character extends Specable {
 
         return await this.client.connectToConversation(this.characterId, false, chatObject) as DMConversation;
     }
-    async newDM(withGreeting?: boolean) { return await this.internalDM(true, withGreeting); }
+    async createDM(withGreeting?: boolean) { return await this.internalDM(true, withGreeting); }
     async DM(specificChatId?: string) { return await this.internalDM(false, false, specificChatId); }
 
     async createGroupChat(options: ICharacterGroupChatCreation) {
@@ -276,6 +277,32 @@ export class Character extends Specable {
     async hide() { // /chat/character/hide
         this.client.checkAndThrow(CheckAndThrow.RequiresAuthentication);
         // todo
+    }
+
+    // voice instance or voiceId
+    // https://plus.character.ai/chat/character/${characterId}/voice_override/update/
+    async setVoiceOverride(voiceOrId: CAIVoice | string) {
+        let voiceId = voiceOrId;
+        
+        if (voiceOrId instanceof CAIVoice)
+            voiceId = voiceOrId.id;
+
+        const request = await this.client.requester.request(`https://plus.character.ai/chat/character/${this.characterId}/voice_override/update/`, {
+            method: 'POST',
+            includeAuthorization: true,
+            contentType: 'application/json',
+            body: Parser.stringify({ voice_id: voiceId }),
+        });
+
+        const response = await Parser.parseJSON(request);
+        if (!request.ok) throw new Error(String(response));
+        if (!response.success) throw new Error("Could set voice override");
+    }
+    async getVoiceOverride(): Promise<string | undefined> {
+        const settings = await this.client.fetchSettings();
+        const { voiceOverridesIds } = settings;
+
+        return voiceOverridesIds[this.characterId];
     }
 
     // https://neo.character.ai/recommendation/v1/character/id

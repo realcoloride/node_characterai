@@ -13,6 +13,7 @@ import { GroupChats } from './groupchat/groupChats';
 import { RecentCharacter } from './character/recentCharacter';
 import { CAICall, ICharacterCallOptions } from './character/call';
 import { CAIVoice } from './voice';
+import { assert } from 'console';
 
 export enum CheckAndThrow {
     RequiresAuthentication = 0,
@@ -365,6 +366,35 @@ export default class CharacterAI extends EventEmitter {
 
         return conversation;
     }
+
+    async fetchSettings() {
+        this.checkAndThrow(CheckAndThrow.RequiresAuthentication);
+
+        const request = await this.requester.request("https://plus.character.ai/chat/user/settings/", {
+            method: 'GET',
+            includeAuthorization: true,
+        });
+        const response = await Parser.parseJSON(request);
+        if (!request.ok) throw new Error(response);
+
+        const { voice_overrides: voiceOverridesIds, default_persona_id: defaultPersonaId } = response;
+
+        const fetchVoiceOverrides = async () => {
+            let voices: CAIVoice[] = [];
+            for (let i = 0; i < voiceOverridesIds.length; i++)
+                voices.push(await this.fetchVoice(voiceOverridesIds[i]));
+
+            return voices;
+        };
+
+        return {
+            defaultPersonaId,
+            voiceOverridesIds,
+            fetchDefaultPersona: async () => await this.myProfile.fetchPersona(defaultPersonaId),
+            fetchVoiceOverrides
+        }
+    }
+
 
     // authentication
     async authenticate(sessionToken: string) {

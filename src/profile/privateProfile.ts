@@ -8,7 +8,7 @@ import { Character } from "../character/character";
 import { CAIVoice, VoiceGender, VoiceVisibility } from "../voice";
 import sharp, { Sharp } from "sharp";
 import { randomUUID } from "crypto";
-import { IPersonaExtraCreationOptions, Persona } from "./persona";
+import { Persona } from "./persona";
 
 export interface IProfileModification {
     // username
@@ -166,27 +166,43 @@ export class PrivateProfile extends PublicProfile {
         this.loadFromInformation(user.user);
     }
 
-    async fetchPersona(personaId: string) {
+    async fetchPersona(personaId: string): Promise<Persona | undefined> {
+        this.client.checkAndThrow(CheckAndThrow.RequiresAuthentication);
+
 
     }
     async getDefaultPersona(): Promise<Persona | undefined> {
-        
+        const settings = await this.client.fetchSettings();
+        return await settings.fetchDefaultPersona();
     }
-    async setDefaultPersona(persona: Persona | string) {
-        return await this.setDefaultPersonaWithIdentifier(persona.identifier);
+    async setDefaultPersona(personaOrId: Persona | string) {
+        this.client.checkAndThrow(CheckAndThrow.RequiresAuthentication);
+
+        let defaultPersonaId = personaOrId;
+        
+        if (personaOrId instanceof Persona) 
+            defaultPersonaId = personaOrId.externalId;
+
+        const request = await this.client.requester.request("https://neo.character.ai/recommendation/v1/category", {
+            method: 'POST',
+            contentType: 'application/json',
+            includeAuthorization: true,
+            body: Parser.stringify({ default_persona_id: defaultPersonaId })
+        });
+
+        const response = await Parser.parseJSON(request);
+        if (!request.ok) throw new Error(String(response));
+        if (!response.success) throw new Error("Could not set default persona");
     }
     async createPersona(
         name: string, 
-        description: string,
+        definition: string,
         makeDefaultForChats: boolean,
-        extraOptions: IPersonaExtraCreationOptions
+        image?: CAIImage
     ) {
         this.client.checkAndThrow(CheckAndThrow.RequiresAuthentication);
 
-        const greeting = extraOptions.greeting ?? "Hello! This is my persona";
-        const image = extraOptions.image;
         const prompt = image?.prompt;
-        
         const request = await this.client.requester.request(`https://plus.character.ai/chat/persona/create/`, {
             method: 'POST',
             contentType: 'application/json',
@@ -197,9 +213,9 @@ export class PrivateProfile extends PublicProfile {
                 categories: [],
                 visbility: "PRIVATE",
                 copyable: false,
-                description,
-                greeting,
-                definition: "background",
+                description: "This is my persona.",
+                definition,
+                greeting: "Hello! This is my persona",
                 avatar_rel_path: image?.endpointUrl ?? '',
                 img_gen_enabled: prompt != undefined,
                 base_img_prompt: prompt ?? '',
@@ -214,11 +230,28 @@ export class PrivateProfile extends PublicProfile {
         if (!request.ok) throw new Error(String(response));
 
         const persona = new Persona(this.client, response.persona);
-
-        // todo
-        if (makeDefaultForChats) await this.setDefaultPersona();
+        if (makeDefaultForChats) await this.setDefaultPersona(persona.externalId);
         
         return persona;
+    }
+    // personas/?force_refresh=0
+    async getPersonas() {
+        this.client.checkAndThrow(CheckAndThrow.RequiresAuthentication);
+
+        const request = await this.client.requester.request("https://plus.character.ai/chat/personas/?force_refresh=0", {
+            method: 'GET',
+            includeAuthorization: true,
+        });
+        const response = await Parser.parseJSON(request);
+        if (!request.ok) throw new Error(response);
+
+        const rawPersonas = response.personas;
+
+        let personas: Persona[] = [];
+        for (let i = 0; i < rawPersonas.length; i++)
+            personas.push(new Persona(this.client, rawPersonas[i]));
+
+        return personas;
     }
     async removePersona(personaId: string) {
 
