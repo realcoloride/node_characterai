@@ -183,6 +183,10 @@ export class Conversation extends Specable {
     async rename(newName: string) {
         // This is an abstract placeholder for higher level conversations (DM/Group), do not touch
     }
+    async regenerateMessage(message: CAIMessage): Promise<CAIMessage> {
+        // This is an abstract placeholder for higher level conversations (DM/Group), do not touch
+        return new CAIMessage(this.client, new Conversation(this.client, {}), {});
+    }
     async reset() { return await this.deleteMessagesInBulk(await this.fetchMessagesViaQuery(false, 999999)); }
     
     private async deleteTurns(turnIds: string[], refreshMessages: boolean) {

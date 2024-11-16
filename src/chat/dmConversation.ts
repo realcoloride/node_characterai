@@ -1,36 +1,20 @@
 import { CAICall, ICharacterCallOptions } from "../character/call";
 import { CheckAndThrow } from "../client";
 import Parser from "../parser";
+import ObjectPatcher from "../utils/patcher";
 import Warnings from "../warnings";
 import { Conversation, ICAIMessageSending } from "./conversation";
 import { CAIMessage } from "./message";
 import { v4 as uuidv4 } from 'uuid';
 
-const generateBaseSendingPayload = (
-    message: string,
-    enableTTS: boolean,
+const generateBaseMessagePayload = (
     characterId: string,
     username: string, // our username
-    turnKey: string,
-    chatId: string,
-    userId: number,
-    imageUrl?: string
 ) => { return {
-    num_candidates: 1,
-    tts_enabled: enableTTS,
-    selected_language: "",
     character_id: characterId,
+    selected_language: "",
+    tts_enabled: false,
     user_name: username,
-    turn: {
-        turn_key: { turn_id: turnKey, chat_id: chatId },
-        author: { author_id: userId.toString(), is_human: true, name: username },
-        candidates: [{
-            candidate_id: turnKey,
-            raw_content: message,
-            ...imageUrl ? { tti_image_rel_path: imageUrl } : {}
-        }],
-        primary_candidate_id: turnKey
-    },
     previous_annotations: {
         boring: 0,
         not_boring: 0,
@@ -57,6 +41,37 @@ const generateBaseSendingPayload = (
     }
 }};
 
+const generateBaseSendingPayload = (
+    message: string,
+    characterId: string,
+    username: string, // our username
+    turnId: string,
+    chatId: string,
+    userId: number,
+    imageUrl?: string
+) => { return {...generateBaseMessagePayload(characterId, username),
+    num_candidates: 1,
+    turn: {
+        turn_key: { turn_id: turnId, chat_id: chatId },
+        author: { author_id: userId.toString(), is_human: true, name: username },
+        candidates: [{
+            candidate_id: turnId,
+            raw_content: message,
+            ...imageUrl ? { tti_image_rel_path: imageUrl } : {}
+        }],
+        primary_candidate_id: turnId
+    }
+}};
+
+const generateBaseRegeneratingPayload = (
+    characterId: string,
+    turnId: string,
+    username: string, // our username
+    chatId: string
+) => { return {...generateBaseMessagePayload(characterId, username),
+    turn_key: { turn_id: turnId, chat_id: chatId },
+}};
+
 export default class DMConversation extends Conversation {
     async archive() {
         this.client.checkAndThrow(CheckAndThrow.RequiresAuthentication);
@@ -70,7 +85,7 @@ export default class DMConversation extends Conversation {
         const response = await Parser.parseJSON(request);
         if (!request.ok) throw new Error(response);
 
-        await this.close();
+        this.close();
     }
     async unarchive(openConversationRightAfter: boolean) {
         this.client.checkAndThrow(CheckAndThrow.RequiresAuthentication);
@@ -124,7 +139,6 @@ export default class DMConversation extends Conversation {
             streaming: false,
             payload: generateBaseSendingPayload(
                 content,
-                false,
                 this.characterId,
                 this.client.myProfile.username,
                 uuidv4(),
@@ -132,9 +146,29 @@ export default class DMConversation extends Conversation {
                 this.client.myProfile.userId,
                 options?.image?.endpointUrl ?? ""
             )
-        })
+        });
         
         // here we should receive OUR message not theirs if selected. im not sure how to do this but i will see
         return this.addMessage(new CAIMessage(this.client, this, request.turn));
+    }
+
+    async regenerateMessage(message: CAIMessage) {
+        this.client.checkAndThrow(CheckAndThrow.RequiresToBeInDM);
+        
+        const request = await this.client.sendDMWebsocketCommandAsync({
+            command: "generate_turn_candidate",
+            originId: "Android",
+            
+            streaming: false,
+            payload: generateBaseRegeneratingPayload(
+                this.characterId,
+                message.turnId,
+                this.client.myProfile.username,
+                this.chatId
+            )
+        });
+        
+        message.indexTurn(request.turn);
+        return message;
     }
 };

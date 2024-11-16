@@ -135,6 +135,7 @@ export class CAIMessage extends Specable {
 
     // content is influenced by the primary candidate to save time/braincells
     public get content() { return this.primaryCandidate?.content ?? ""; }
+    public get wasFlagged() { return this.primaryCandidate?.wasFlagged ?? false; }
 
     // primary_candidate_id
     @hiddenProperty
@@ -172,11 +173,10 @@ export class CAIMessage extends Specable {
         this.indexCandidates();
     }
     // next/previous/candidate_id
-    async switchPrimaryCandidate(candidate: 'next' | 'previous' | string) {
+    private async internalSwitchPrimaryCandidate(candidate: 'next' | 'previous' | string) {
         this.client.checkAndThrow(CheckAndThrow.RequiresAuthentication);
 
         let candidateId = candidate;
-
         let candidates = this.getCandidates();
         const candidateValues = Object.values(candidates);
         const primaryCandidateIndex = Object.keys(candidates).indexOf(this.primary_candidate_id);
@@ -212,7 +212,14 @@ export class CAIMessage extends Specable {
 
         this.primary_candidate_id = candidate;
         this.indexCandidates();
+        return this.primaryCandidate;
     }
+    async switchToPreviousCandidate() { return this.internalSwitchPrimaryCandidate("previous"); }
+    async switchToNextCandidate() { return this.internalSwitchPrimaryCandidate("next"); }
+    async switchPrimaryCandidateTo(candidateId: string) { return await this.internalSwitchPrimaryCandidate(candidateId); }
+
+    async regenerate() { return this.conversation.regenerateMessage(this); }
+
     private getConversationMessageAfterIndex(offset: number): CAIMessage | null {
         const conversationMessageIds = this.conversation.messageIds;
         let index = conversationMessageIds.indexOf(this.turnId);
@@ -291,11 +298,16 @@ export class CAIMessage extends Specable {
     async getTTSUrlWithQuery(voiceQuery?: string) { return await this.primaryCandidate.getTTSUrlWithQuery(voiceQuery); }
     async getTTSUrl(voiceId: string) { return await this.primaryCandidate.getTTSUrl(voiceId); }
 
+    // TODO: remind to not use
+    public indexTurn(turn: any) {
+        ObjectPatcher.patch(this.client, this, turn);
+        this.indexCandidates();
+    }
+
     constructor(client: CharacterAI, conversation: Conversation, turn: any) {
         super();
         this.client = client;
         this.conversation = conversation;
-        ObjectPatcher.patch(this.client, this, turn);
-        this.indexCandidates();
+        this.indexTurn(turn);
     }
 }

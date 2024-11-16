@@ -133,7 +133,7 @@ export class Candidate extends Specable {
     }
     async setPrimary() {
         if (this.message.primaryCandidate == this) return;
-        await this.message.switchPrimaryCandidate(this.candidateId);
+        await this.message.switchPrimaryCandidateTo(this.candidateId);
     }
     // TTS
     async getTTSUrlWithQuery(voiceQuery?: string) { return await this.internalGetTTSUrl(undefined, voiceQuery ?? ""); }
