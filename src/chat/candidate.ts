@@ -136,7 +136,7 @@ export class Candidate extends Specable {
         await this.message.switchPrimaryCandidate(this.candidateId);
     }
     // TTS
-    async getTTSUrlWithQuery(voiceQuery: string) { return await this.internalGetTTSUrl(undefined, voiceQuery); }
+    async getTTSUrlWithQuery(voiceQuery?: string) { return await this.internalGetTTSUrl(undefined, voiceQuery ?? ""); }
     async getTTSUrl(voiceId: string) { return await this.internalGetTTSUrl(voiceId); }
 
     constructor(client: CharacterAI, message: CAIMessage, information: any) {
