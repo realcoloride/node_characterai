@@ -273,7 +273,6 @@ export class Character extends Specable {
         if (!request.ok) throw new Error(String(response));
 
         const vote = response["vote"];
-        console.log(vote);
         switch (vote) {
             case true: return CharacterVote.Like;
             case false: return CharacterVote.Dislike;
