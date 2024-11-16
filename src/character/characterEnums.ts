@@ -6,5 +6,6 @@ export enum CharacterVote {
 
 export enum CharacterVisibility {
     Private = "PRIVATE",
+    Unlisted = "UNLITSTED",
     Public = "PUBLIC",
 };

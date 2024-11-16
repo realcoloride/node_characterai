@@ -369,3 +369,5 @@ export class Character extends Specable {
         ObjectPatcher.patch(this.client, this, information);
     }
 }
+
+export { CharacterVisibility };

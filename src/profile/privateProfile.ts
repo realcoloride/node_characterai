@@ -1,4 +1,4 @@
-import { ICharacterCreation } from "../character/modification";
+import { ICharacterCreationOptions } from "../character/modification";
 import CharacterAI, { CheckAndThrow } from "../client";
 import Parser from "../parser";
 import { CAIImage } from "../utils/image";
@@ -101,7 +101,7 @@ export class PrivateProfile extends PublicProfile {
     }
 
     // creation
-    async createCharacter(options: ICharacterCreation): Promise<Character> {
+    async createCharacter(options: ICharacterCreationOptions): Promise<Character> {
         // todo
         return new Character(this.client, {});
     }

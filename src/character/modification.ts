@@ -1,7 +1,7 @@
 import { CAIImage } from "../utils/image";
 import { CharacterVisibility } from "./character";
 
-export interface ICharacterCreation {
+export interface ICharacterCreationOptions {
     // avatar_rel_path
     // base_img_prompt
     avatar: CAIImage,

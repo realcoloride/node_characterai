@@ -3,6 +3,7 @@ import Parser from '../parser';
 import fs from 'fs';
 import { getterProperty, hiddenProperty, Specable } from '../utils/specable';
 import sharp, { Sharp } from 'sharp';
+import { NEEDS_MOBILE_DOMAIN, NO_DOMAIN_FOUND } from './unavailableCodes';
 
 const baseEndpoint = "https://characterai.io/i/200/static/avatars/";
 
@@ -69,8 +70,8 @@ export class CAIImage extends Specable {
         this.client.checkAndThrow(CheckAndThrow.RequiresAuthentication);
         
         // TODO: Weird issues with permissions are going on here and need a fix ASAP
-        //       AFTER REVIEWING, it is best to just use the mobile endpoint
-        //this.client.throwBecauseNotAvailableYet();
+        //       AFTER REVIEWING, it is best to just find the mobile endpoint
+        this.client.throwBecauseNotAvailableYet(NEEDS_MOBILE_DOMAIN);
 
         this._isImageUploaded = false;
 
@@ -129,6 +130,7 @@ export class CAIImage extends Specable {
     // extra
     async changeToPrompt(prompt: string, isAvatarPrompt: boolean) {
         this.client.checkAndThrow(CheckAndThrow.RequiresAuthentication);
+        this.client.throwBecauseNotAvailableYet(NEEDS_MOBILE_DOMAIN);
 
         // TODO: check if generating works right since its cloudflare protected
         const request = await this.client.requester.request(`https://plus.character.ai/chat/${(isAvatarPrompt ? "character/generate-avatar-options" : "chat/generate-image")}`, {

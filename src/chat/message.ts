@@ -287,6 +287,10 @@ export class CAIMessage extends Specable {
     }
     async delete() { return await this.conversation.deleteMessage(this); }
 
+    // TTS
+    async getTTSUrlWithQuery(voiceQuery: string) { return await this.primaryCandidate.getTTSUrlWithQuery(voiceQuery); }
+    async getTTSUrl(voiceId: string) { return await this.primaryCandidate.getTTSUrl(voiceId); }
+
     constructor(client: CharacterAI, conversation: Conversation, turn: any) {
         super();
         this.client = client;

@@ -124,7 +124,7 @@ export default class DMConversation extends Conversation {
             streaming: false,
             payload: generateBaseSendingPayload(
                 content,
-                false, // todo TTS
+                false,
                 this.characterId,
                 this.client.myProfile.username,
                 uuidv4(),

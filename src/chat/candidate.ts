@@ -110,10 +110,34 @@ export class Candidate extends Specable {
         const response = await Parser.parseJSON(request);
         if (!request.ok) throw new Error(String(response));
     }
+    // https://neo.character.ai/multimodal/api/v1/memo/replay
+    private async internalGetTTSUrl(voiceId?: string, voiceQuery?: string): Promise<string> {
+        this.client.checkAndThrow(CheckAndThrow.RequiresAuthentication);
+
+        const request = await this.client.requester.request("https://neo.character.ai/annotation/remove", {
+            method: 'POST',
+            includeAuthorization: true,
+            body: Parser.stringify({ 
+                candidateId: this.candidateId,
+                roomId: this.message.chatId,
+                turnId: this.message.turnId,
+                voiceId,
+                voiceQuery
+            }),
+            contentType: 'application/json'
+        });
+        const response = await Parser.parseJSON(request);
+        if (!request.ok) throw new Error(String(response));
+
+        return response.replayUrl;
+    }
     async setPrimary() {
         if (this.message.primaryCandidate == this) return;
         await this.message.switchPrimaryCandidate(this.candidateId);
     }
+    // TTS
+    async getTTSUrlWithQuery(voiceQuery: string) { return await this.internalGetTTSUrl(undefined, voiceQuery); }
+    async getTTSUrl(voiceId: string) { return await this.internalGetTTSUrl(voiceId); }
 
     constructor(client: CharacterAI, message: CAIMessage, information: any) {
         super();

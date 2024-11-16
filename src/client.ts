@@ -14,7 +14,7 @@ import { RecentCharacter } from './character/recentCharacter';
 import { CAICall, ICharacterCallOptions } from './character/call';
 import { CAIVoice } from './voice';
 import { assert } from 'console';
-import { NO_DOMAIN_FOUND } from './utils/unavailableCodes';
+import { NEEDS_MOBILE_DOMAIN, NO_DOMAIN_FOUND } from './utils/unavailableCodes';
 
 export enum CheckAndThrow {
     RequiresAuthentication = 0,
@@ -215,6 +215,7 @@ export default class CharacterAI extends EventEmitter {
     // character fetching
     async searchCharacter(query: string, suggested: boolean = false): Promise<Character[]> {
         this.checkAndThrow(CheckAndThrow.RequiresAuthentication);
+        this.throwBecauseNotAvailableYet(NEEDS_MOBILE_DOMAIN);
 
         const encodedQuery = encodeURIComponent(Parser.stringify({
             "0": {"json": {"searchQuery": "character"}}
