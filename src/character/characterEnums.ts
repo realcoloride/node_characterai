@@ -24,8 +24,17 @@ export interface ICharacterCreationExtraOptions {
     avatar?: CAIImage
 }
 
-export interface ICharacterModificationOptions extends ICharacterCreationExtraOptions {
-    name?: string,
-    greeting?: string,
-    visbility?: CharacterVisibility
+export interface ICharacterModificationOptions {
+    newName?: string,
+    newGreeting?: string,
+    newVisbility?: CharacterVisibility
+    
+    newTagline?: string;
+    newDescription?: string;
+
+    newDefinition?: string,
+    keepCharacterDefintionPrivate?: boolean,
+
+    voiceOrId?: CAIVoice | string,
+    editAvatar: boolean
 }

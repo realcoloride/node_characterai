@@ -361,7 +361,7 @@ export class Character extends Specable {
         this.client.checkAndThrow(CheckAndThrow.RequiresAuthentication);
         this.client.throwBecauseNotAvailableYet(WEIRD_INTERNAL_SERVER_ERROR);
 
-        const image = options?.avatar;
+        const image = this.avatar;
         const prompt = image?.prompt;
 
         let voiceId = options?.voiceOrId ?? "";
@@ -373,14 +373,14 @@ export class Character extends Specable {
             includeAuthorization: true,
             body: Parser.stringify({ 
                 external_id: this.externalId,
-                title: options?.tagline ?? this.tagline,
-                name: options?.name ?? this.name,
+                title: options?.newTagline ?? this.tagline,
+                name: options?.newName ?? this.name,
                 categories: [],
-                visbility: options?.visbility ?? this.visibility,
+                visbility: options?.newVisbility ?? this.visibility,
                 copyable: options?.keepCharacterDefintionPrivate ?? this.copyable,
-                description: options?.description ?? this.description,
-                greeting: options?.greeting ?? this.greeting,
-                definition: options?.definition ?? this.definition,
+                description: options?.newDescription ?? this.description,
+                greeting: options?.newGreeting ?? this.greeting,
+                definition: options?.newDefinition ?? this.definition,
                 avatar_rel_path: image?.endpointUrl ?? this.avatar.endpointUrl,
                 img_gen_enabled: prompt != undefined,
                 base_img_prompt: prompt ?? '',
