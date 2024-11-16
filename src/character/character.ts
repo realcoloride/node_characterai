@@ -291,7 +291,7 @@ export class Character extends Specable {
             method: 'POST',
             includeAuthorization: true,
             contentType: 'application/json',
-            body: Parser.stringify({ voice_id: voiceId }),
+            body: Parser.stringify({ voice_id: voiceId })
         });
 
         const response = await Parser.parseJSON(request);

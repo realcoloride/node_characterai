@@ -1,13 +1,13 @@
 import CharacterAI, { CheckAndThrow } from '../client';
 import Parser from '../parser';
 import fs from 'fs';
-import { getterProperty, hiddenProperty } from '../utils/specable';
+import { getterProperty, hiddenProperty, Specable } from '../utils/specable';
 import sharp, { Sharp } from 'sharp';
 
 const baseEndpoint = "https://characterai.io/i/200/static/avatars/";
 
 // class to contain cai related images
-export class CAIImage {
+export class CAIImage extends Specable {
     // field is get only
     @hiddenProperty
     private client: CharacterAI;
@@ -146,6 +146,7 @@ export class CAIImage {
     }
 
     constructor(client: CharacterAI, canUploadChanges: Function | boolean = true) {
+        super();
         this.client = client;
         this.canUploadChanges = 
             typeof canUploadChanges == 'boolean' ? () => canUploadChanges : canUploadChanges;

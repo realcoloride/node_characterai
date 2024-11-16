@@ -49,9 +49,11 @@ export class Persona extends Specable {
     private identifier = "";
 
     // avatar_file_name
+    @hiddenProperty
     public avatar: CAIImage;
 
     // songs
+    @hiddenProperty
     private songs = [];
 
     // img_gen_enabled    
@@ -62,6 +64,7 @@ export class Persona extends Specable {
     public set imageGenerationEnabled(value) { this.img_gen_enabled = value; }
 
     // base_img_prompt
+    @hiddenProperty
     private base_img_prompt = "";
     @getterProperty
     public get baseImagePrompt() { return this.base_img_prompt; }
@@ -131,7 +134,8 @@ export class Persona extends Specable {
     @hiddenProperty
     private background = "";
 
-    async edit(options: IPersonaEditOptions) {
+
+    private async internalEdit(options: IPersonaEditOptions, archived: boolean | undefined = undefined) {
         this.client.checkAndThrow(CheckAndThrow.RequiresAuthentication);
 
         let { external_id, title, greeting, description, definition, visibility, copyable, default_voice_id, is_persona } = this;
@@ -147,6 +151,7 @@ export class Persona extends Specable {
             method: 'POST',
             contentType: 'application/json',
             body: Parser.stringify({ 
+                archived,
                 external_id,
                 title,
                 greeting,
@@ -174,12 +179,9 @@ export class Persona extends Specable {
         
         ObjectPatcher.patch(this.client, this, response.persona);
     }
-    async makeDefault() {
-        return await this.client.myProfile.setDefaultPersona(this.externalId);
-    }
-    async remove() {
-        
-    }
+    async edit(options: IPersonaEditOptions) { return await this.internalEdit(options) }
+    async makeDefault() { return await this.client.myProfile.setDefaultPersona(this.externalId); }
+    async remove() { return await this.internalEdit({}, true); }
 
     constructor(client: CharacterAI, information: any) {
         super();

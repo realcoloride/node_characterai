@@ -351,7 +351,7 @@ export default class CharacterAI extends EventEmitter {
 
         const request = await this.requester.request(`https://neo.character.ai/chat/${chatId}/`, {
             method: 'GET',
-            includeAuthorization: true,
+            includeAuthorization: true
         });
         const response = await Parser.parseJSON(request);
         if (!request.ok) throw new Error(response);
@@ -372,7 +372,7 @@ export default class CharacterAI extends EventEmitter {
 
         const request = await this.requester.request("https://plus.character.ai/chat/user/settings/", {
             method: 'GET',
-            includeAuthorization: true,
+            includeAuthorization: true
         });
         const response = await Parser.parseJSON(request);
         if (!request.ok) throw new Error(response);

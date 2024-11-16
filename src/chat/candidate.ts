@@ -61,6 +61,13 @@ export class Candidate extends Specable {
     public get isFinal() { return this.is_final; }
     public set isFinal(value) { this.is_final = value; }
 
+    // safety_truncated
+    @hiddenProperty
+    private safety_truncated = false;
+    @getterProperty
+    public get wasFlagged() { return this.safety_truncated; }
+    public set wasFlagged(value) { this.safety_truncated = value; }
+
     // annotation
     async createAnnotation(annotation: AnnotationStars | AnnotationValue | string) {
         this.client.checkAndThrow(CheckAndThrow.RequiresAuthentication);

@@ -6,7 +6,6 @@ import { PublicProfile } from "./publicProfile";
 import { getterProperty, hiddenProperty } from "../utils/specable";
 import { Character } from "../character/character";
 import { CAIVoice, VoiceGender, VoiceVisibility } from "../voice";
-import sharp, { Sharp } from "sharp";
 import { randomUUID } from "crypto";
 import { Persona } from "./persona";
 
@@ -167,9 +166,8 @@ export class PrivateProfile extends PublicProfile {
     }
 
     async fetchPersona(personaId: string): Promise<Persona | undefined> {
-        this.client.checkAndThrow(CheckAndThrow.RequiresAuthentication);
-
-
+        const personas = await this.fetchPersonas();
+        return personas.find(persona => persona.externalId == personaId);
     }
     async getDefaultPersona(): Promise<Persona | undefined> {
         const settings = await this.client.fetchSettings();
@@ -179,7 +177,6 @@ export class PrivateProfile extends PublicProfile {
         this.client.checkAndThrow(CheckAndThrow.RequiresAuthentication);
 
         let defaultPersonaId = personaOrId;
-        
         if (personaOrId instanceof Persona) 
             defaultPersonaId = personaOrId.externalId;
 
@@ -235,12 +232,12 @@ export class PrivateProfile extends PublicProfile {
         return persona;
     }
     // personas/?force_refresh=0
-    async getPersonas() {
+    async fetchPersonas() {
         this.client.checkAndThrow(CheckAndThrow.RequiresAuthentication);
 
         const request = await this.client.requester.request("https://plus.character.ai/chat/personas/?force_refresh=0", {
             method: 'GET',
-            includeAuthorization: true,
+            includeAuthorization: true
         });
         const response = await Parser.parseJSON(request);
         if (!request.ok) throw new Error(response);
@@ -254,7 +251,8 @@ export class PrivateProfile extends PublicProfile {
         return personas;
     }
     async removePersona(personaId: string) {
-
+        const persona = await this.fetchPersona(personaId);
+        await persona?.remove();
     }
     
     constructor(client: CharacterAI) {
