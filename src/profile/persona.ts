@@ -20,6 +20,9 @@ export class Persona extends Specable {
     @getterProperty
     public get externalId() { return this.external_id; }
 
+    /**
+     * This variable redirects to `externalId`
+     */
     @getterProperty
     public get id() { return this.external_id; }
 

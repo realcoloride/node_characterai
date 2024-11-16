@@ -234,7 +234,7 @@ export class PrivateProfile extends PublicProfile {
     // personas/?force_refresh=0
     async fetchPersonas() {
         this.client.checkAndThrow(CheckAndThrow.RequiresAuthentication);
-
+        
         const request = await this.client.requester.request("https://plus.character.ai/chat/personas/?force_refresh=0", {
             method: 'GET',
             includeAuthorization: true
@@ -254,7 +254,8 @@ export class PrivateProfile extends PublicProfile {
         const persona = await this.fetchPersona(personaId);
         await persona?.remove();
     }
-    
+    async getLikedCharacters() { return this.client.getLikedCharacters(); }
+
     constructor(client: CharacterAI) {
         super(client);
         this.avatar = new CAIImage(client);

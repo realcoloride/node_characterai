@@ -5,6 +5,7 @@ import ObjectPatcher from '../utils/patcher';
 import { getterProperty, hiddenProperty } from '../utils/specable';
 import { CAIVoice } from '../voice';
 import { Character } from '../character/character';
+import { CSRF_COOKIE_REQUIRED } from '../utils/unavailableCodes';
 
 export class PublicProfile {
     // characters
@@ -53,9 +54,8 @@ export class PublicProfile {
 
     // features
     async follow() {
-        // sad
-        this.client.throwBecauseNotAvailableYet();
         this.client.checkAndThrow(CheckAndThrow.RequiresAuthentication);
+        this.client.throwBecauseNotAvailableYet(CSRF_COOKIE_REQUIRED);
 
         if (this.username == this.client.myProfile.username) throw new Error("You cannot follow yourself!");
 
@@ -64,13 +64,11 @@ export class PublicProfile {
             includeAuthorization: true,
             body: Parser.stringify({ username: this.username })
         });
-
         if (!request.ok) throw new Error(await Parser.parseJSON(request));
     }
     async unfollow() {
-        // sad
-        this.client.throwBecauseNotAvailableYet();
         this.client.checkAndThrow(CheckAndThrow.RequiresAuthentication);
+        this.client.throwBecauseNotAvailableYet(CSRF_COOKIE_REQUIRED);
 
         if (this.username == this.client.myProfile.username) throw new Error("You cannot unfollow or follow yourself!");
 
@@ -79,7 +77,6 @@ export class PublicProfile {
             includeAuthorization: true,
             body: Parser.stringify({ username: this.username })
         });
-
         if (!request.ok) throw new Error(await Parser.parseJSON(request));
     }
     async getFollowers(page = 1) {
@@ -101,19 +98,6 @@ export class PublicProfile {
             body: Parser.stringify({ username: this.username, pageParam: page })
         });
         if (!request.ok) throw new Error(await Parser.parseJSON(request));
-    }
-    async getLikedCharacters() {
-        this.client.checkAndThrow(CheckAndThrow.RequiresAuthentication);
-        
-        const request = await this.client.requester.request("https://plus.character.ai/chat/user/characters/upvoted/", {
-            method: 'GET',
-            includeAuthorization: true
-        });
-
-        if (!request.ok) throw new Error(await Parser.parseJSON(request));
-
-        // .characters
-        // todo
     }
     
     // character management

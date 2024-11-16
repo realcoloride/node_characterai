@@ -14,6 +14,7 @@ import { RecentCharacter } from './character/recentCharacter';
 import { CAICall, ICharacterCallOptions } from './character/call';
 import { CAIVoice } from './voice';
 import { assert } from 'console';
+import { NO_DOMAIN_FOUND } from './utils/unavailableCodes';
 
 export enum CheckAndThrow {
     RequiresAuthentication = 0,
@@ -206,11 +207,10 @@ export default class CharacterAI extends EventEmitter {
         
         return profile;
     }
-    async fetchProfileById(userId: number) {
-        this.checkAndThrow(CheckAndThrow.RequiresAuthentication);
-
+    async fetchProfileById(userId: number): Promise<undefined> {
         // not available yet
-        this.throwBecauseNotAvailableYet();
+        this.checkAndThrow(CheckAndThrow.RequiresAuthentication);
+        this.throwBecauseNotAvailableYet(NO_DOMAIN_FOUND);
     }
     // character fetching
     async searchCharacter(query: string, suggested: boolean = false): Promise<Character[]> {
@@ -343,6 +343,8 @@ export default class CharacterAI extends EventEmitter {
         return response.categories;
     }
     async getSimilarCharactersTo(characterId: string) { return await this.automateCharactersRecommendation(`character/${characterId}`, Character); }
+    // https://plus.character.ai/chat/user/characters/upvoted/
+    async getLikedCharacters() { return await this.automateCharactersRecommendation("", Character, "characters", "https://plus.character.ai/chat/user/characters/upvoted/"); }
 
     // conversations
     // raw is the raw output else the convo instance
@@ -437,8 +439,8 @@ WARNING: CharacterAI has changed its authentication methods again.
         this.removeAllListeners();
     }
 
-    throwBecauseNotAvailableYet() {
-        throw Error("This feature is not available yet due to some restrictions from CharacterAI. Sorry!");
+    throwBecauseNotAvailableYet(additionalDetails: string) {
+        throw Error("This feature is not available yet due to some restrictions from CharacterAI. Sorry!\nDetails: " + additionalDetails);
     }
 
     // allows for quick auth errors

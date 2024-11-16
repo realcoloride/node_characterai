@@ -1,4 +1,3 @@
-import IDMCollection from "../chat/dmCollection";
 import DMConversation from "../chat/dmConversation";
 import { PreviewDMConversation } from "../chat/previewDMConversation";
 import CharacterAI, { CheckAndThrow } from "../client";
@@ -10,20 +9,9 @@ import ObjectPatcher from "../utils/patcher";
 import { getterProperty, hiddenProperty, Specable } from "../utils/specable";
 import { v4 as uuidv4 } from 'uuid';
 import { ReportCharacterReason } from "./reportCharacter";
-import { RecentCharacter } from "./recentCharacter";
-import { Sharp } from "sharp";
 import { CAIVoice } from "../voice";
-
-export enum CharacterVote {
-    None,
-    Like,
-    Dislike
-};
-
-export enum CharacterVisibility {
-    Private = "PRIVATE",
-    Public = "PUBLIC",
-}
+import { CharacterVisibility, CharacterVote } from "./characterEnums";
+import { CSRF_COOKIE_REQUIRED } from "../utils/unavailableCodes";
 
 export interface ICharacterGroupChatCreation {
     name: string,
@@ -43,6 +31,11 @@ export class Character extends Specable {
     @hiddenProperty
     private set character_id(value: any) { this.external_id = value; }
 
+    @getterProperty
+    public get externalId() { return this.external_id; }
+    public set externalId(value) { this.external_id = value; }
+
+    @getterProperty
     public get characterId() { return this.external_id; }
     public set characterId(value) { this.external_id = value; }
 
@@ -255,7 +248,6 @@ export class Character extends Specable {
     async createGroupChat(options: ICharacterGroupChatCreation) {
         this.client.checkAndThrow(CheckAndThrow.RequiresAuthentication);
 
-        
         // todo
     }
     async getAuthorProfile(): Promise<PublicProfile | PrivateProfile> {
@@ -267,16 +259,49 @@ export class Character extends Specable {
 
     async getVote() {
         this.client.checkAndThrow(CheckAndThrow.RequiresAuthentication);
-        // todo
+        
+        const request = await this.client.requester.request(`https://plus.character.ai/chat/character/${this.characterId}/voted/`, {
+            method: 'GET',
+            includeAuthorization: true
+        });
+
+        const response = await Parser.parseJSON(request);
+        if (!request.ok) throw new Error(String(response));
+
+        const vote = response["vote"];
+        console.log(vote);
+        switch (vote) {
+            case true: return CharacterVote.Like;
+            case false: return CharacterVote.Dislike;
+        }
+
+        return CharacterVote.None;
     }
     async setVote(vote: CharacterVote) {
         this.client.checkAndThrow(CheckAndThrow.RequiresAuthentication);
-        // todo
+        this.client.throwBecauseNotAvailableYet(CSRF_COOKIE_REQUIRED);
+
+        // vote is true/false/null
+        let voteValue: boolean | null = null;
+        switch (vote) {
+            case CharacterVote.Like: voteValue = true; break;
+            case CharacterVote.Dislike: voteValue = false; break;
+        }
+        
+        const request = await this.client.requester.request(`https://plus.character.ai/chat/character/${this.characterId}/vote`, {
+            method: 'POST',
+            includeAuthorization: true,
+            body: Parser.stringify({ external_id: this.characterId, vote: voteValue }),
+            contentType: 'application/json'
+        });
+
+        const response = await Parser.parseJSON(request);
+        if (!request.ok) throw new Error(String(response));
     }
 
-    async hide() { // /chat/character/hide
+    async hide() { // (plus) /chat/character/hide
         this.client.checkAndThrow(CheckAndThrow.RequiresAuthentication);
-        // todo
+        this.client.throwBecauseNotAvailableYet(CSRF_COOKIE_REQUIRED);
     }
 
     // voice instance or voiceId

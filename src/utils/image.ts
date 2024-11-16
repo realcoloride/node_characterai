@@ -69,7 +69,8 @@ export class CAIImage extends Specable {
         this.client.checkAndThrow(CheckAndThrow.RequiresAuthentication);
         
         // TODO: Weird issues with permissions are going on here and need a fix ASAP
-        this.client.throwBecauseNotAvailableYet();
+        //       AFTER REVIEWING, it is best to just use the mobile endpoint
+        //this.client.throwBecauseNotAvailableYet();
 
         this._isImageUploaded = false;
 
@@ -90,6 +91,7 @@ export class CAIImage extends Specable {
         });
 
         const response = await Parser.parseJSON(request);
+        console.log(response[0].error.json);
         if (!request.ok) throw new Error("Could not upload picture");
         
         this._endpointUrl = response[0].result.data.json;
