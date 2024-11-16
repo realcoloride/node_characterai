@@ -1,13 +1,13 @@
-import { ICharacterCreationOptions } from "../character/modification";
 import CharacterAI, { CheckAndThrow } from "../client";
 import Parser from "../parser";
 import { CAIImage } from "../utils/image";
 import { PublicProfile } from "./publicProfile";
 import { getterProperty, hiddenProperty } from "../utils/specable";
-import { Character } from "../character/character";
+import { Character, CharacterVisibility } from "../character/character";
 import { CAIVoice, VoiceGender, VoiceVisibility } from "../voice";
-import { randomUUID } from "crypto";
 import { Persona } from "./persona";
+import { ICharacterCreationExtraOptions } from "../character/characterEnums";
+import { createIdentifier } from "../utils/identifier";
 
 export interface IProfileModification {
     // username
@@ -101,9 +101,48 @@ export class PrivateProfile extends PublicProfile {
     }
 
     // creation
-    async createCharacter(options: ICharacterCreationOptions): Promise<Character> {
-        // todo
-        return new Character(this.client, {});
+    async createCharacter(
+        name: string,
+        greeting: string,
+        visbility: CharacterVisibility,
+
+        options: ICharacterCreationExtraOptions
+    ): Promise<Character> {
+        this.client.checkAndThrow(CheckAndThrow.RequiresAuthentication);
+
+        const image = options.avatar;
+        const prompt = image?.prompt;
+
+        let voiceId = options.voiceOrId ?? "";
+        if (options.voiceOrId instanceof CAIVoice)
+            voiceId = options.voiceOrId.id;
+
+        const request = await this.client.requester.request("https://plus.character.ai/chat/character/create/", {
+            method: 'POST',
+            includeAuthorization: true,
+            body: Parser.stringify({ 
+                title: options.tagline ?? "",
+                name,
+                identifier: createIdentifier(),
+                categories: [],
+                visbility,
+                copyable: options.keepCharacterDefintionPrivate ?? false,
+                description: options.description ?? "",
+                greeting,
+                definition: options.definition ?? "",
+                avatar_rel_path: image?.endpointUrl ?? '',
+                img_gen_enabled: prompt != undefined,
+                base_img_prompt: prompt ?? '',
+                strip_img_prompt_from_msg: false,
+                default_voice_id: voiceId
+            }),
+            contentType: 'application/json'
+        });
+        
+        const response = await Parser.parseJSON(request);
+        if (!request.ok) throw new Error(response.status);
+
+        return new Character(this.client, response.character);
     }
 
     // https://neo.character.ai/multimodal/api/v1/voices/
@@ -206,7 +245,7 @@ export class PrivateProfile extends PublicProfile {
             body: Parser.stringify({ 
                 title: name,
                 name,
-                identifier: `id:${randomUUID()}`,
+                identifier: createIdentifier(),
                 categories: [],
                 visbility: "PRIVATE",
                 copyable: false,

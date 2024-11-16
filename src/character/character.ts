@@ -10,7 +10,7 @@ import { getterProperty, hiddenProperty, Specable } from "../utils/specable";
 import { v4 as uuidv4 } from 'uuid';
 import { ReportCharacterReason } from "./reportCharacter";
 import { CAIVoice } from "../voice";
-import { CharacterVisibility, CharacterVote } from "./characterEnums";
+import { CharacterVisibility, CharacterVote, ICharacterModificationOptions } from "./characterEnums";
 import { CSRF_COOKIE_REQUIRED } from "../utils/unavailableCodes";
 
 export interface ICharacterGroupChatCreation {
@@ -39,8 +39,12 @@ export class Character extends Specable {
     public get characterId() { return this.external_id; }
     public set characterId(value) { this.external_id = value; }
 
-    // title
-    public title: string = "";
+    // title aka tagline
+    private title: string = "";
+    
+    @getterProperty
+    public get tagline() { return this.title; }
+    public set tagline(value) { this.title = value; }
 
     // description
     public description: string = "";
@@ -352,8 +356,41 @@ export class Character extends Specable {
         return response.report.report_id;
     }
 
-    async edit() {
-        // todo
+    // /chat/character/update/
+    async edit(options?: ICharacterModificationOptions) {
+        this.client.checkAndThrow(CheckAndThrow.RequiresAuthentication);
+
+        const image = options?.avatar;
+        const prompt = image?.prompt;
+
+        let voiceId = options?.voiceOrId ?? "";
+        if (options?.voiceOrId instanceof CAIVoice)
+            voiceId = options.voiceOrId.id;
+
+        const request = await this.client.requester.request("https://plus.character.ai/chat/character/update/", {
+            method: 'POST',
+            includeAuthorization: true,
+            body: Parser.stringify({ 
+                title: options?.tagline ?? this.tagline,
+                name: options?.name ?? this.name,
+                identifier: this.identifier,
+                categories: [],
+                visbility: options?.visbility ?? this.visibility,
+                copyable: options?.keepCharacterDefintionPrivate ?? this.copyable,
+                description: options?.description ?? this.description,
+                greeting: options?.greeting ?? this.greeting,
+                definition: options?.definition ?? this.definition,
+                avatar_rel_path: image?.endpointUrl ?? this.avatar.endpointUrl,
+                img_gen_enabled: prompt != undefined,
+                base_img_prompt: prompt ?? '',
+                strip_img_prompt_from_msg: false,
+                default_voice_id: voiceId
+            }),
+            contentType: 'application/json'
+        });
+        
+        const response = await Parser.parseJSON(request);
+        if (!request.ok) throw new Error(response.status);
     }
     
     constructor(client: CharacterAI, information: any) {
