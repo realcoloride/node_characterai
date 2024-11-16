@@ -271,7 +271,6 @@ Ffplay is necessary to play out the audio on your speakers without dependencies.
                     try {
                         ffmpegInputCommand = `ffmpeg -f ${inputFormat} -rtbufsize 256M -i ${microphoneDevice} -f lavfi -i anullsrc=r=48000:cl=mono -ar 48000 -filter_complex "[0:a][1:a]amix=inputs=2:duration=longest" -ac 1 -ar 48000 -f s16le pipe:1`;
                     } catch (error) {
-                        this.clean();
                         cleanReject(new Error("Recording from the default microphone device is unsupported on this device or failed. Details: " + error));
                     }
                 } 
