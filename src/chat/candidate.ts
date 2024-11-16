@@ -114,7 +114,7 @@ export class Candidate extends Specable {
     private async internalGetTTSUrl(voiceId?: string, voiceQuery?: string): Promise<string> {
         this.client.checkAndThrow(CheckAndThrow.RequiresAuthentication);
 
-        const request = await this.client.requester.request("https://neo.character.ai/annotation/remove", {
+        const request = await this.client.requester.request("https://neo.character.ai/multimodal/api/v1/memo/replay", {
             method: 'POST',
             includeAuthorization: true,
             body: Parser.stringify({ 
@@ -127,7 +127,7 @@ export class Candidate extends Specable {
             contentType: 'application/json'
         });
         const response = await Parser.parseJSON(request);
-        if (!request.ok) throw new Error(String(response));
+        if (!request.ok) throw new Error(response);
 
         return response.replayUrl;
     }
