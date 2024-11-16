@@ -73,7 +73,6 @@ export class CAICall extends EventEmitterSpecable {
     public outputStream: PassThrough = new PassThrough();
 
     private inputFfmpeg: any;
-    private outputFfmpeg: any;
     private outputFfplay: any;
 
     public mute: boolean = false;
@@ -371,7 +370,6 @@ Ffplay is necessary to play out the audio on your speakers without dependencies.
         this.liveKitInputStream?.destroy();
 
         this.inputFfmpeg?.kill();
-        this.outputFfmpeg?.kill();
         this.outputFfplay?.kill();
         
         delete this.dataReceivedCallback;
