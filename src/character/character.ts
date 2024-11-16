@@ -11,7 +11,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { ReportCharacterReason } from "./reportCharacter";
 import { CAIVoice } from "../voice";
 import { CharacterVisibility, CharacterVote, ICharacterModificationOptions } from "./characterEnums";
-import { CSRF_COOKIE_REQUIRED } from "../utils/unavailableCodes";
+import { CSRF_COOKIE_REQUIRED, WEIRD_INTERNAL_SERVER_ERROR } from "../utils/unavailableCodes";
 
 export interface ICharacterGroupChatCreation {
     name: string,
@@ -357,8 +357,9 @@ export class Character extends Specable {
     }
 
     // /chat/character/update/
-    async edit(options?: ICharacterModificationOptions) {
+    private async internalEdit(archived: boolean, options?: ICharacterModificationOptions) {
         this.client.checkAndThrow(CheckAndThrow.RequiresAuthentication);
+        this.client.throwBecauseNotAvailableYet(WEIRD_INTERNAL_SERVER_ERROR);
 
         const image = options?.avatar;
         const prompt = image?.prompt;
@@ -371,9 +372,9 @@ export class Character extends Specable {
             method: 'POST',
             includeAuthorization: true,
             body: Parser.stringify({ 
+                external_id: this.externalId,
                 title: options?.tagline ?? this.tagline,
                 name: options?.name ?? this.name,
-                identifier: this.identifier,
                 categories: [],
                 visbility: options?.visbility ?? this.visibility,
                 copyable: options?.keepCharacterDefintionPrivate ?? this.copyable,
@@ -384,14 +385,20 @@ export class Character extends Specable {
                 img_gen_enabled: prompt != undefined,
                 base_img_prompt: prompt ?? '',
                 strip_img_prompt_from_msg: false,
-                default_voice_id: voiceId
+                voice_id: "",
+                default_voice_id: voiceId ?? this.defaultVoiceId,
+                archived
             }),
             contentType: 'application/json'
         });
         
         const response = await Parser.parseJSON(request);
-        if (!request.ok) throw new Error(response.status);
+        if (!request.ok || response.status != "OK") throw new Error(response.status);
+
+        ObjectPatcher.patch(this.client, this, response.character);
     }
+    async edit(options?: ICharacterModificationOptions) { return await this.internalEdit(false, options); }
+    async delete() { return await this.internalEdit(true); }
     
     constructor(client: CharacterAI, information: any) {
         super();

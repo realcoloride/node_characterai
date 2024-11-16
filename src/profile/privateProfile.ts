@@ -106,30 +106,30 @@ export class PrivateProfile extends PublicProfile {
         greeting: string,
         visbility: CharacterVisibility,
 
-        options: ICharacterCreationExtraOptions
+        options?: ICharacterCreationExtraOptions
     ): Promise<Character> {
         this.client.checkAndThrow(CheckAndThrow.RequiresAuthentication);
 
-        const image = options.avatar;
+        const image = options?.avatar;
         const prompt = image?.prompt;
 
-        let voiceId = options.voiceOrId ?? "";
-        if (options.voiceOrId instanceof CAIVoice)
+        let voiceId = options?.voiceOrId ?? "";
+        if (options?.voiceOrId instanceof CAIVoice)
             voiceId = options.voiceOrId.id;
 
         const request = await this.client.requester.request("https://plus.character.ai/chat/character/create/", {
             method: 'POST',
             includeAuthorization: true,
             body: Parser.stringify({ 
-                title: options.tagline ?? "",
+                title: options?.tagline ?? "",
                 name,
                 identifier: createIdentifier(),
                 categories: [],
                 visbility,
-                copyable: options.keepCharacterDefintionPrivate ?? false,
-                description: options.description ?? "",
+                copyable: options?.keepCharacterDefintionPrivate ?? false,
+                description: options?.description ?? "",
                 greeting,
-                definition: options.definition ?? "",
+                definition: options?.definition ?? "",
                 avatar_rel_path: image?.endpointUrl ?? '',
                 img_gen_enabled: prompt != undefined,
                 base_img_prompt: prompt ?? '',
