@@ -3,7 +3,7 @@ import Parser from '../parser';
 import fs from 'fs';
 import { getterProperty, hiddenProperty, Specable } from '../utils/specable';
 import sharp, { Sharp } from 'sharp';
-import { NEEDS_MOBILE_DOMAIN, NO_DOMAIN_FOUND } from './unavailableCodes';
+import { NEEDS_MOBILE_DOMAIN } from './unavailableCodes';
 
 const baseEndpoint = "https://characterai.io/i/200/static/avatars/";
 

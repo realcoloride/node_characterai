@@ -9,7 +9,6 @@ import { fileURLToPath } from 'url';
 import { platform } from "process";
 import { DisconnectReason } from "@livekit/rtc-node/dist/proto/room_pb";
 import DMConversation from "../chat/dmConversation";
-import { Conversation } from "../chat/conversation";
 
 export interface ICharacterCallOptions {
     // will record the input from the default system device or following name
@@ -88,7 +87,6 @@ export class CAICall extends EventEmitterSpecable {
     public isCharacterSpeaking: boolean = false;
     private liveKitInputStream: PassThrough = new PassThrough();
 
-    private dataReceivedCallback: any;
     private dataProcessCallback: any;
 
     private hasBeenShutDownNormally: boolean = false;
@@ -167,7 +165,6 @@ Ffplay is necessary to play out the audio on your speakers without dependencies.
         console.log("[node_characterai] Call - Connecting to room...");
 
         this.liveKitRoom = liveKitRoom;
-        this.dataReceivedCallback = null;
 
         liveKitRoom.on('dataReceived', async (payload: any) => {
             const decoder = new TextDecoder();
@@ -368,7 +365,6 @@ Ffplay is necessary to play out the audio on your speakers without dependencies.
         this.hasBeenShutDownNormally = true;
 
         this.liveKitInputStream?.off('data', this.dataProcessCallback);
-        this.liveKitRoom?.off('dataReceived', this.dataReceivedCallback);
 
         this.inputStream?.destroy();
         this.outputStream?.destroy();
@@ -377,7 +373,6 @@ Ffplay is necessary to play out the audio on your speakers without dependencies.
         this.inputFfmpeg?.kill();
         this.outputFfplay?.kill();
         
-        delete this.dataReceivedCallback;
         delete this.liveKitRoom;
     }
 

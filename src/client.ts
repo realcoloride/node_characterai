@@ -380,10 +380,12 @@ WARNING: CharacterAI has changed its authentication methods again.
 
     unauthenticate() {
         this.checkAndThrow(CheckAndThrow.RequiresAuthentication);
-        this.token = "";
 
+        this.disconnectFromCall();
         this.closeWebsockets();
         this.removeAllListeners();
+        
+        this.token = "";
     }
 
     throwBecauseNotAvailableYet(additionalDetails: string) {

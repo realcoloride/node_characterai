@@ -1,7 +1,6 @@
 import { CAICall, ICharacterCallOptions } from "../character/call";
 import { CheckAndThrow } from "../client";
 import Parser from "../parser";
-import ObjectPatcher from "../utils/patcher";
 import Warnings from "../warnings";
 import { Conversation, ICAIMessageSending } from "./conversation";
 import { CAIMessage } from "./message";
