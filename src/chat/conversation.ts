@@ -239,9 +239,6 @@ export class Conversation extends Specable {
     }
     async deleteMessage(message: CAIMessage, refreshMessages: boolean = true) { return this.deleteMessageById(message.turnId, refreshMessages); }
 
-    // disconnects from room
-    public close() { this.client.disconnectFromConversation(); }
-
     constructor(client: CharacterAI, information: any) {
         super();
         this.client = client;

@@ -26,10 +26,7 @@ export class RecentCharacter extends Character {
         });
         if (!request.ok) throw new Error(String(request));
     }
-
-    async getLastConversation() {
-        return await this.client.fetchConversation(this.lastConversationId);
-    }
+    async getLastDMConversation() { return await this.client.fetchDMConversation(this.lastConversationId); }
 
     constructor(client: CharacterAI, information: any) {
         super(client, information);

@@ -219,9 +219,9 @@ export class Character extends Specable {
     private async internalDM(createNewConversation: boolean, withGreeting?: boolean, specificChatId?: string): Promise<DMConversation> {
         this.client.checkAndThrow(CheckAndThrow.RequiresAuthentication);
 
-        let chatObject;
+        var conversation;
         if (specificChatId)
-            chatObject = await this.client.fetchRawConversation(specificChatId);
+            conversation = await this.client.fetchDMConversation(specificChatId);
 
         // create conversation
         if (createNewConversation) {
@@ -241,10 +241,17 @@ export class Character extends Specable {
                 }
             })
 
-            chatObject = request[0].chat;
+            conversation = new DMConversation(this.client, request[0].chat);
         }
 
-        return await this.client.connectToConversation(this.characterId, false, chatObject) as DMConversation;
+        // if no chat id after allat, lets fetch the most recent one
+        if (!specificChatId) 
+            conversation = await this.client.fetchLatestDMConversationWith(this.characterId);
+
+        await conversation?.resurrect();
+        await conversation?.refreshMessages();
+
+        return conversation as DMConversation;
     }
     async createDM(withGreeting?: boolean) { return await this.internalDM(true, withGreeting); }
     async DM(specificChatId?: string) { return await this.internalDM(false, false, specificChatId); }

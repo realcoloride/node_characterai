@@ -2,11 +2,11 @@ import { getterProperty, hiddenProperty, Specable } from "../utils/specable";
 import CharacterAI, { CheckAndThrow } from "../client";
 import { CAIImage } from "../utils/image";
 import ObjectPatcher from "../utils/patcher";
-import { CAIWebsocketConnectionType } from "../websocket";
-import { v4 as uuidv4 } from 'uuid';
 import { Candidate, EditedCandidate } from "./candidate";
 import { Conversation } from "./conversation";
 import Parser from "../parser";
+import DMConversation from "./dmConversation";
+import { GroupChatConversation } from "../groupchat/groupChatConversation";
 
 export class CAIMessage extends Specable {
     @hiddenProperty
@@ -149,24 +149,21 @@ export class CAIMessage extends Specable {
         const candidateId = specificCandidateId ?? this.primaryCandidate.candidateId;
 
         let request;
-        switch (this.client.connectionType) {
-            default:
-            case CAIWebsocketConnectionType.DM:
-                request = await this.client.sendDMWebsocketCommandAsync({
-                    command: "edit_turn_candidate",
-                    originId: "Android",
-                    streaming: true,
-                    waitForAIResponse: false,
-                    
-                    payload: {
-                        turn_key: this.turn_key,
-                        current_candidate_id: candidateId,
-                        new_candidate_raw_content: newContent
-                    }
-                });
-                break;
-            case CAIWebsocketConnectionType.GroupChat:
-                break;
+        if (this.conversation instanceof DMConversation) {
+            request = await this.client.sendDMWebsocketCommandAsync({
+                command: "edit_turn_candidate",
+                originId: "Android",
+                streaming: true,
+                waitForAIResponse: false,
+                
+                payload: {
+                    turn_key: this.turn_key,
+                    current_candidate_id: candidateId,
+                    new_candidate_raw_content: newContent
+                }
+            });
+        } else {
+
         }
 
         this.candidates = request.pop().turn.candidates;
@@ -268,7 +265,7 @@ export class CAIMessage extends Specable {
     async pin() { await this.handlePin(true); }
     async unpin() { await this.handlePin(false); }
     // https://neo.character.ai/chat/id/copy
-    async copyFromHere(): Promise<Conversation> {
+    async copyFromHere(isDM: boolean = true): Promise<DMConversation | GroupChatConversation> {
         this.client.checkAndThrow(CheckAndThrow.RequiresAuthentication);
 
         const request = await this.client.requester.request(`https://neo.character.ai/chat/${this.conversation.chatId}/copy`, {
@@ -281,8 +278,10 @@ export class CAIMessage extends Specable {
         const response = await Parser.parseJSON(request);
         if (!request.ok) throw new Error(String(response));
         
-        const { new_chat_id } = response;
-        return await this.client.fetchConversation(new_chat_id) as Conversation;
+        const { new_chat_id: newChatId } = response;
+        return isDM 
+            ? await this.client.fetchDMConversation(newChatId)
+            : await this.client.fetchGroupChatConversation(); // todo
     }
     async rewindFromHere() {
         this.client.checkAndThrow(CheckAndThrow.RequiresAuthentication);

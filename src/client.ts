@@ -4,32 +4,26 @@ import { PrivateProfile } from './profile/privateProfile';
 import { PublicProfile } from './profile/publicProfile';
 import Requester from './requester';
 import { CAIWebsocket, CAIWebsocketConnectionType, ICAIWebsocketCommand, ICAIWebsocketMessage } from './websocket';
-import { Conversation } from './chat/conversation';
 import DMConversation from './chat/dmConversation';
-import GroupChatConversation from './groupchat/groupChatConversation';
 import { Character } from './character/character';
 import { v4 as uuidv4 } from 'uuid';
 import { GroupChats } from './groupchat/groupChats';
 import { RecentCharacter } from './character/recentCharacter';
 import { CAICall, ICharacterCallOptions } from './character/call';
 import { CAIVoice } from './voice';
-import { assert } from 'console';
 import { NEEDS_MOBILE_DOMAIN, NO_DOMAIN_FOUND } from './utils/unavailableCodes';
+import { GroupChatConversation } from './groupchat/groupChatConversation';
 
 export enum CheckAndThrow {
     RequiresAuthentication = 0,
     RequiresNoAuthentication,
-    RequiresToBeConnected,
-    RequiresToBeInDM,
-    RequiresToBeInGroupChat,
-    RequiresToNotBeConnected
+    RequiresToBeInCall,
+    RequiresToNotBeInCall
 }
 
 export default class CharacterAI extends EventEmitter {
     private token: string = "";
-    public get authenticated() {
-        return this.token != "";
-    }
+    public get authenticated() { return this.token != ""; }
     
     public myProfile: PrivateProfile;
     public requester: Requester;
@@ -79,12 +73,6 @@ export default class CharacterAI extends EventEmitter {
         });
     }
 
-    private _connectionType: CAIWebsocketConnectionType = CAIWebsocketConnectionType.Disconnected;
-    public get connectionType() { return this._connectionType; }
-
-    private _currentConversation?: DMConversation | GroupChatConversation = undefined;
-    public get currentConversation() { return this._currentConversation }
-
     public autoReconnecting = true; // todo
 
     private async openWebsockets() {
@@ -116,85 +104,22 @@ export default class CharacterAI extends EventEmitter {
             throw Error("Failed opening websocket. Error:" + error);
         }
     }
-    
-    // todo indicate do not use if you dont know what you're doing
-    async connectToConversation(id: string, isRoom: boolean, specificChatObject?: any): Promise<DMConversation | GroupChatConversation> {
-        this.checkAndThrow(CheckAndThrow.RequiresAuthentication);
-        
-        const { connectionType } = this;
-        if (connectionType != CAIWebsocketConnectionType.Disconnected) throw Error(`You are already in a ${(connectionType == CAIWebsocketConnectionType.DM ? "DM" : "group chat")} conversation. Please disconnect from your current conversation (using characterAI.currentConversation.close()) to create and follow a new one.`);
-
-        if (isRoom) {
-            let request:any; // todo
-            /*const request = await this.groupChatWebsocket?.sendAsync({
-                data: Parser.stringify({ subscribe : { channel: `room:${id}`, id: 1 }}),
-                messageType: CAIWebsocketConnectionType.GroupChat,
-                awaitResponse: true,
-                parseJSON: true,
-                streaming: false
-            });*/
-
-            if (request.error) return request;
-
-            // todo checking
-            this._connectionType = CAIWebsocketConnectionType.GroupChat;
-            this._currentConversation = new GroupChatConversation(this, request);
-            await this._currentConversation.refreshMessages();
-            return this._currentConversation;
-        }
-
-        // if no specific object fetch latest conversation
-        if (!specificChatObject) {
-            const fetchRecentRequest = await this.requester.request(`https://neo.character.ai/chats/recent/${id}`, {
-                method: 'GET',
-                includeAuthorization: true
-            });
-            const fetchRecentResponse = await Parser.parseJSON(fetchRecentRequest);
-            if (!fetchRecentRequest.ok) throw new Error(fetchRecentResponse);
-
-            specificChatObject = fetchRecentResponse.chats[0];
-        }
-
-        return await this.connectToDMConversationDirectly(new DMConversation(this, specificChatObject));
-    }
-    async connectToDMConversationDirectly(conversation: DMConversation) {
-        this.checkAndThrow(CheckAndThrow.RequiresToNotBeConnected);
-        
-        // ressurect convo from the dead
-        const resurectionRequest = await this.requester.request(`https://neo.character.ai/chats/recent/${conversation.chatId}`, {
-            method: 'GET',
-            includeAuthorization: true
-        });
-        const resurectionResponse = await Parser.parseJSON(resurectionRequest);
-        if (!resurectionRequest.ok) throw new Error(resurectionResponse);
-
-        this._currentConversation = conversation;
-        await this._currentConversation.refreshMessages();
-        this._connectionType = CAIWebsocketConnectionType.DM;
-
-        return this._currentConversation;
-    }
-    disconnectFromConversation() {
-        if (this._connectionType == CAIWebsocketConnectionType.Disconnected || !this._currentConversation) return;
-
-        this._connectionType = CAIWebsocketConnectionType.Disconnected;
-        this._currentConversation = undefined;
-
+    private closeWebsockets() {
         this.dmChatWebsocket?.close();
         this.groupChatWebsocket?.close();
     }
     
     public currentCall?: CAICall = undefined;
-    async connectToCall(options: ICharacterCallOptions): Promise<CAICall> {
-        this.checkAndThrow(CheckAndThrow.RequiresToBeInDM);
+    async connectToCall(call: CAICall, options: ICharacterCallOptions): Promise<CAICall> {
+        this.checkAndThrow(CheckAndThrow.RequiresToNotBeInCall);
 
-        const call = new CAICall(this);
+        this.currentCall = call;
         await call.connectToSession(options, this.token, this.myProfile.username);
 
         return call;
     }
     async disconnectFromCall() {
-        this.checkAndThrow(CheckAndThrow.RequiresToBeInDM);
+        this.checkAndThrow(CheckAndThrow.RequiresToBeInCall);
         return await this.currentCall?.hangUp();
     }
 
@@ -357,14 +282,35 @@ export default class CharacterAI extends EventEmitter {
             includeAuthorization: true
         });
         const response = await Parser.parseJSON(request);
-        if (!request.ok) throw new Error(response);
+        if (!request.ok) throw new Error(response.comment ?? String(response));
 
         return response.chat;
     }
-    async fetchConversation(chatId: string): Promise<Conversation> {
+    async fetchDMConversation(chatId: string): Promise<DMConversation> {
         this.checkAndThrow(CheckAndThrow.RequiresAuthentication);
 
-        const conversation = new Conversation(this, await this.fetchRawConversation(chatId));
+        const conversation = new DMConversation(this, await this.fetchRawConversation(chatId));
+        await conversation.refreshMessages();
+
+        return conversation;
+    }
+    async fetchGroupChatConversation(): Promise<any> {
+        // todo, placeholder rn
+        return new GroupChatConversation(this, {});
+    }
+    async fetchLatestDMConversationWith(characterId: string) {
+        this.checkAndThrow(CheckAndThrow.RequiresAuthentication);
+        
+        const request = await this.requester.request(`https://neo.character.ai/chats/recent/${characterId}`, {
+            method: 'GET',
+            includeAuthorization: true
+        });
+        const response = await Parser.parseJSON(request);
+        if (!request.ok) throw new Error(response);
+
+        const chatObject = response.chats[0];
+        
+        const conversation = new DMConversation(this, chatObject);
         await conversation.refreshMessages();
 
         return conversation;
@@ -436,7 +382,7 @@ WARNING: CharacterAI has changed its authentication methods again.
         this.checkAndThrow(CheckAndThrow.RequiresAuthentication);
         this.token = "";
 
-        this.disconnectFromConversation();
+        this.closeWebsockets();
         this.removeAllListeners();
     }
 
@@ -449,25 +395,18 @@ WARNING: CharacterAI has changed its authentication methods again.
         argument: CheckAndThrow,
         requiresAuthenticatedMessage: string = "You must be authenticated to do this."
     ) {
-        if ((argument == CheckAndThrow.RequiresAuthentication || 
-             argument >= CheckAndThrow.RequiresToBeConnected) && !this.authenticated) 
+        if ((argument == CheckAndThrow.RequiresAuthentication ||
+             argument >= CheckAndThrow.RequiresToBeInCall) && !this.authenticated)
             throw Error(requiresAuthenticatedMessage);
 
         if (argument == CheckAndThrow.RequiresNoAuthentication && this.authenticated) 
             throw Error("Already authenticated");
-
-        const { connectionType } = this;
-        if (argument == CheckAndThrow.RequiresToNotBeConnected && connectionType != CAIWebsocketConnectionType.Disconnected)
-            throw Error(`You are already in a ${(connectionType == CAIWebsocketConnectionType.DM ? "DM" : "group chat")} conversation. Please disconnect from your current conversation (using characterAI.currentConversation.close()) to create and follow a new one.`);
         
-        if (argument == CheckAndThrow.RequiresToBeConnected && connectionType == CAIWebsocketConnectionType.Disconnected)
-            throw Error("This action requires you to be connected to a DM or a Group Chat.");
+        if (argument == CheckAndThrow.RequiresToNotBeInCall && this.currentCall)
+            throw Error("You are already in a call. CharacterAI currently limits to 1 call per account.");
 
-        if (argument == CheckAndThrow.RequiresToBeInDM && connectionType != CAIWebsocketConnectionType.DM) 
-            throw Error("This action requires you to be connected to a DM.");
-
-        if (argument == CheckAndThrow.RequiresToBeInGroupChat && connectionType != CAIWebsocketConnectionType.GroupChat)
-            throw Error("This action requires you to be connected to a Group Chat.");
+        if (argument == CheckAndThrow.RequiresToBeInCall && !this.currentCall)
+            throw Error("You need to be in a call.");
     }
     
     constructor() {

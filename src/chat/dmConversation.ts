@@ -73,6 +73,15 @@ const generateBaseRegeneratingPayload = (
 }};
 
 export default class DMConversation extends Conversation {
+    async resurrect() {
+        const resurectionRequest = await this.client.requester.request(`https://neo.character.ai/chats/recent/${this.chatId}`, {
+            method: 'GET',
+            includeAuthorization: true
+        });
+        const resurectionResponse = await Parser.parseJSON(resurectionRequest);
+        if (!resurectionRequest.ok) throw new Error(resurectionResponse);
+    }
+
     async archive() {
         this.client.checkAndThrow(CheckAndThrow.RequiresAuthentication);
         
@@ -84,10 +93,8 @@ export default class DMConversation extends Conversation {
 
         const response = await Parser.parseJSON(request);
         if (!request.ok) throw new Error(response);
-
-        this.close();
     }
-    async unarchive(openConversationRightAfter: boolean) {
+    async unarchive(refreshMessagesAfter: boolean = true): Promise<DMConversation | void> {
         this.client.checkAndThrow(CheckAndThrow.RequiresAuthentication);
         
         const request = await this.client.requester.request(`https://neo.character.ai/chat/${this.chatId}/unarchive`, {
@@ -98,13 +105,18 @@ export default class DMConversation extends Conversation {
 
         const response = await Parser.parseJSON(request);
         if (!request.ok) throw new Error(response);
+        if (!refreshMessagesAfter) return;
 
-        if (!openConversationRightAfter) return;
-        await this.client.connectToDMConversationDirectly(this);
+        await this.resurrect();
+        await this.refreshMessages();
     }
+
     async duplicate() {
         await this.refreshMessages();
-        return this.getLastMessage();
+        const lastMessage = this.getLastMessage();
+
+        if (!lastMessage) throw new Error("You must have atleast one message in the conversation to do this");
+        return await lastMessage.copyFromHere(true) as DMConversation;
     }
 
     async rename(newName: string) {
@@ -123,11 +135,13 @@ export default class DMConversation extends Conversation {
 
     async call(options: ICharacterCallOptions): Promise<CAICall> {
         // oh boy im hyped for this
-        return await this.client.connectToCall(options);
+        const call = new CAICall(this.client, this);
+        return await this.client.connectToCall(call, options);
     }
 
     async sendMessage(content: string, options?: ICAIMessageSending): Promise<CAIMessage> {
-        this.client.checkAndThrow(CheckAndThrow.RequiresToBeInDM);
+        this.client.checkAndThrow(CheckAndThrow.RequiresAuthentication);
+
         if (this.frozen)
             Warnings.show("sendingFrozen");
         
@@ -153,7 +167,7 @@ export default class DMConversation extends Conversation {
     }
 
     async regenerateMessage(message: CAIMessage) {
-        this.client.checkAndThrow(CheckAndThrow.RequiresToBeInDM);
+        this.client.checkAndThrow(CheckAndThrow.RequiresAuthentication);
         
         const request = await this.client.sendDMWebsocketCommandAsync({
             command: "generate_turn_candidate",

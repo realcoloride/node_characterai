@@ -1,6 +1,6 @@
 import { Conversation } from "../chat/conversation";
 
-export default class GroupChatConversation extends Conversation {
+export class GroupChatConversation extends Conversation {
     async rename() {
 
     }

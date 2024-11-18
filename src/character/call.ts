@@ -8,6 +8,8 @@ import path from "path";
 import { fileURLToPath } from 'url';
 import { platform } from "process";
 import { DisconnectReason } from "@livekit/rtc-node/dist/proto/room_pb";
+import DMConversation from "../chat/dmConversation";
+import { Conversation } from "../chat/conversation";
 
 export interface ICharacterCallOptions {
     // will record the input from the default system device or following name
@@ -68,6 +70,9 @@ export class CAICall extends EventEmitterSpecable {
     @hiddenProperty
     private client: CharacterAI;
 
+    @hiddenProperty
+    private conversation: DMConversation;
+
     private liveKitRoom?: Room = undefined;
     public inputStream: PassThrough = new PassThrough();
     public outputStream: PassThrough = new PassThrough();
@@ -96,12 +101,13 @@ export class CAICall extends EventEmitterSpecable {
     }
 
     private callForBackgroundConversationRefresh() {
-        (async() => await this.client.currentConversation?.refreshMessages())();
+        (async() => await this.conversation?.refreshMessages())();
     }
 
     async connectToSession(options: ICharacterCallOptions, token: string, username: string): Promise<void> {
-        this.client.checkAndThrow(CheckAndThrow.RequiresToBeInDM);
-        if (this.liveKitRoom) throw new Error("You are already connected to a call.");
+        this.client.checkAndThrow(CheckAndThrow.RequiresAuthentication);
+        if (this.client.currentCall != this) throw new Error("You are connected into another call that isn't this one. Please disconnect from that one first because CharacterAI restricts to only 1 call per person.");
+        if (this.liveKitRoom) throw new Error("You are already connected to this call.");
         
         this.ready = false;
         this.hasBeenShutDownNormally = false;
@@ -122,7 +128,7 @@ Ffplay is necessary to play out the audio on your speakers without dependencies.
 
         console.log("[node_characterai] Call - Creating session...");
 
-        const conversation = this.client.currentConversation;
+        const { conversation } = this;
         if (!conversation) throw Error("No conversation");
         const character = await conversation.getCharacter();
 
@@ -134,7 +140,7 @@ Ffplay is necessary to play out the audio on your speakers without dependencies.
             method: 'POST',
             includeAuthorization: true,
             body: Parser.stringify({ 
-                roomId: this.client.currentConversation?.chatId,
+                roomId: conversation?.chatId,
                 ...(options.voiceId 
                     ? { voices: { [character.characterId]: options.voiceId } } 
                     : { voiceQueries: { [character.characterId]: voiceQuery } }),
@@ -326,11 +332,11 @@ Ffplay is necessary to play out the audio on your speakers without dependencies.
 
     // https://neo.character.ai/multimodal/api/v1/sessions/discardCandidate
     async interruptCharacter() {
-        this.client.checkAndThrow(CheckAndThrow.RequiresToBeInDM);
+        this.client.checkAndThrow(CheckAndThrow.RequiresToBeInCall);
 
         if (!this.canInterruptCharacter) return;
 
-        const conversation = this.client.currentConversation;
+        const { conversation } = this;
         if (!conversation) throw new Error("No conversation");
 
         const request = await this.client.requester.request("https://neo.character.ai/multimodal/api/v1/sessions/discardCandidate", {
@@ -375,8 +381,9 @@ Ffplay is necessary to play out the audio on your speakers without dependencies.
         delete this.liveKitRoom;
     }
 
-    constructor(client: CharacterAI) {
+    constructor(client: CharacterAI, conversation: DMConversation) {
         super();
         this.client = client;
+        this.conversation = conversation;
     }
 }
