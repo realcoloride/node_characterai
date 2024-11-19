@@ -54,7 +54,7 @@ export class CAIMessage extends Specable {
     @getterProperty
     public get isHuman() { return this.author.is_human ?? false; }
     @getterProperty
-    public get name() { return this.author.name; }
+    public get authorUsername() { return this.author.name; }
 
     // is_pinned
     @hiddenProperty
@@ -67,10 +67,10 @@ export class CAIMessage extends Specable {
     async getAuthorProfile() {
         this.client.checkAndThrow(CheckAndThrow.RequiresAuthentication);
 
-        const { authorId, isHuman } = this;
+        const { authorUsername, isHuman } = this;
         if (!isHuman) throw Error("Failed to fetch author because this is message was not made by a human.");
 
-        return await this.client.fetchProfileById(authorId);
+        return await this.client.fetchProfileByUsername(authorUsername);
     }
     async getCharacter() {
         this.client.checkAndThrow(CheckAndThrow.RequiresAuthentication);
