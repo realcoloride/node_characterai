@@ -11,8 +11,9 @@ import { GroupChats } from './groupchat/groupChats';
 import { RecentCharacter } from './character/recentCharacter';
 import { CAICall, ICharacterCallOptions } from './character/call';
 import { CAIVoice } from './voice';
-import { NEEDS_MOBILE_DOMAIN, NO_DOMAIN_FOUND } from './utils/unavailableCodes';
+import { NO_DOMAIN_FOUND } from './utils/unavailableCodes';
 import { GroupChatConversation } from './groupchat/groupChatConversation';
+import { SearchCharacter } from './character/searchCharacter';
 
 export enum CheckAndThrow {
     RequiresAuthentication = 0,
@@ -138,16 +139,12 @@ export default class CharacterAI extends EventEmitter {
         this.throwBecauseNotAvailableYet(NO_DOMAIN_FOUND);
     }
     // character fetching
-    async searchCharacter(query: string, suggested: boolean = false): Promise<Character[]> {
+    async searchCharacter(query: string): Promise<SearchCharacter[]> {
         this.checkAndThrow(CheckAndThrow.RequiresAuthentication);
-        this.throwBecauseNotAvailableYet(NEEDS_MOBILE_DOMAIN);
 
-        const encodedQuery = encodeURIComponent(Parser.stringify({
-            "0": {"json": {"searchQuery": "character"}}
-        }));
-
-        /* TODO! 
-        const request = await this.requester.request(`https://character.ai/api/trpc/search.search?batch=1&input=${encodedQuery}`, {
+        if (query == "") throw new Error("The query must not be empty");
+        const encodedQuery = encodeURIComponent(query);
+        const request = await this.requester.request(`https://beta.character.ai/chat/characters/search/?query=${encodedQuery}`, {
             method: 'GET',
             includeAuthorization: true,
             contentType: 'application/json'
@@ -156,9 +153,12 @@ export default class CharacterAI extends EventEmitter {
         const response = await Parser.parseJSON(request);
         if (!request.ok) throw new Error(response);
 
-        let characters: Character[] = [];*/
+        let characters: SearchCharacter[] = [];
+        const { characters: rawCharacters } = response;
+        for (let i = 0; i < rawCharacters.length; i++)
+            characters.push(new SearchCharacter(this, rawCharacters[i]));
 
-        return [];
+        return characters;
     }
     async fetchCharacter(characterId: string) {
         this.checkAndThrow(CheckAndThrow.RequiresAuthentication);
