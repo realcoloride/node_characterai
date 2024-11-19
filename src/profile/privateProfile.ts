@@ -21,7 +21,7 @@ export interface IProfileModification {
 
     /**
      * Sends avatar to be updated or else uses the cached one.
-     * Make sure to uploadChanges() before calling this!
+     * Make sure to call `avatar.uploadChanges()` before calling this!
      */
     editAvatar?: boolean
 }

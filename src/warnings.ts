@@ -1,4 +1,4 @@
-const warnings: Record<'reachedMaxMessages' | 'sendingFrozen' | 'deletingInBulk', WarningEntry> = {
+const warnings: Record<'reachedMaxMessages' | 'sendingFrozen' | 'deletingInBulk' | 'contentFiltered', WarningEntry> = {
     reachedMaxMessages: {
         message: "You have reached the max amount of messages you can store. New messages will now overwrite old messages stored. To increase the number, change maxMessagesStored.",
         hasShown: false,
@@ -13,6 +13,11 @@ const warnings: Record<'reachedMaxMessages' | 'sendingFrozen' | 'deletingInBulk'
         message: "Resetting a conversation, or deleting a lot of messages, can take some time.",
         hasShown: false,
         useWarning: false
+    },
+    contentFiltered: {
+        message: "The generated candidate content has been flagged and aborted. This happens when the output was filtered for violent or explicit content. This will not be shown twice. Make sure to use candidate/message .wasFlagged to check beforehand to avoid any confusion.",
+        hasShown: false,
+        useWarning: true
     }
 };
 
@@ -37,4 +42,7 @@ export default class Warnings {
 
         (useWarning ? console.warn : console.log)(`[node_characterai] Warning: ${message}`); 
     }
+
+    static disable() { this.disabled = true; }
+    static enable() { this.disabled = false; }
 }

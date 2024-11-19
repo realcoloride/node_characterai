@@ -6,6 +6,8 @@
 
 ## Intro
 
+`node_characterai` is an unopiniated TypeScript wrapper for Character.AI, which aims to give life to characters using AI!
+
 **Preface:**
 
 This package is a completely reworked and revamped version of the `1.0+` `node_characterai` version series, that used old endpoints and were worked on from 2023 to 2024 until the CharacterAI team has completely deprecated the endpoints and websites on September 10th, 2024.

@@ -7,6 +7,7 @@ import { Conversation } from "./conversation";
 import Parser from "../parser";
 import DMConversation from "./dmConversation";
 import { GroupChatConversation } from "../groupchat/groupChatConversation";
+import Warnings from "../warnings";
 
 export class CAIMessage extends Specable {
     @hiddenProperty
@@ -105,6 +106,9 @@ export class CAIMessage extends Specable {
         const candidate = isEditedCandidate
             ? new EditedCandidate(this.client, this, candidateObject)
             : new Candidate(this.client, this, candidateObject);
+
+        if (candidate.wasFlagged)
+            Warnings.show('contentFiltered');
 
         this.candidateIdToCandidate[candidate.candidateId] = candidate;
         if (addAfterToActualRawCandidates) this.candidates.unshift(candidateObject);
