@@ -133,11 +133,6 @@ export default class CharacterAI extends EventEmitter {
         
         return profile;
     }
-    async fetchProfileById(userId: number): Promise<undefined> {
-        // not available yet
-        this.checkAndThrow(CheckAndThrow.RequiresAuthentication);
-        this.throwBecauseNotAvailableYet(NO_DOMAIN_FOUND);
-    }
     // character fetching
     async searchCharacter(query: string): Promise<SearchCharacter[]> {
         this.checkAndThrow(CheckAndThrow.RequiresAuthentication);

@@ -42,10 +42,6 @@ export default class Requester {
         
         if (typeof body === "string") headers["Content-Length"] = body.length;
         
-        return await fetch(url, {
-            headers,
-            method: options.method,
-            body
-        });
+        return await fetch(url, { headers, method: options.method, body });
     }
 }
