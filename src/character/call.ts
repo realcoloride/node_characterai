@@ -9,6 +9,7 @@ import { fileURLToPath } from 'url';
 import { platform } from "process";
 import { DisconnectReason } from "@livekit/rtc-node/dist/proto/room_pb";
 import DMConversation from "../chat/dmConversation";
+import fs from 'fs';
 
 export interface ICharacterCallOptions {
     // will record the input from the default system device or following name
@@ -112,6 +113,7 @@ export class CAICall extends EventEmitterSpecable {
 
         console.log("[node_characterai] Call - WARNING: Experimental feature ahead! Report issues in the GitHub.");
 
+        // todo add guides
         if (!await checkIfFfmpegIsInstalled()) throw Error(
 `Ffmpeg is not present on this machine or not detected. Here's a guide to install it:
 Ffmpeg is necessary to process the audio for the call.
@@ -199,12 +201,6 @@ Ffplay is necessary to play out the audio on your speakers without dependencies.
                     // call for message refresh when that happens in a separate context
                     if (!isSpeechStarted) this.callForBackgroundConversationRefresh();
                     break;
-                case 'TurnState':
-                    if (this.ready) break;
-
-                    this.ready = true;
-                    this.emit('ready');
-                    break;
                 case 'ParticipantDisconnected':
                     await this.internalHangup("Participant disconnected");
                     break;
@@ -259,8 +255,8 @@ Ffplay is necessary to play out the audio on your speakers without dependencies.
                         cleanReject(new Error("Default devices could not be identified properly. Details: " + error));
                 }
 
-                let ffmpegInputCommand = "ffmpeg -f wav -i pipe:0 -ac 1 -ar 48000 -f s16le pipe:1";
-
+                // THIS REQUIRES AN ENTIRE REWORK. I CANNOT MANAGE TO MAKE IT WORK.
+                let ffmpegInputCommand = `ffmpeg -loglevel debug -i pipe:0 -ac 1 -ar 48000 -f s16le pipe:1`;
                 // input
                 if (microphoneDevice) {
                     const inputFormat = platformInputFormats[process.platform] as string;
@@ -281,20 +277,26 @@ Ffplay is necessary to play out the audio on your speakers without dependencies.
                 // input mic/arbitrary data -> pipe:0 -> output pipe:1 pcm data in stdout
                 // console.log(ffmpegInputCommand);
 
-                const inputFfmpeg = spawnFF(ffmpegInputCommand, false);
+                this.inputStream.on('data', chunk => console.log("input data: ", chunk));
+
+                const inputFfmpeg = spawnFF(ffmpegInputCommand, true);
                 inputFfmpeg.once('exit', async (code, signal) => await this.internalHangup(`Ffmpeg exited (code ${code}) with signal ${signal}`));
-                inputFfmpeg.stdin.pipe(this.inputStream);
+                
+                this.inputStream.pipe(inputFfmpeg.stdin);
+                
+                inputFfmpeg.on('data', chunk => console.log("input's output data: ", chunk));
                 inputFfmpeg.stdout.pipe(this.liveKitInputStream);
                 this.inputFfmpeg = inputFfmpeg;
 
                 // god, this is awful. i wish i didn't have to do this.
                 this.dataProcessCallback = async (data: any) => {
                     if (this.mute) return;
-
+                    
                     // convert to int16 array & send 
                     const int16Array = new Int16Array(data.buffer, data.byteOffset, data.byteLength / Int16Array.BYTES_PER_ELEMENT);
                     const frame = new AudioFrame(int16Array, 48000, 1, int16Array.length);
-                    
+
+                    console.log(data.length, "/", frame.data.length);
                     // final audio frame here
                     await audioSource.captureFrame(frame);
                 };
@@ -319,9 +321,22 @@ Ffplay is necessary to play out the audio on your speakers without dependencies.
                 })();
 
                 // this.outputStream.on('data', data => console.log(data));
+                this.ready = true;
                 console.log("[node_characterai] Call - Call is ready!");
+
                 resolve();
             });
+        });
+    }
+
+    async playFile(filePath: fs.PathOrFileDescriptor): Promise<void> {
+        const resolvedPath = path.resolve(filePath.toString());
+        if (!fs.existsSync(resolvedPath)) throw new Error("Path is invalid");
+
+        return new Promise((resolve) => {
+            const data = fs.readFileSync(resolvedPath);
+            this.inputStream.write(data);
+            resolve();
         });
     }
 

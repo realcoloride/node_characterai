@@ -74,6 +74,104 @@ soon
 
 ## Calling characters
 
+Calling characters is a pretty awesome feature Character.AI incorporates. Luckily, `node_characterai` also has support for calling characters at your ease with flexibility in mind.
+
+### Installing FFmpeg and FFplay
+
+In order to properly work and process audio in real time, `node_characterai` uses `ffmpeg`, and for optional playback `ffplay`. Installing `ffmpeg` is required to be able to call with the package.
+
+#### Installing FFmpeg
+
+TODO
+
+#### Installing FFplay (optional, for speaker playback)
+
+TODO
+
+### Basic call usage
+
+In the following example, we will call a character using our microphone device as input, and speakers as output.
+
+```typescript
+// create a dm if you have not already
+const dm = await character.DM(characterId);
+
+// create a call session
+const call = await dm.call({
+    microphoneDevice: 'default', // use 'default' to get the default microphone or else specify the device name manually.
+    useSpeakerForPlayback: true
+});
+```
+
+This alone should be enough to let you talk to the character without any extra setup.
+
+### Call events
+
+The call allows you to subscribe to a few events in order to track what you are saying when the character starts and stops talking.
+
+```typescript
+call.on('userSpeechProgress', candidate => console.log("User speech candidate:", candidate));
+call.on('userSpeechEnded', candidate => console.log("User ended speech candidate:", candidate));
+
+call.on('characterBeganSpeaking', () => console.log("Character started speaking"));
+call.on('characterEndedSpeaking', () => console.log("Character ended speaking"));
+```
+
+### Other call features
+
+There are also other misc. calling features that allow you to spice up and have more control over the conversation. Mainly:
+
+```typescript
+// interrupting a character when they're speaking
+if (call.canInterruptCharacter)
+    await call.interruptCharacter();
+
+// muting yourself
+call.mute = true;
+
+// knowing if the character is speaking
+if (call.isCharacterSpeaking) 
+    console.log("The character is currently speaking");
+
+// hanging up after you're done
+await call.hangUp();
+```
+
+> [!WARNING]
+> Leaving no data or input for a prolonged amount of time will result in the character disconnecting from the call. Make sure to use empty data if required to avoid the call from hanging up.
+
+### Advanced calling features
+
+Previously, we have seen how to use a basic barebones and batteries-included way of calling characters with the package, but if we want to have more flexibility with our own voice input and voice output, here is how to proceed.
+
+A set of streams (`inputStream` and `outputStream`) included in the call class allow you to send information or receive.
+
+> [!IMPORTANT]
+> The recommended input format AND the output format is 16-bit Mono PCM at 48000Hz. 
+
+#### Custom input
+
+The `inputStream` awaits for any real time audio part and `ffmpeg` should automatically convert the input into the recommended format, it is important to note that `ffmpeg` can become resource intensive if imporperly used and or resources are wasted.
+
+Code example with streaming the contents of an audio file:
+
+```typescript
+const call = await dm.call({
+    microphoneDevice: false, // disable automatic microphone input
+    useSpeakerForPlayback: true
+});
+
+
+```
+
+todo
+#### Custom output
+
+
+```typescript
+
+```
+
 ## Manipulating images
 
 ## Group chats
