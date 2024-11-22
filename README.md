@@ -76,6 +76,54 @@ soon
 
 Calling characters is a pretty awesome feature Character.AI incorporates. Luckily, `node_characterai` also has support for calling characters at your ease with flexibility in mind.
 
+### Finding voices, or setting a default one
+
+Voices are an essential part in the calling feature. By default, if you have set a default voice on a character via the app or website, the package will try to automatically set that. But when calling, you can choose to specify a specific query or voice.
+
+Here is some basic code to do that:
+
+```typescript
+// fetch your voices
+const myVoices = await characterAI.fetchMyVoices();
+
+// or search for one
+const potentialVoices = await characterAI.searchCharacterVoices("Character");
+
+// or even get the system ones
+const systemVoices = await characterAI.fetchSystemVoices();
+
+// or fetch a specific one with its id.
+const specificVoice = await characterAI.fetchVoice(voiceId);
+
+// or, set a voice override for a specific character.
+await character.setVoiceOverride(voice.id);
+```
+
+Once you have settled on the voice you wish to use, scroll down to learn how to initiate a call, and set the voice id, or search for a specific query.
+
+### Creating or editing a voice
+
+Like we've seen before, we have learned to fetch and look for voices, but the package allows you to also edit and create voices, like you would on the app or website.
+
+Creating a voice usage using an `.mp3` file:
+
+```typescript
+const fileContent = fs.readFileSync('./voice.mp3');
+const blob = new File([fileContent], 'input.mp3', { type: 'audio/mpeg' });    
+
+const voice = await characterAI.myProfile.createVoice("voice name", "description", true, "this is a preview text", blob, VoiceGender.Neutral);
+```
+
+Editing voices usage:
+
+```typescript
+// edit the voice (see options)
+await voice.edit();
+
+// delete the voice
+await voice.delete();
+```
+
 ### Installing FFmpeg and FFplay
 
 In order to properly work and process audio in real time, `node_characterai` uses `ffmpeg`, and for optional playback `ffplay`. Installing `ffmpeg` is required to be able to call with the package.
@@ -92,6 +140,9 @@ TODO
 
 In the following example, we will call a character using our microphone device as input, and speakers as output.
 
+>[!WARNING]
+> You can only call 1 character on the same account at a time. Trying to call somewhere else while this is running will call the call to interrupt and disconnect.
+
 ```typescript
 // create a dm if you have not already
 const dm = await character.DM(characterId);
@@ -99,9 +150,17 @@ const dm = await character.DM(characterId);
 // create a call session
 const call = await dm.call({
     microphoneDevice: 'default', // use 'default' to get the default microphone or else specify the device name manually.
-    useSpeakerForPlayback: true
+    useSpeakerForPlayback: true,
+
+    // you can use voiceId to specify a specific voice
+    voiceId: (await characterAI.fetchVoice("Character")).id 
+
+    // or use a specific query
+    // voiceQuery: "voice name"
 });
 ```
+
+You can also use `voiceId` to specify a specific voice, or use `voiceQuery` to automatically look for one if none can be found. **Note that you cannot use both arguments at the same time.**
 
 This alone should be enough to let you talk to the character without any extra setup.
 
@@ -173,6 +232,109 @@ todo
 ```
 
 ## Manipulating images
+
+Manipulating images has became much more straightforward and easier. 
+
+### Introduction
+
+Images are now stored as instances called `CAIImage`s. They store a local instance of the image and allow you to manipulate the image, generate a new image, and upload the image to CharacterAI's servers.
+
+They work on a STORED cache basis, meaning that the changes are stored locally until published.
+
+### Usage
+
+Example of basic usage with editing the avatar
+```typescript
+// getting the avatar CAIImage instance
+const avatar = characterAI.myProfile.avatar;
+
+// printing the fullURL to CAI's servers
+console.log(avatar.fullUrl);
+
+// changing the file to a local one for example
+avatar.changeToFilePath("./avatar.png");
+
+// or better yet, change to a prompt
+await avatar.changeToPrompt("Cool cat with sunglasses");
+
+// there are more, like for example:
+// changeToBlobOrFile() - changes to a File instance or Blob instance
+// changeToUrl() - downloads an image and changes to it
+// changeToBuffer() - changes to a buffer
+// etc...
+
+// use this if you want to restore the image from the servers
+await image.reloadImage();
+```
+
+### Image manipulation
+
+The images, like said before are stored locally and store a `Sharp` image instance for you to have fun and edit the actual image, or save it in your hard drive, and more.
+
+```typescript
+const image = await avatar.getSharpImage();
+
+// example of modifications, and making it a png file to save it to the hard drive.
+image.rotate(90).png().toFile('./image.png');
+```
+
+To read more about `Sharp` and its documentation, [click here](https://sharp.pixelplumbing.com/api-constructor).
+
+### Uploading changes
+
+Like I said previously, the changes ARE NOT automatically published and saved. They're cached in the memory until you decide to upload and publish your changes.
+
+**Uploading** will upload the image to the CharacterAI servers while **Publishing** will apply the image to the avatar you're editing for example.
+
+This can be useful if you mess up the image for example and you wish to have full control of the pipeline.
+
+```typescript
+// UPLOAD changes first
+await avatar.uploadChanges();
+
+// APPLY the changes to the profile.
+await characterAI.myProfile.edit({ editAvatar: true });
+```
+
+The `edit()` publishing logic applies to other classes where images are involved like the `Character` class.
+
+## Personas
+
+Personas are a unique and cool way to change how you will interact with the character. Character AI provides you on the website and app a way to change, edit your personas, and set the default one. The package allows you to do that too.
+
+Creating or fetching a persona usage:
+
+```typescript
+// creating one
+const persona = characterAI.myProfile.createPersona("persona name", "definition", true);
+
+// or fetching the ones we made
+const myPersonas = await characterAI.myProfile.fetchPersonas();
+
+// or fetching one if you know the id
+const persona = await characterAI.myProfile.fetchPersona(personaId);
+
+// or get the default one
+const defaultPersona = await characterAI.myProfile.getDefaultPersona();
+```
+
+Persona management usage:
+```typescript
+// makes persona the default one
+await persona.makeDefault();
+
+// editing the persona (see options)
+await persona.edit();
+
+// removing the persona
+await persona.remove();
+```
+
+## Character management
+
+Like personas or voices, characters can be managed, too.
+
+soon
 
 ## Group chats
 
