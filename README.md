@@ -237,7 +237,7 @@ Manipulating images has became much more straightforward and easier.
 
 ### Introduction
 
-Images are now stored as instances called `CAIImage`s. They store a local instance of the image and allow you to manipulate the image, generate a new image, and upload the image to CharacterAI's servers.
+Images are now stored as instances called `CAIImage`. They store a local instance of the image and allow you to manipulate the image, generate a new image, and upload the image to CharacterAI's servers.
 
 They work on a STORED cache basis, meaning that the changes are stored locally until published.
 
