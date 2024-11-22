@@ -11,9 +11,10 @@ import { GroupChats } from './groupchat/groupChats';
 import { RecentCharacter } from './character/recentCharacter';
 import { CAICall, ICharacterCallOptions } from './character/call';
 import { CAIVoice } from './voice';
-import { NO_DOMAIN_FOUND } from './utils/unavailableCodes';
 import { GroupChatConversation } from './groupchat/groupChatConversation';
 import { SearchCharacter } from './character/searchCharacter';
+import { Specable } from './utils/specable';
+import { Persona } from './profile/persona';
 
 export enum CheckAndThrow {
     RequiresAuthentication = 0,
@@ -311,6 +312,22 @@ export default class CharacterAI extends EventEmitter {
         return conversation;
     }
 
+    private async automateOverrideFetching<T extends Specable>(
+        baseDictionary: Record<string, string>,
+        fetchingMethod: Function
+    ) {
+        let record: Record<string, T> = {};
+
+        for (const [characterId, valueId] of Object.entries(baseDictionary)) {
+            const object = await fetchingMethod(valueId);
+            if (!object) continue;
+
+            (record as any)[characterId as string] = object;
+        }
+
+        return record;
+    }
+
     async fetchSettings() {
         this.checkAndThrow(CheckAndThrow.RequiresAuthentication);
 
@@ -321,24 +338,45 @@ export default class CharacterAI extends EventEmitter {
         const response = await Parser.parseJSON(request);
         if (!request.ok) throw new Error(response);
 
-        const { voice_overrides: voiceOverridesIds, default_persona_id: defaultPersonaId } = response;
+        const { voiceOverrides: voiceOverridesIds, default_persona_id: defaultPersonaId, personaOverrides: personaOverridesIds } = response;
 
-        const fetchVoiceOverrides = async () => {
-            let voices: CAIVoice[] = [];
-            for (let i = 0; i < voiceOverridesIds.length; i++)
-                voices.push(await this.fetchVoice(voiceOverridesIds[i]));
-
-            return voices;
-        };
+        const fetchVoiceOverrides = async () => this.automateOverrideFetching<CAIVoice>(voiceOverridesIds, this.fetchVoice);
+        const fetchPersonaOverrides = async () => this.automateOverrideFetching<Persona>(personaOverridesIds, this.myProfile.fetchPersona);
 
         return {
             defaultPersonaId,
+            personaOverridesIds,
             voiceOverridesIds,
+
             fetchDefaultPersona: async () => await this.myProfile.fetchPersona(defaultPersonaId),
-            fetchVoiceOverrides
+            fetchVoiceOverrides,
+            fetchPersonaOverrides
         }
     }
+    // persona (linked to settings)
+    async setPersonaOverrideFor(characterId: string, personaId: string) {
+        this.checkAndThrow(CheckAndThrow.RequiresAuthentication);
+        
+        const settings = await this.fetchSettings();
+        let personasOverrides = settings.personaOverridesIds;
+        personasOverrides[characterId] = personaId;
 
+        const request = await this.requester.request("https://plus.character.ai/chat/user/settings/", {
+            method: 'POST',
+            includeAuthorization: true,
+            contentType: 'application/json',
+            body: Parser.stringify({ personasOverrides })
+        });
+        const response = await Parser.parseJSON(request);
+        if (!request.ok) throw new Error(response);
+    }
+    async getPersonaOverrideFor(characterId: string): Promise<Persona | undefined> {
+        this.checkAndThrow(CheckAndThrow.RequiresAuthentication);
+        
+        const settings = await this.fetchSettings();
+        const personaOverrides = await settings.fetchPersonaOverrides();
+        return personaOverrides[characterId];
+    }
 
     // authentication
     async authenticate(sessionToken: string) {

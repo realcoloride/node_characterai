@@ -316,6 +316,9 @@ const persona = await characterAI.myProfile.fetchPersona(personaId);
 
 // or get the default one
 const defaultPersona = await characterAI.myProfile.getDefaultPersona();
+
+// or getting the persona override of a character
+const characterPersona = await character.getPersonaOverride();
 ```
 
 Persona management usage:
@@ -328,6 +331,10 @@ await persona.edit();
 
 // removing the persona
 await persona.remove();
+
+// setting a character's persona (via instance or id)
+await character.setPersonaOverride(persona);
+await character.setPersonaOverride(personaId);
 ```
 
 ## Character management

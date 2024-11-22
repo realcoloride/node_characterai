@@ -12,6 +12,7 @@ import { ReportCharacterReason } from "./reportCharacter";
 import { CAIVoice } from "../voice";
 import { CharacterVisibility, CharacterVote, ICharacterModificationOptions } from "./characterEnums";
 import { CSRF_COOKIE_REQUIRED, WEIRD_INTERNAL_SERVER_ERROR } from "../utils/unavailableCodes";
+import { Persona } from "../profile/persona";
 
 export interface ICharacterGroupChatCreation {
     name: string,
@@ -405,6 +406,15 @@ export class Character extends Specable {
     }
     async edit(options?: ICharacterModificationOptions) { return await this.internalEdit(false, options); }
     async delete() { return await this.internalEdit(true); }
+
+    // persona
+    async setPersonaOverride(personaOrId: string | Persona) {
+        if (personaOrId instanceof Persona)
+            personaOrId = personaOrId.id;
+
+        await this.client.setPersonaOverrideFor(this.characterId, personaOrId);
+    }
+    async getPersonaOverride(): Promise<Persona | undefined> { return await this.client.getPersonaOverrideFor(this.characterId); }
     
     constructor(client: CharacterAI, information: any) {
         super();
