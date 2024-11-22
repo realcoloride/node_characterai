@@ -92,10 +92,10 @@ const potentialVoices = await characterAI.searchCharacterVoices("Character");
 // or even get the system ones
 const systemVoices = await characterAI.fetchSystemVoices();
 
-// or fetch a specific one with its id.
+// or fetch a specific one with its id
 const specificVoice = await characterAI.fetchVoice(voiceId);
 
-// or, set a voice override for a specific character.
+// or, set a voice override for a specific character
 await character.setVoiceOverride(voice.id);
 ```
 
@@ -153,7 +153,7 @@ const call = await dm.call({
     useSpeakerForPlayback: true,
 
     // you can use voiceId to specify a specific voice
-    voiceId: (await characterAI.fetchVoice("Character")).id 
+    voiceId: "id"
 
     // or use a specific query
     // voiceQuery: "voice name"
