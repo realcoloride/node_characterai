@@ -569,7 +569,7 @@ Group chats is a feature that is currently put on hold while I work on it. Pleas
 
 |Problem|Solution|
 |-|-|
-|No repoted problems at the moment.|Please [submit an issue](https://github.com/realcoloride/node_characterai/issues/new) if you see a problem thats not listed here.|
+|No reported problems at the moment.|Please [submit an issue](https://github.com/realcoloride/node_characterai/issues/new) if you see a problem thats not listed here.|
 
 ## Support
 
