@@ -108,7 +108,7 @@ Basic authentication usage:
 ```typescript
 
 const characterAI = new CharacterAI();
-characterAI.authenticate("Token [INSERT ACCESS TOKEN]").then(async() => {
+characterAI.authenticate("INSERT ACCESS TOKEN RIGHT HERE").then(async() => {
    console.log("Logged in");
    // start coding in here!
 });
@@ -116,7 +116,7 @@ characterAI.authenticate("Token [INSERT ACCESS TOKEN]").then(async() => {
 ```
 
 > [!TIP]
-> **Please avoid putting your access token in your code.** You are unintentionally giving access to your account if you share code with your access token in it.
+> **Please avoid putting your access token in your code.** You are unintentionally giving access to your account if you share code with your access token in it, and if you ever publish this to something open like GitHub, the token will still be found in the commit, and there is a good chance GitHub will index it too.
 >
 > Instead, use something like `process.env.` and `.env` files. [Click here to see a comprehensive tutorial and documentaton](https://nodejs.org/en/learn/command-line/how-to-read-environment-variables-from-nodejs).
 
