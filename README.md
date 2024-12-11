@@ -1,5 +1,5 @@
 > [!WARNING]
-> 🔨 **You are looking at a development work in progress branch.** If you want to let me know you feedback or report issues, [click here to open the related issue](https://github.com/realcoloride/node_characterai/issues/180).
+> 🔨 **You are looking at a development work in progress branch.** If you want to let me know your feedback or report issues, [click here to open the related issue](https://github.com/realcoloride/node_characterai/issues/180).
 
 # Character AI Node Client
 
