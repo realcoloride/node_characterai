@@ -1,4 +1,4 @@
-# Character AI Node JS Client
+# Character AI Node Client
 
 <a href="character.ai"><img src="https://github.com/user-attachments/assets/61536b0a-3c93-4001-891f-f01dba68f553" aria-label="character.ai"></a>
 ###### _The logo was recolored to be visible on both Dark and Light environments._
