@@ -1,3 +1,6 @@
+> [!WARNING]
+> 🔨 **You are looking at a development work in progress branch.** If you want to let me know you feedback or report issues, [click here to open the related issue](https://github.com/realcoloride/node_characterai/issues/180).
+
 # Character AI Node Client
 
 <a href="character.ai"><img src="https://github.com/user-attachments/assets/61536b0a-3c93-4001-891f-f01dba68f553" aria-label="character.ai"></a>
