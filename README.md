@@ -9,7 +9,7 @@ Unofficial Node.js client for [Character AI API](https://character.ai/), an awes
 
 * [👋 Intro](#intro)
 * [💡 Features](#features)
-* [🔨 Installation and usage]
+* [🔨 Installation and usage](#installation-and-usage)
 * [🔑 Using an Access Token](#using-an-access-token)
 * [🆔 Finding your character's ID](#finding-your-characters-id)
 * [🆔 Finding your conversation's ID](#finding-your-conversations-id)
