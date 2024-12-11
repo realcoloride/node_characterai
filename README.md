@@ -431,7 +431,7 @@ await character.setPersonaOverride(personaId);
 
 Like personas or voices, characters can be managed, too.
 
-### Looking for character(s)
+### Looking for characters
 
 ### Looking for someone's characters
 
