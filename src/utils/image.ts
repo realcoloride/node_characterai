@@ -21,11 +21,15 @@ export class CAIImage extends Specable {
     @hiddenProperty
     private client: CharacterAI;
 
+    @hiddenProperty
     private imageEndpoint = neoImageEndpoint;
+
     @hiddenProperty
     private _endpointUrl = "";
     @getterProperty
     public get endpointUrl() { return this._endpointUrl; }
+
+    public get hasImage() { return this.endpointUrl != ""; }
 
     /**
      * Gets full image URL (if available). Often returns into a `.webp` format.
@@ -80,6 +84,7 @@ export class CAIImage extends Specable {
         this.sharpImage = sharp(target);
     }
     private async downloadImageBuffer(url: string, headers?: Record<string, string>) {
+        if (!this.hasImage) console.warn("[node_characterai] No images are loaded or assigned to this cached image. This could either mean the image doesn't have any fallback or it doesn't exist.");
         return (await fetch(url, { headers })).arrayBuffer();
     }
 

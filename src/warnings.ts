@@ -1,4 +1,4 @@
-const warnings: Record<'reachedMaxMessages' | 'sendingFrozen' | 'deletingInBulk' | 'contentFiltered', WarningEntry> = {
+const warnings: Record<'reachedMaxMessages' | 'sendingFrozen' | 'deletingInBulk' | 'contentFiltered' | 'soxNotFound', WarningEntry> = {
     reachedMaxMessages: {
         message: "You have reached the max amount of messages you can store. New messages will now overwrite old messages stored. To increase the number, change maxMessagesStored.",
         hasShown: false,
@@ -16,6 +16,11 @@ const warnings: Record<'reachedMaxMessages' | 'sendingFrozen' | 'deletingInBulk'
     },
     contentFiltered: {
         message: "The generated candidate content has been flagged and aborted. This happens when the output was filtered for violent or explicit content. This will not be shown twice. Make sure to use candidate/message .wasFlagged to check beforehand to avoid any confusion.",
+        hasShown: false,
+        useWarning: true
+    },
+    soxNotFound: {
+        message: "Sox is not present on this machine or not detected. The audio you tried to play will not be played. Here's a guide to install it: [todo]",
         hasShown: false,
         useWarning: true
     }
