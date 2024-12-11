@@ -210,7 +210,7 @@ Here are the instructions to installing them depending on your platform:
 > If you do not know how to add something to your PATH and you do not wish your project directory, [this YouTube tutorial](https://www.youtube.com/watch?v=pGRw1bgb1gU) shows how to do it easily. Put the path as where you installed sox.
 
 3. **Verify Installation**:
-   ```powershell
+   ```bash
    sox --version
    ```
 
