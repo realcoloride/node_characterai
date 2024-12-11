@@ -116,11 +116,36 @@ characterAI.authenticate("Token [INSERT ACCESS TOKEN]").then(async() => {
 ```
 
 > [!TIP]
-> **Please avoid putting your access token in your code.** You are unintentionally giving access to your account if you share code with your access token in it. Instead use something like `process.env.` and `.env` files. [Click here to see a comprehensive tutorial and documentaton](https://nodejs.org/en/learn/command-line/how-to-read-environment-variables-from-nodejs).
+> **Please avoid putting your access token in your code.** You are unintentionally giving access to your account if you share code with your access token in it.
+>
+> Instead, use something like `process.env.` and `.env` files. [Click here to see a comprehensive tutorial and documentaton](https://nodejs.org/en/learn/command-line/how-to-read-environment-variables-from-nodejs).
 
 ## Finding your character's ID
 
+You can find your character ID in the URL of a conversation.
+
+![Character ID](https://github.com/user-attachments/assets/18273775-1ec0-4d32-9ea5-7dcf4ffd2b2c)
+
 ## Finding your conversation's ID
+
+You can either fetch the conversations with code when you fetch your character with code:
+
+```typescript
+// gets the latest dms with a character.
+// you can also customize the amount of preview messages to fetch.
+const dms = await character.getDMs();
+```
+
+> [!TIP]
+> When you open a conversation using `DM()`, if you specify no specific `chatId`, the latest conversation with the character will be fetched, or a new dm will be created.
+
+Or, if you want to fetch a previous conversation you had on your browser or phone, open the conversation history (History > Click on the Conversation) and look at the URL.
+
+![Conversation ID Step 1](https://github.com/user-attachments/assets/41c65cea-ecbb-4623-9dbf-4f11e4753482)
+![Conversation ID Step 2](https://github.com/user-attachments/assets/30950bac-86b0-49d4-aec8-1677132e120d)
+
+What comes after `hist=` is the external/conversation ID.
+![Conversation ID](https://github.com/user-attachments/assets/91c76b41-ea17-496b-8189-0b6abac943e0)
 
 ## Calling characters
 
