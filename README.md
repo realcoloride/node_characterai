@@ -19,6 +19,7 @@ Unofficial TypeScript Node.js client for [Character AI API](https://character.ai
 * 🧚 [Character management](#character-management)
 * 👥 [Group chats](#group-chats)
 * ❓ [Troubleshooting](#troubleshooting)
+* 💖 [Support](#support)
 * 🛑 [Disclaimer](#disclaimer)
 
 ## Intro
@@ -497,6 +498,23 @@ Group chats is a feature that is currently put on hold while I work on it. Pleas
 
 ## Troubleshooting
 
+## Support
+
+If you wish to support the package or the project, you have a few options:
+
+|Option|Description|Link|
+|-|-|-|
+|☕ You wish to support me financially|Thank you! You can send me a coffee on ko-fi.|[Send me a coffee](https://ko-fi.com/coloride)|
+|💡 You have an idea, or feedback|I'm glad to hear! Feel free to open an issue or reach me privately.|[Open a new issue](https://github.com/realcoloride/node_characterai/issues/new)|
+|❓ You want to report a bug, or a problem, or you have a question|Feel free to open an issue or reach me privately.|[Open a new issue](https://github.com/realcoloride/node_characterai/issues/new)|
+|⌨️ You want to contribute with code|Feel free to open a Pull Request!|[Open PRs](https://github.com/realcoloride/node_characterai/pulls)|
+|📩 You want to share a word, or a creation|Feel free to contact me anywhere! I'm looking forward to see what you can create with the package.|[🌍](https://coloride.ch/) [📨](mailto:hello@coloride.ch)|
+|🧚 You want to support Character.AI|Feel free to go on their awesome website, or subscribe to their C.AI+ subscription.|[Website](https://character.ai)|
+
+##### 👍 If none of these options matter but you still wish to help, leaving a ⭐ star to this package or sharing the package can greatly help!
+
+_💗 This project was able to be maintained because of the incredible work of this community, and I am grateful for everyone that has suppoted, used, promoted and contributed to the package._
+
 ## Disclaimer
 
 ##### ❤️ This project is updated frequently, **always check for the latest version for new features or bug fixes**.
@@ -507,4 +525,4 @@ Group chats is a feature that is currently put on hold while I work on it. Pleas
 
 ☕ **Want to support me?** You can send me a coffee on ko.fi: https://ko-fi.com/coloride.
 
-###### © *(real)Coloride - 2023-2024, Licensed MIT.*
+###### © *(real)Coloride - 2023-2025, Licensed MIT.*
