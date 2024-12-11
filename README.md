@@ -23,7 +23,7 @@ Unofficial TypeScript Node.js client for [Character AI API](https://character.ai
 
 ## Intro
 
-`node_characterai` is an unopiniated TypeScript wrapper for Character.AI, which aims to give life to characters using AI!
+`node_characterai` is an unopiniated TypeScript client and wrapper for Character.AI. It allows you to use the website and app with a developer friendly programmable interface.
 
 **Preface:**
 
