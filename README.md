@@ -136,7 +136,7 @@ Basic usage:
 
 ### Installing sox
 
-Most of the audio features are handled natively using [`naudiodon`](https://github.com/Streampunk/naudiodon), a node implementation of [`PortAudio`](https://www.portaudio.com/). I highly recommnd you check their package out. Some functions like `playFile()`, use **So**und E**X**change _(or `sox` for short)_ to handle playback, which should work on most platforms.
+Most of the audio features are handled natively using [`naudiodon`](https://github.com/Streampunk/naudiodon), a node implementation of [`PortAudio`](https://www.portaudio.com/). I highly recommnd you check their package out. Some functions like `playFile()`, use **So**und e**X**change _(or `sox` for short)_ to handle playback, which should work on most platforms.
 
 Here are the instructions to installing them depending on your platform:
 
