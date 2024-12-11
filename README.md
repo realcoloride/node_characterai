@@ -376,7 +376,7 @@ The `outputStream` gets to the same format raw PCM data out. No extra decoding i
 
 ## Manipulating images
 
-Manipulating images has became much more straightforward and easier. 
+Since `1.x`, manipulating images became much more straightforward and easier.
 
 ### Introduction
 
