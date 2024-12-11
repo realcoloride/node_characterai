@@ -485,9 +485,9 @@ await character.setPersonaOverride(personaId);
 
 ## Character management
 
-Like personas or voices, characters can be managed, too. Here are some code samples:
+Like personas or voices, characters can be managed, too.
 
-### Looking for Characters
+### Looking for characters
 
 To find characters on Character.AI, you can search for them using keywords or fetch characters that are featured or recommended for your account.
 
@@ -505,7 +505,7 @@ const recommendedCharacters = await characterAI.getRecommendedCharactersForYou()
 const similarCharacters = await characterAI.getSimilarCharactersTo(characterId);
 ```
 
-### Looking for Someone's Characters
+### Looking for someone's characters
 
 To explore characters created by a specific user, use their username to fetch their profile and retrieve their characters.
 
@@ -517,7 +517,7 @@ const profile = await characterAI.fetchProfileByUsername("username");
 const userCharacters = profile.characters;
 ```
 
-### Managing Your Own Characters
+### Managing your own characters
 
 Once authenticated, you can create, edit, delete, and manage your own characters easily.
 
@@ -532,7 +532,7 @@ const hiddenCharacters = characterAI.myProfile.hiddenCharacters;
 const likedCharacters = await characterAI.getLikedCharacters();
 ```
 
-### Creating, Editing, or Deleting Characters
+### Creating, editing, or deleting characters
 
 You can create characters with detailed customizations, edit their properties, or delete them when no longer needed.
 
@@ -551,7 +551,7 @@ await character.delete();
 > [!WARNING]
 > You need to own the character to do these actions, and it is irreversible.
 
-#### Setting a Persona or Voice Override
+#### Setting overrides
 
 You can personalize interactions by assigning a specific persona or voice to a character.
 
