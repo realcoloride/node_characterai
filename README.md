@@ -5,9 +5,21 @@
 
 Unofficial Node.js client for [Character AI API](https://character.ai/), an awesome website which brings characters to life with AI!
 
-## Table of contents
+**🔗 Table of contents:**
 
-soon
+* [👋 Intro](#intro)
+* [💡 Features](#features)
+* [🔨 Installation and usage]
+* [🔑 Using an Access Token](#using-an-access-token)
+* [🆔 Finding your character's ID](#finding-your-characters-id)
+* [🆔 Finding your conversation's ID](#finding-your-conversations-id)
+* [📞 Calling characters](#calling-characters)
+* [🖼️ Manipulating images](#manipulating-images)
+* [👤 Personas](#personas)
+* [🧚 Character management](#character-management)
+* [👥 Group chats](#group-chats)
+* [❓ Troubleshooting](#troubleshooting)
+* [🛑 Disclaimer](#disclaimer)
 
 ## Intro
 
@@ -38,20 +50,18 @@ If you like this project, please check their [website](https://character.ai/).
 * 🧸 Easy and developer-friendly to use
 * 📨 DM characters, fetch information, create, edit, delete conversations
 * 📒 Huge list of features you can use and interact with like on the app or website
-* 🎤 Call characters and utilize the TTS and SST features
-* 🧜 Create, edit voices or characters with a few lines of code
+* 📞 Call characters and utilize the TTS and SST features
+* 🗣️ Create, edit voices or characters with a few lines of code
 * 🔍 Be able to switch message candidates, submit annotations and manipulate messages
 * 🖼️ Built in image manipulation
 * 👥 ~~Group chat support~~ (Soon)
 * 🔁 Active development
 
-## Installation
+## Installation and usage
 
 ```bash
 npm install node_characterai
 ```
-
-## How to use
 
 ### Importing the package
 
