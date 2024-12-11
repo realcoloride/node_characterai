@@ -134,19 +134,72 @@ Basic usage:
 
 ```
 
-### Installing sos
+### Installing sox
 
 Most of the audio features are handled natively using [`naudiodon`](https://github.com/Streampunk/naudiodon), a node implementation of [`PortAudio`](https://www.portaudio.com/). I highly recommnd you check their package out. Some functions like `playFile()`, use **So**und E**X**change _(or `sox` for short)_ to handle playback, which should work on most platforms.
 
 Here are the instructions to installing them depending on your platform:
-#### Windows
 
-arm is not supported
+### Windows
 
-#### MacOS
+1. **Download SoX**:
+   - Visit the official SoX SourceForge page: http://sox.sourceforge.net/
+   - Download the latest Windows binary release
 
-#### Linux
+2. **Installation**:
+   - Extract the downloaded ZIP file
+   - Add the sox folder to your PATH, or in your project folder.
+    
+> [!TIP]
+> If you do not know how to add something to your PATH and you do not wish your project directory, [this YouTube tutorial](https://www.youtube.com/watch?v=pGRw1bgb1gU) shows how to do it easily. Put the path as where you installed sox.
 
+3. **Verify Installation**:
+   ```powershell
+   sox --version
+   ```
+
+**Note**: 32-bit and 64-bit x86 architectures are supported. Windows ARM is not currently supported, but potential alternatives like WSL or `ffmpeg` work.
+
+### macOS
+
+1. **Using Homebrew** (Recommended):
+   ```bash
+   brew install sox
+   ```
+
+2. **Using MacPorts**:
+   ```bash
+   sudo port install sox
+   ```
+
+3. **Verify Installation**:
+   ```bash
+   sox --version
+   ```
+
+### Linux
+
+1. **Ubuntu/Debian**:
+   ```bash
+   sudo apt-get update
+   sudo apt-get install sox libsox-fmt-all
+   ```
+
+2. **Fedora**:
+   ```bash
+   sudo dnf install sox sox-plugins-freeworld
+   ```
+
+3. **Arch Linux**:
+   ```bash
+   sudo pacman -S sox
+   ```
+
+4. **Verify Installation**:
+   ```bash
+   sox --version
+   ```
+   
 ### Basic call usage
 
 In the following example, we will call a character using our microphone device as input, and speakers as output.
