@@ -166,11 +166,28 @@ await voice.delete();
 
 ### Getting your audio devices
 
-Using the audio interface (`AudioInterface` class), you can get the microphone/input devices and speaker/output devices information according to your platform.
+Using the audio interface (`AudioInterface` class), you can get the microphone/input devices and speaker/output devices information according to your platform and change the `sox` path.
 
 Basic usage:
 ```typescript
+// get all audio devices
+const allDevices = AudioInterface.getAllDevices();
 
+// get microphones or speakers
+const microphones = AudioInterface.getMicrophones();
+const speakers = AudioInterface.getSpeakers();
+
+// find them by their ID or name
+const micById = AudioInterface.getMicrophoneFromId(2);
+const micByName = AudioInterface.getMicrophoneFromName('USB Microphone');
+
+// same for speakers
+const speakerById = AudioInterface.getSpeakerFromId(1);
+const speakerByName = AudioInterface.getSpeakerFromName('Bluetooth Speakers');
+
+// and optionally, if you need, you can set a custom sox path.
+// is `null` by default.
+AudioInterface.soxPath = '/custom/path/to/sox';
 ```
 
 ### Installing sox
@@ -244,7 +261,7 @@ Here are the instructions to installing them depending on your platform:
 In the following example, we will call a character using our microphone device as input, and speakers as output.
 
 >[!WARNING]
-> You can only call 1 character on the same account at a time. Trying to call somewhere else while this is running will call the call to interrupt and disconnect.
+> You can only call 1 character on the same account at a time. Trying to call somewhere else while this is running will cause the call to interrupt and disconnect.
 
 ```typescript
 // create a dm if you have not already
