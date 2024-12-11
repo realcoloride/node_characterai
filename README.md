@@ -511,7 +511,7 @@ If you wish to support the package or the project, you have a few options:
 |💡 You have an idea, or feedback|I'm glad to hear! Feel free to open an issue or reach me privately.|[Open a new issue](https://github.com/realcoloride/node_characterai/issues/new)|
 |❓ You want to report a bug, or a problem, or you have a question|Feel free to open an issue or reach me privately.|[Open a new issue](https://github.com/realcoloride/node_characterai/issues/new)|
 |⌨️ You want to contribute with code|Feel free to open a Pull Request!|[View PRs](https://github.com/realcoloride/node_characterai/pulls)|
-|📩 You want to share a word, or a creation|Feel free to contact me anywhere! I'm looking forward to see what you can create with the package.|[🌍](https://coloride.ch/) [📨](mailto:hello@coloride.ch)|
+|📩 You want to share a word, or a creation|Feel free to contact me anywhere! I'm looking forward to see what you can create with the package.|[📨 Send me an e-mail](mailto:hello@coloride.ch)|
 |🧚 You want to support Character.AI|Feel free to go on their awesome website, or subscribe to their C.AI+ subscription.|[Website](https://character.ai)|
 
 ##### 👍 If none of these options matter but you still wish to help, leaving a ⭐ star to this package or sharing the package can greatly help!
