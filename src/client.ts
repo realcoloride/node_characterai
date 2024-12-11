@@ -22,7 +22,7 @@ export enum CheckAndThrow {
     RequiresToNotBeInCall
 }
 
-export default class CharacterAI {
+export class CharacterAI {
     private token: string = "";
     public get authenticated() { return this.token != ""; }
     

@@ -1,4 +1,4 @@
-import CharacterAI from "../client";
+import { CharacterAI } from "../client";
 import { CAIImage } from "./image";
 
 export default class ObjectPatcher {

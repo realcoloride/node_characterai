@@ -1,5 +1,5 @@
 import { getterProperty, hiddenProperty, Specable } from "../utils/specable";
-import CharacterAI, { CheckAndThrow } from "../client";
+import { CharacterAI, CheckAndThrow } from "../client";
 import { CAIImage } from "../utils/image";
 import ObjectPatcher from "../utils/patcher";
 import { Candidate, EditedCandidate } from "./candidate";

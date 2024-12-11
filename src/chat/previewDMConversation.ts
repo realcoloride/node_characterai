@@ -1,4 +1,4 @@
-import CharacterAI from "../client";
+import { CharacterAI } from "../client";
 import { hiddenProperty } from "../utils/specable";
 import DMConversation from "./dmConversation";
 import { CAIMessage } from "./message";

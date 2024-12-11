@@ -69,14 +69,14 @@ npm install node_characterai
 
 ### Importing the package
 
-Typescript:
+Typescript (Recommended):
 ```
-soon
+import { CharacterAI } from "node_characterai";
 ```
 
-Javascript:
+Javascript (CommonJS):
 ```
-soon
+const { CharacterAI } = require("node_characterai");
 ```
 
 ## Using an Access Token

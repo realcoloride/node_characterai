@@ -1,5 +1,5 @@
 import { hiddenProperty } from "../utils/specable";
-import CharacterAI from "../client";
+import { CharacterAI } from "../client";
 
 export class GroupChats {
     @hiddenProperty

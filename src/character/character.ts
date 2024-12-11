@@ -1,6 +1,6 @@
 import DMConversation from "../chat/dmConversation";
 import { PreviewDMConversation } from "../chat/previewDMConversation";
-import CharacterAI, { CheckAndThrow } from "../client";
+import { CharacterAI, CheckAndThrow } from "../client";
 import Parser from "../parser";
 import { PrivateProfile } from "../profile/privateProfile";
 import { PublicProfile } from "../profile/publicProfile";

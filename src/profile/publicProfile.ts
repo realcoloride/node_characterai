@@ -1,5 +1,5 @@
 import Parser from '../parser';
-import CharacterAI, { CheckAndThrow } from '../client';
+import { CharacterAI, CheckAndThrow } from "../client";
 import { CAIImage as CAIImage } from '../utils/image';
 import ObjectPatcher from '../utils/patcher';
 import { getterProperty, hiddenProperty } from '../utils/specable';

@@ -1,4 +1,4 @@
-import CharacterAI, { CheckAndThrow } from "../client";
+import { CharacterAI, CheckAndThrow } from "../client";
 import Parser from "../parser";
 import { EventEmitterSpecable, hiddenProperty } from "../utils/specable";
 import { PassThrough } from "stream";

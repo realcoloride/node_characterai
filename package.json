@@ -1,9 +1,9 @@
 {
   "name": "node_characterai",
-  "version": "2.0.0-beta.0",
+  "version": "2.0.0-beta.5",
   "description": "Unofficial Character AI wrapper for node.",
-  "main": "dist/client.js",
-  "types": "dist/client.d.ts",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "scripts": {
     "build": "npx tsc"
   },

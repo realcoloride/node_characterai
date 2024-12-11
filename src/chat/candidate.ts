@@ -1,4 +1,4 @@
-import CharacterAI, { CheckAndThrow } from "../client";
+import { CharacterAI, CheckAndThrow } from "../client";
 import Parser from "../parser";
 import ObjectPatcher from "../utils/patcher";
 import { getterProperty, hiddenProperty, Specable } from "../utils/specable";
