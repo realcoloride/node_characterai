@@ -20,7 +20,7 @@ const warnings: Record<'reachedMaxMessages' | 'sendingFrozen' | 'deletingInBulk'
         useWarning: true
     },
     soxNotFound: {
-        message: "Sox is not present on this machine or not detected. The audio you tried to play will not be played. Here's a guide to install it: [todo]",
+        message: "Sox is not present on this machine or not detected. The audio you tried to play will not be played. Here's a guide to install it: https://github.com/realcoloride/node_characterai/blob/2.0/README.md#installing-sox",
         hasShown: false,
         useWarning: true
     }

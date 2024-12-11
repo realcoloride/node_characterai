@@ -70,7 +70,7 @@ export class PrivateProfile extends PublicProfile {
     public set blockedUsers(value) { this.blocked_users = value; }
 
     // interests
-    interests?: any[] | null = null; // TODO
+    private interests?: any[] | null = null;
 
     // id
     @hiddenProperty
