@@ -567,6 +567,10 @@ Group chats is a feature that is currently put on hold while I work on it. Pleas
 
 ## Troubleshooting
 
+|Problem|Solution|
+|-|-|
+|No repoted problems at the moment.|Please submit an issue if you see a problem thats not listed here.|
+
 ## Support
 
 If you wish to support the package or the project, you have a few options:
