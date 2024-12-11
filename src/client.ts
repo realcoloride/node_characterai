@@ -1,4 +1,3 @@
-import { EventEmitter } from 'stream';
 import Parser from './parser';
 import { PrivateProfile } from './profile/privateProfile';
 import { PublicProfile } from './profile/publicProfile';
@@ -23,15 +22,13 @@ export enum CheckAndThrow {
     RequiresToNotBeInCall
 }
 
-export default class CharacterAI extends EventEmitter {
+export default class CharacterAI {
     private token: string = "";
     public get authenticated() { return this.token != ""; }
     
     public myProfile: PrivateProfile;
     public requester: Requester;
     public groupChats: GroupChats;
-
-    // todo type safety for on('')
 
     private dmChatWebsocket: CAIWebsocket | null = null;
     async sendDMWebsocketAsync(options: ICAIWebsocketMessage) { 
@@ -75,8 +72,6 @@ export default class CharacterAI extends EventEmitter {
         });
     }
 
-    public autoReconnecting = true; // todo
-
     private async openWebsockets() {
         try {
             const request = await this.requester.request("https://character.ai/", {
@@ -87,8 +82,6 @@ export default class CharacterAI extends EventEmitter {
             const edgeRollout = headers.get("set-cookie")?.match(/edge_rollout=(\d+)/)?.at(1);
             if (!edgeRollout) throw Error("Could not get edge rollout");
     
-            // todo listen for events
-
             this.groupChatWebsocket = await new CAIWebsocket({
                 url: "wss://neo.character.ai/connection/websocket",
                 authorization: this.token,
@@ -407,8 +400,6 @@ WARNING: CharacterAI has changed its authentication methods again.
 
         // connect to endpoints
         await this.openWebsockets();
-
-        this.emit('ready');
     }
 
     unauthenticate() {
@@ -416,7 +407,6 @@ WARNING: CharacterAI has changed its authentication methods again.
 
         this.disconnectFromCall();
         this.closeWebsockets();
-        this.removeAllListeners();
         
         this.token = "";
     }
@@ -445,7 +435,6 @@ WARNING: CharacterAI has changed its authentication methods again.
     }
     
     constructor() {
-        super();
         this.myProfile = new PrivateProfile(this);
         this.requester = new Requester();
         this.groupChats = new GroupChats(this);

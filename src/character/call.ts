@@ -8,10 +8,9 @@ import { DisconnectReason } from "@livekit/rtc-node/dist/proto/room_pb";
 import DMConversation from "../chat/dmConversation";
 import fs from 'fs';
 import AudioInterface from "./audioInterface";
-import { ChildProcessWithoutNullStreams, exec, spawn } from "child_process";
+import { exec, spawn } from "child_process";
 import { AudioIO, IoStreamRead, IoStreamWrite, SampleFormat16Bit } from "naudiodon";
 import Warnings from "../warnings";
-import Sox from 'sox-stream';
 
 type DeviceType = 'default' | string | number | false;
 
@@ -260,7 +259,6 @@ export class CAICall extends EventEmitterSpecable {
                     const frame = new AudioFrame(int16Array, 48000, 1, int16Array.length);
                     // final audio frame here
                     await audioSource.captureFrame(frame);
-                    console.log(data.length, "/", frame.data.length);
                 };
 
                 this.liveKitInputStream.on('data', this.dataProcessCallback);

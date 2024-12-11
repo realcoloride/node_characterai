@@ -50,7 +50,7 @@ export class PrivateProfile extends PublicProfile {
 
     // suspended_until
     @hiddenProperty
-    private suspended_until: any; // TODO
+    private suspended_until: any;
     @getterProperty
     public get suspendedUntil() { return this.suspended_until; }
     public set suspendedUntil(value) { this.suspended_until = value; }
@@ -70,6 +70,7 @@ export class PrivateProfile extends PublicProfile {
     public set blockedUsers(value) { this.blocked_users = value; }
 
     // interests
+    @hiddenProperty
     private interests?: any[] | null = null;
 
     // id

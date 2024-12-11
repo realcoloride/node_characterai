@@ -15,7 +15,8 @@ export class CAIMessage extends Specable {
     @hiddenProperty
     private conversation: Conversation;
 
-    public image?: CAIImage; // todo
+    @hiddenProperty
+    private image?: CAIImage;
 
     // turn_key
     @hiddenProperty
@@ -285,7 +286,7 @@ export class CAIMessage extends Specable {
         const { new_chat_id: newChatId } = response;
         return isDM 
             ? await this.client.fetchDMConversation(newChatId)
-            : await this.client.fetchGroupChatConversation(); // todo
+            : await this.client.fetchGroupChatConversation();
     }
     async rewindFromHere() {
         this.client.checkAndThrow(CheckAndThrow.RequiresAuthentication);
@@ -301,7 +302,10 @@ export class CAIMessage extends Specable {
     async getTTSUrlWithQuery(voiceQuery?: string) { return await this.primaryCandidate.getTTSUrlWithQuery(voiceQuery); }
     async getTTSUrl(voiceId: string) { return await this.primaryCandidate.getTTSUrl(voiceId); }
 
-    // TODO: remind to not use
+    /**
+     * Patches and indexes an unsanitized turn.
+     * @remarks **Do not use this method.** It is meant for internal use only.
+     */
     public indexTurn(turn: any) {
         ObjectPatcher.patch(this.client, this, turn);
         this.indexCandidates();

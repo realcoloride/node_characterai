@@ -127,7 +127,7 @@ export class Character extends Specable {
     // definition
     public definition = "";
 
-    // default_voice_id TODO SWITCH TO VOICE INSTANCE
+    // default_voice_id 
     @hiddenProperty
     private default_voice_id = "";
     @getterProperty
@@ -190,6 +190,10 @@ export class Character extends Specable {
     public translations: any = null;
     @hiddenProperty
     private set character_translations(value: any) { this.translations = value; }
+
+    async getDefaultVoice() {
+        return await this.client.fetchVoice(this.default_voice_id);
+    }
 
     /// features
     async getDMs(turnPreviewCount: number = 2, refreshChats: boolean = false): Promise<PreviewDMConversation[]> {
@@ -259,8 +263,7 @@ export class Character extends Specable {
 
     async createGroupChat(options: ICharacterGroupChatCreation) {
         this.client.checkAndThrow(CheckAndThrow.RequiresAuthentication);
-
-        // todo
+        this.client.throwBecauseNotAvailableYet("Group Chats are not yet supported");
     }
     async getAuthorProfile(): Promise<PublicProfile | PrivateProfile> {
         // if the author is us, give private profile directly else fetch

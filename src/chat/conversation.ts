@@ -75,7 +75,7 @@ export class Conversation extends Specable {
     public state: ConversationState = ConversationState.Active;
 
     // type
-    public type: string = "TYPE_ONE_ON_ONE"; // todo figure out and make enum
+    public type: string = "TYPE_ONE_ON_ONE";
 
     // visibility
     public visibility: ConversationVisibility = ConversationVisibility.Private;
@@ -208,8 +208,6 @@ export class Conversation extends Specable {
         this.client.checkAndThrow(CheckAndThrow.RequiresAuthentication);
         Warnings.show('deletingInBulk');
         
-        console.log("[node_characterai] Warning: resetting a conversation, or deleting a lot of messages, can take some time.");
-
         let turnIds: string[] = [];
         if (typeof input == 'number') {
             if (input <= 0 || input >= this.maxMessagesStored) throw new Error("Invalid deletion range. The input number must be positive and reach within your messageCache limit.");

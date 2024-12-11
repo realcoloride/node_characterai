@@ -77,7 +77,7 @@ export class CAIWebsocket extends EventEmitter {
                     return;
                 }
 
-                console.log("RECEIVED", message);
+                // console.log("RECEIVED", message);
                 this.emit("rawMessage", message);
             });
         });
