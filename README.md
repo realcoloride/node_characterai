@@ -3,7 +3,7 @@
 <a href="character.ai"><img src="https://github.com/user-attachments/assets/61536b0a-3c93-4001-891f-f01dba68f553" aria-label="character.ai"></a>
 ###### _The logo was recolored to be visible on both Dark and Light environments._
 
-Unofficial Node.js client for [Character AI API](https://character.ai/), an awesome website which brings characters to life with AI!
+Unofficial TypeScript Node.js client for [Character AI API](https://character.ai/), an awesome website which brings characters to life with AI!
 
 **🔗 Table of contents:**
 
