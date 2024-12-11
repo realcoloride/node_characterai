@@ -1,8 +1,13 @@
-# Character AI Unofficial Node API
+# Character AI Node JS Client
 
-<img src="">
+<a href="character.ai"><img src="https://github.com/user-attachments/assets/61536b0a-3c93-4001-891f-f01dba68f553" aria-label="character.ai"></a>
+###### _The logo was recolored to be visible on both Dark and Light environments._
 
-> Node.js client for the unofficial [Character AI API](https://character.ai/), an awesome website which brings characters to life with AI!
+Unofficial Node.js client for [Character AI API](https://character.ai/), an awesome website which brings characters to life with AI!
+
+## Table of contents
+
+soon
 
 ## Intro
 
@@ -10,13 +15,13 @@
 
 **Preface:**
 
-This package is a completely reworked and revamped version of the `1.0+` `node_characterai` version series, that used old endpoints and were worked on from 2023 to 2024 until the CharacterAI team has completely deprecated the endpoints and websites on September 10th, 2024.
+This package is a completely reworked and revamped version of the `1.x` version series, that used (now considered old) endpoints and were actively worked and maintained on from 2023 to 2024 until the CharacterAI team has completely deprecated the endpoints and websites on September 10th, 2024.
 
 The old version has stayed a long time and still currently works partly to this day but is at risk of deprecation and uses old features that are not available anymore and or does not fully utilize all the new features the new endpoint and website has to offer and utilized features like Puppeteer to get around some restrictions.
 
 This new version has been rewritten in mind to be as developer-friendly as possible, and with type safety in mind; a [long requested feature](https://github.com/realcoloride/node_characterai/issues/102).
 
-**Old intro:**
+**Old intro: (1.x)**
 
 This repository is inspired by [RichardDorian's unofficial node API](https://github.com/RichardDorian/node-character.ai/).
 Though, I found it hard to use and it was not really stable and archived. So I remade it in javascript.
@@ -39,10 +44,6 @@ If you like this project, please check their [website](https://character.ai/).
 * 🖼️ Built in image manipulation
 * 👥 ~~Group chat support~~ (Soon)
 * 🔁 Active development
-
-## Table of contents
-
-soon
 
 ## Installation
 
@@ -124,17 +125,27 @@ await voice.edit();
 await voice.delete();
 ```
 
-### Installing FFmpeg and FFplay
+### Getting your audio devices
 
-In order to properly work and process audio in real time, `node_characterai` uses `ffmpeg`, and for optional playback `ffplay`. Installing `ffmpeg` is required to be able to call with the package.
+Using the audio interface (`AudioInterface` class), you can get the microphone/input devices and speaker/output devices information according to your platform.
 
-#### Installing FFmpeg
+Basic usage:
+```typescript
 
-TODO
+```
 
-#### Installing FFplay (optional, for speaker playback)
+### Installing sos
 
-TODO
+Most of the audio features are handled natively using [`naudiodon`](https://github.com/Streampunk/naudiodon), a node implementation of [`PortAudio`](https://www.portaudio.com/). I highly recommnd you check their package out. Some functions like `playFile()`, use **So**und E**X**change _(or `sox` for short)_ to handle playback, which should work on most platforms.
+
+Here are the instructions to installing them depending on your platform:
+#### Windows
+
+arm is not supported
+
+#### MacOS
+
+#### Linux
 
 ### Basic call usage
 
@@ -149,8 +160,9 @@ const dm = await character.DM(characterId);
 
 // create a call session
 const call = await dm.call({
-    microphoneDevice: 'default', // use 'default' to get the default microphone or else specify the device name manually.
-    useSpeakerForPlayback: true,
+    // protip: use 'default' to get the default microphone. or else, you can look above to get the device id or name of your choice.
+    microphoneDevice: 'default', 
+    speakerDevice: 'default',
 
     // you can use voiceId to specify a specific voice
     voiceId: "id"
@@ -210,26 +222,12 @@ A set of streams (`inputStream` and `outputStream`) included in the call class a
 
 #### Custom input
 
-The `inputStream` awaits for any real time audio part and `ffmpeg` should automatically convert the input into the recommended format, it is important to note that `ffmpeg` can become resource intensive if imporperly used and or resources are wasted.
+The `inputStream` awaits for any real time audio that will be encoded as livekit frames. This means YOU need to stream your own PCM data according to the format and pipe it through the stream.
+Alternatively, `playFile()` allows you to play a file and stream it with `sox`.
 
-Code example with streaming the contents of an audio file:
-
-```typescript
-const call = await dm.call({
-    microphoneDevice: false, // disable automatic microphone input
-    useSpeakerForPlayback: true
-});
-
-
-```
-
-todo
 #### Custom output
 
-
-```typescript
-
-```
+The `outputStream` gets to the same format raw PCM data out. No extra decoding is required, but if you wish to save or modify the data, you will have to use a tool like `ffmpeg` or `sox`.
 
 ## Manipulating images
 
