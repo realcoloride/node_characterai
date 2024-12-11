@@ -1,6 +1,6 @@
 # Character AI Unofficial Node API
 
-< add characterai image here >
+<img src="">
 
 > Node.js client for the unofficial [Character AI API](https://character.ai/), an awesome website which brings characters to life with AI!
 
