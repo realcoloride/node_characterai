@@ -7,19 +7,19 @@ Unofficial Node.js client for [Character AI API](https://character.ai/), an awes
 
 **🔗 Table of contents:**
 
-* [👋 Intro](#intro)
-* [💡 Features](#features)
-* [🔨 Installation and usage](#installation-and-usage)
-* [🔑 Using an Access Token](#using-an-access-token)
-* [🆔 Finding your character's ID](#finding-your-characters-id)
-* [🆔 Finding your conversation's ID](#finding-your-conversations-id)
-* [📞 Calling characters](#calling-characters)
-* [🖼️ Manipulating images](#manipulating-images)
-* [👤 Personas](#personas)
-* [🧚 Character management](#character-management)
-* [👥 Group chats](#group-chats)
-* [❓ Troubleshooting](#troubleshooting)
-* [🛑 Disclaimer](#disclaimer)
+* 👋 [Intro](#intro)
+* 💡 [Features](#features)
+* 🔨 [Installation and usage](#installation-and-usage)
+* 🔑 [Using an Access Token](#using-an-access-token)
+* 🆔 [Finding your character's ID](#finding-your-characters-id)
+* 🆔 [Finding your conversation's ID](#finding-your-conversations-id)
+* 📞 [Calling characters](#calling-characters)
+* 🖼️ [Manipulating images](#manipulating-images)
+* 👤 [Personas](#personas)
+* 🧚 [Character management](#character-management)
+* 👥 [Group chats](#group-chats)
+* ❓ [Troubleshooting](#troubleshooting)
+* 🛑 [Disclaimer](#disclaimer)
 
 ## Intro
 
