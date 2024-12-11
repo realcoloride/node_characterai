@@ -11,7 +11,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { ReportCharacterReason } from "./reportCharacter";
 import { CAIVoice } from "../voice";
 import { CharacterVisibility, CharacterVote, ICharacterModificationOptions } from "./characterEnums";
-import { CSRF_COOKIE_REQUIRED, WEIRD_INTERNAL_SERVER_ERROR } from "../utils/unavailableCodes";
+import { CSRF_COOKIE_REQUIRED, GROUP_CHATS_NOT_SUPPORTED_YET, WEIRD_INTERNAL_SERVER_ERROR } from "../utils/unavailableCodes";
 import { Persona } from "../profile/persona";
 
 export interface ICharacterGroupChatCreation {
@@ -263,7 +263,7 @@ export class Character extends Specable {
 
     async createGroupChat(options: ICharacterGroupChatCreation) {
         this.client.checkAndThrow(CheckAndThrow.RequiresAuthentication);
-        this.client.throwBecauseNotAvailableYet("Group Chats are not yet supported");
+        this.client.throwBecauseNotAvailableYet(GROUP_CHATS_NOT_SUPPORTED_YET);
     }
     async getAuthorProfile(): Promise<PublicProfile | PrivateProfile> {
         // if the author is us, give private profile directly else fetch

@@ -131,7 +131,7 @@ export default class CharacterAI {
     async searchCharacter(query: string): Promise<SearchCharacter[]> {
         this.checkAndThrow(CheckAndThrow.RequiresAuthentication);
 
-        if (query == "") throw new Error("The query must not be empty");
+        if (query.trim() == "") throw new Error("The query must not be empty");
         const encodedQuery = encodeURIComponent(query);
         const request = await this.requester.request(`https://beta.character.ai/chat/characters/search/?query=${encodedQuery}`, {
             method: 'GET',
