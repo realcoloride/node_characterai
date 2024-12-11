@@ -1,17 +1,33 @@
-# Character AI Node JS Client
+> [!WARNING]
+> 🔨 **You are looking at a development work in progress branch.** If you want to let me know you feedback or report issues, [click here to open the related issue](https://github.com/realcoloride/node_characterai/issues/180).
+
+# Character AI Node Client
 
 <a href="character.ai"><img src="https://github.com/user-attachments/assets/61536b0a-3c93-4001-891f-f01dba68f553" aria-label="character.ai"></a>
 ###### _The logo was recolored to be visible on both Dark and Light environments._
 
-Unofficial Node.js client for [Character AI API](https://character.ai/), an awesome website which brings characters to life with AI!
+Unofficial TypeScript Node.js client for [Character AI API](https://character.ai/), an awesome website which brings characters to life with AI!
 
-## Table of contents
+**🔗 Table of contents:**
 
-soon
+* 👋 [Intro](#intro)
+* 💡 [Features](#features)
+* 🔨 [Installation and usage](#installation-and-usage)
+* 🔑 [Using an Access Token](#using-an-access-token)
+* 🆔 [Finding your character's ID](#finding-your-characters-id)
+* 🆔 [Finding your conversation's ID](#finding-your-conversations-id)
+* 📞 [Calling characters](#calling-characters)
+* 🖼️ [Manipulating images](#manipulating-images)
+* 👤 [Personas](#personas)
+* 🧚 [Character management](#character-management)
+* 👥 [Group chats](#group-chats)
+* ❓ [Troubleshooting](#troubleshooting)
+* 💖 [Support](#support)
+* 🛑 [Disclaimer](#disclaimer)
 
 ## Intro
 
-`node_characterai` is an unopiniated TypeScript wrapper for Character.AI, which aims to give life to characters using AI!
+`node_characterai` is an unopiniated TypeScript client and wrapper for Character.AI. It allows you to use the website and app with a developer friendly programmable interface.
 
 **Preface:**
 
@@ -38,20 +54,18 @@ If you like this project, please check their [website](https://character.ai/).
 * 🧸 Easy and developer-friendly to use
 * 📨 DM characters, fetch information, create, edit, delete conversations
 * 📒 Huge list of features you can use and interact with like on the app or website
-* 🎤 Call characters and utilize the TTS and SST features
-* 🧜 Create, edit voices or characters with a few lines of code
+* 📞 Call characters and utilize the TTS and SST features
+* 🗣️ Create, edit voices or characters with a few lines of code
 * 🔍 Be able to switch message candidates, submit annotations and manipulate messages
 * 🖼️ Built in image manipulation
 * 👥 ~~Group chat support~~ (Soon)
 * 🔁 Active development
 
-## Installation
+## Installation and usage
 
 ```bash
 npm install node_characterai
 ```
-
-## How to use
 
 ### Importing the package
 
@@ -65,13 +79,77 @@ Javascript:
 soon
 ```
 
-### Authentication
-
 ## Using an Access Token
+
+---
+>[!WARNING]
+> ⚠️ **HUGE** WARNING: **DO NOT** share your session token to anyone you do not trust or if you do not know what you're doing.
+>
+> _Anyone with your session token could have access to your account without your consent. **Do this at your own risk and responsability.**_
+---
+
+You have two ways of getting your access token. One via network inspection and the other by local storage.
+
+To get it, you can open your browser, go to the [Character.AI website](https://character.ai) in `localStorage`.
+
+1. Open the Character.AI website in your browser on the front page.
+2. Open the developer tools (<kbd>F12</kbd>, <kbd>Ctrl+Shift+I</kbd>, or <kbd>Cmd+J</kbd>).
+3. Go to the `Application` tab.
+4. Go to the `Storage` section and click on `Local Storage`.
+5. Look for the `HTTP_AUTHORIZATION` key.
+6. Open the object, right click on value and copy your access token.
+
+![Instructions](https://github.com/user-attachments/assets/98e64019-dc8a-4340-b386-51a8f8636954)
+
+> [!TIP]
+> Sometimes the `HTTP_AUTHORIZATION` key doesn't show up directly. Try refreshing the page until you see it.
+
+### Authenticating
+
+Authentication refers to logging in to an account to use the client. Back in beta, Character.AI had a guest login feature, which was deprecated in favor of using accounts. <kbd>F</kbd>.
+
+Basic authentication usage:
+```typescript
+
+const characterAI = new CharacterAI();
+characterAI.authenticate("INSERT ACCESS TOKEN RIGHT HERE").then(async() => {
+   console.log("Logged in");
+   // start coding in here!
+});
+
+```
+
+> [!TIP]
+> **Please avoid putting your access token in your code.** You are unintentionally giving access to your account if you share code with your access token in it, and if you ever publish this to something open like GitHub, the token will still be found in the commit, and there is a good chance GitHub will index it too.
+>
+> Instead, use something like `process.env.` and `.env` files. [Click here to see a comprehensive tutorial and documentaton](https://nodejs.org/en/learn/command-line/how-to-read-environment-variables-from-nodejs).
 
 ## Finding your character's ID
 
+You can find your character ID in the URL of a conversation.
+
+![Character ID](https://github.com/user-attachments/assets/18273775-1ec0-4d32-9ea5-7dcf4ffd2b2c)
+
 ## Finding your conversation's ID
+
+You can either fetch the conversations with code when you fetch your character with code:
+
+```typescript
+// gets the latest dms with a character.
+// you can also customize the amount of preview messages to fetch.
+const dms = await character.getDMs();
+```
+
+> [!TIP]
+> When you open a conversation using `DM()`, if you specify no specific `chatId`, the latest conversation with the character will be fetched, or a new dm will be created.
+
+Or, if you want to fetch a previous conversation you had on your browser or phone, open the conversation history (History > Click on the Conversation) and look at the URL.
+
+![Conversation ID Step 1](https://github.com/user-attachments/assets/41c65cea-ecbb-4623-9dbf-4f11e4753482)
+![Conversation ID Step 2](https://github.com/user-attachments/assets/30950bac-86b0-49d4-aec8-1677132e120d)
+
+What comes after `hist=` is the external/conversation ID.
+![Conversation ID](https://github.com/user-attachments/assets/91c76b41-ea17-496b-8189-0b6abac943e0)
 
 ## Calling characters
 
@@ -127,16 +205,33 @@ await voice.delete();
 
 ### Getting your audio devices
 
-Using the audio interface (`AudioInterface` class), you can get the microphone/input devices and speaker/output devices information according to your platform.
+Using the audio interface (`AudioInterface` class), you can get the microphone/input devices and speaker/output devices information according to your platform and change the `sox` path.
 
 Basic usage:
 ```typescript
+// get all audio devices
+const allDevices = AudioInterface.getAllDevices();
 
+// get microphones or speakers
+const microphones = AudioInterface.getMicrophones();
+const speakers = AudioInterface.getSpeakers();
+
+// find microphones by their ID or name
+const microphoneById = AudioInterface.getMicrophoneFromId(2);
+const microphoneByName = AudioInterface.getMicrophoneFromName('USB Microphone');
+
+// same for speakers
+const speakerById = AudioInterface.getSpeakerFromId(1);
+const speakerByName = AudioInterface.getSpeakerFromName('Bluetooth Speakers');
+
+// and optionally, if you need, you can set a custom sox path.
+// is `null` by default.
+AudioInterface.soxPath = '/custom/path/to/sox';
 ```
 
 ### Installing sox
 
-Most of the audio features are handled natively using [`naudiodon`](https://github.com/Streampunk/naudiodon), a node implementation of [`PortAudio`](https://www.portaudio.com/). I highly recommnd you check their package out. Some functions like `playFile()`, use **So**und E**X**change _(or `sox` for short)_ to handle playback, which should work on most platforms.
+Most of the audio features are handled natively using [`naudiodon`](https://github.com/Streampunk/naudiodon), a node implementation of [`PortAudio`](https://www.portaudio.com/). I highly recommnd you check their package out. Some functions like `playFile()`, use **So**und e**X**change _(or `sox` for short)_ to handle playback, which should work on most platforms.
 
 Here are the instructions to installing them depending on your platform:
 
@@ -154,7 +249,7 @@ Here are the instructions to installing them depending on your platform:
 > If you do not know how to add something to your PATH and you do not wish your project directory, [this YouTube tutorial](https://www.youtube.com/watch?v=pGRw1bgb1gU) shows how to do it easily. Put the path as where you installed sox.
 
 3. **Verify Installation**:
-   ```powershell
+   ```bash
    sox --version
    ```
 
@@ -205,7 +300,7 @@ Here are the instructions to installing them depending on your platform:
 In the following example, we will call a character using our microphone device as input, and speakers as output.
 
 >[!WARNING]
-> You can only call 1 character on the same account at a time. Trying to call somewhere else while this is running will call the call to interrupt and disconnect.
+> You can only call 1 character on the same account at a time. Trying to call somewhere else while this is running will cause the call to interrupt and disconnect.
 
 ```typescript
 // create a dm if you have not already
@@ -284,7 +379,7 @@ The `outputStream` gets to the same format raw PCM data out. No extra decoding i
 
 ## Manipulating images
 
-Manipulating images has became much more straightforward and easier. 
+Since `1.x`, manipulating images became much more straightforward and easier.
 
 ### Introduction
 
@@ -392,11 +487,36 @@ await character.setPersonaOverride(personaId);
 
 Like personas or voices, characters can be managed, too.
 
-soon
+### Looking for characters
+
+### Looking for someone's characters
+
+### Managing your own
+
+### Creating, editing or deleting characters
 
 ## Group chats
 
+Group chats is a feature that is currently put on hold while I work on it. Please come back later!
+
 ## Troubleshooting
+
+## Support
+
+If you wish to support the package or the project, you have a few options:
+
+|Option|Description|Link|
+|-|-|-|
+|☕ You wish to support me financially|Thank you! You can send me a coffee on ko-fi.|[Send me a coffee](https://ko-fi.com/coloride)|
+|💡 You have an idea, or feedback|I'm glad to hear! Feel free to open an issue or reach me privately.|[Open a new issue](https://github.com/realcoloride/node_characterai/issues/new)|
+|❓ You want to report a bug, or a problem, or you have a question|Feel free to open an issue or reach me privately.|[Open a new issue](https://github.com/realcoloride/node_characterai/issues/new)|
+|⌨️ You want to contribute with code|Feel free to open a Pull Request!|[View PRs](https://github.com/realcoloride/node_characterai/pulls)|
+|📩 You want to share a word, or a creation|Feel free to contact me anywhere! I'm looking forward to see what you can create with the package.|[📨 Send me an e-mail](mailto:hello@coloride.ch)|
+|🧚 You want to support Character.AI|Feel free to go on their awesome website, or subscribe to their C.AI+ subscription.|[Website](https://character.ai)|
+
+##### 👍 If none of these options matter but you still wish to help, leaving a ⭐ star to this package or sharing the package can greatly help!
+
+_💗 This project was able to be maintained because of the incredible work of this community, and I am grateful for everyone that has suppoted, used, promoted and contributed to the package._
 
 ## Disclaimer
 
@@ -408,4 +528,4 @@ soon
 
 ☕ **Want to support me?** You can send me a coffee on ko.fi: https://ko-fi.com/coloride.
 
-###### © *(real)Coloride - 2023-2024, Licensed MIT.*
+###### © *(real)Coloride - 2023-2025, Licensed MIT.*
