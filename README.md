@@ -65,9 +65,48 @@ Javascript:
 soon
 ```
 
-### Authentication
-
 ## Using an Access Token
+
+---
+>[!WARNING]
+> ⚠️ **HUGE** WARNING: **DO NOT** share your session token to anyone you do not trust or if you do not know what you're doing.
+>
+> _Anyone with your session token could have access to your account without your consent. **Do this at your own risk and responsability.**_
+---
+
+You have two ways of getting your access token. One via network inspection and the other by local storage.
+
+To get it, you can open your browser, go to the [Character.AI website](https://character.ai) in `localStorage`.
+
+1. Open the Character.AI website in your browser on the front page.
+2. Open the developer tools (<kbd>F12</kbd>, <kbd>Ctrl+Shift+I</kbd>, or <kbd>Cmd+J</kbd>).
+3. Go to the `Application` tab.
+4. Go to the `Storage` section and click on `Local Storage`.
+5. Look for the `HTTP_AUTHORIZATION` key.
+6. Open the object, right click on value and copy your access token.
+
+![Instructions](https://github.com/user-attachments/assets/98e64019-dc8a-4340-b386-51a8f8636954)
+
+> [!TIP]
+> Sometimes the `HTTP_AUTHORIZATION` key doesn't show up directly. Try refreshing the page until you see it.
+
+### Authenticating
+
+Authentication refers to logging in to an account to use the client. Back in beta, Character.AI had a guest login feature, which was deprecated in favor of using accounts. <kbd>F</kbd>.
+
+Basic authentication usage:
+```typescript
+
+const characterAI = new CharacterAI();
+characterAI.authenticate("Token [INSERT ACCESS TOKEN]").then(async() => {
+   console.log("Logged in");
+   // start coding in here!
+});
+
+```
+
+> [!TIP]
+> **Please avoid putting your access token in your code.** You are unintentionally giving access to your account if you share the code with your access token in it. Instead use something like `process.env.` and `.env` files.
 
 ## Finding your character's ID
 
@@ -392,9 +431,17 @@ await character.setPersonaOverride(personaId);
 
 Like personas or voices, characters can be managed, too.
 
-soon
+### Looking for character(s)
+
+### Looking for someone's characters
+
+### Managing your own
+
+### Creating, editing or deleting characters
 
 ## Group chats
+
+Group chats is a feature that is currently put on hold while I work on it. Please come back later!
 
 ## Troubleshooting
 
