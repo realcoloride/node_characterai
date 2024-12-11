@@ -213,7 +213,7 @@ const allDevices = AudioInterface.getAllDevices();
 const microphones = AudioInterface.getMicrophones();
 const speakers = AudioInterface.getSpeakers();
 
-// find them by their ID or name
+// find microphones by their ID or name
 const microphoneById = AudioInterface.getMicrophoneFromId(2);
 const microphoneByName = AudioInterface.getMicrophoneFromName('USB Microphone');
 
