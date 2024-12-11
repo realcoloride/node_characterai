@@ -485,15 +485,81 @@ await character.setPersonaOverride(personaId);
 
 ## Character management
 
-Like personas or voices, characters can be managed, too.
+Like personas or voices, characters can be managed, too. Here are some code samples:
 
-### Looking for characters
+### Looking for Characters
 
-### Looking for someone's characters
+To find characters on Character.AI, you can search for them using keywords or fetch characters that are featured or recommended for your account.
 
-### Managing your own
+```typescript
+// search for characters by keyword
+const searchResults = await characterAI.searchCharacter("keyword");
 
-### Creating, editing or deleting characters
+// fetch featured characters
+const featuredCharacters = await characterAI.getFeaturedCharacters();
+
+// fetch characters recommended for you
+const recommendedCharacters = await characterAI.getRecommendedCharactersForYou();
+
+// fetch characters similar to another character
+const similarCharacters = await characterAI.getSimilarCharactersTo(characterId);
+```
+
+### Looking for Someone's Characters
+
+To explore characters created by a specific user, use their username to fetch their profile and retrieve their characters.
+
+```typescript
+// fetch a user's profile by username
+const profile = await characterAI.fetchProfileByUsername("username");
+
+// get the characters created by this user
+const userCharacters = profile.characters;
+```
+
+### Managing Your Own Characters
+
+Once authenticated, you can create, edit, delete, and manage your own characters easily.
+
+```typescript
+// fetch your own characters
+const myCharacters = characterAI.myProfile.characters;
+
+// fetch hidden characters (not publicly visible)
+const hiddenCharacters = characterAI.myProfile.hiddenCharacters;
+
+// fetch liked characters
+const likedCharacters = await characterAI.getLikedCharacters();
+```
+
+### Creating, Editing, or Deleting Characters
+
+You can create characters with detailed customizations, edit their properties, or delete them when no longer needed.
+
+Creating a character:
+```typescript
+// create a character
+const character = await characterAI.myProfile.createCharacter();
+
+// edit the character info with new information. (see options)
+await character.edit();
+
+// or delete it
+await character.delete();
+```
+
+> [!WARNING]
+> You need to own the character to do these actions, and it is irreversible.
+
+#### Setting a Persona or Voice Override
+
+You can personalize interactions by assigning a specific persona or voice to a character.
+
+```typescript
+// set a persona or a voice override
+await character.setPersonaOverride("personaId");
+await character.setVoiceOverride("voiceId");
+```
 
 ## Group chats
 
