@@ -391,7 +391,7 @@ WARNING: CharacterAI has changed its authentication methods again.
             method: "GET",
             includeAuthorization: true
         });
-        if (!request.ok) throw Error("Invaild session token.");
+        if (!request.ok) throw Error("Invaild authentication token.");
 
         this.token = sessionToken;
 

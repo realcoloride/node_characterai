@@ -313,7 +313,7 @@ const call = await dm.call({
     speakerDevice: 'default',
 
     // you can use voiceId to specify a specific voice
-    voiceId: "id"
+    // voiceId: "id"
 
     // or use a specific query
     // voiceQuery: "voice name"
