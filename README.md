@@ -194,7 +194,7 @@ console.log(content);
 
 Getting voice messages, or Text-To-Speech (TTS), (a.k.a. the character talking) can be fetched. On the website and app, you can fetch the voice by clicking here:
 
-[image]
+![Above the message, you can play the message with a voice](https://github.com/user-attachments/assets/78dd0dc2-2cea-4d3c-a100-829e312d6a85)
 
 The following methods give you a link to an **mp3** file **URL** that you can use to do whatever you want with.
 
