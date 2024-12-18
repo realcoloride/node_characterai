@@ -192,7 +192,22 @@ console.log(content);
 
 ## Getting voice messages
 
+Getting voice messages, or Text-To-Speech (TTS), (a.k.a. the character talking) can be fetched. On the website and app, you can fetch the voice by clicking here:
 
+[image]
+
+The following methods give you a link to an **mp3** file **URL** that you can use to do whatever you want with.
+
+Note: **You will have to manually download the file if needed, you are only supplied with an URL.**
+
+To do the following with the package, you do:
+```typescript
+// with a specific voice id
+await message.getTTSUrl(voiceId);
+
+// or with a query/character name/voice name.
+await message.getTTSUrlWithQuery("voice name");
+```
 
 ## Calling characters
 
