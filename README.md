@@ -1,5 +1,7 @@
 > [!WARNING]
 > 🔨 **You are looking at a development work in progress branch.** If you want to let me know your feedback or report issues, [click here to open the related issue](https://github.com/realcoloride/node_characterai/issues/180).
+>
+> 🔧 **Also, this documentation is not complete yet** so please report on your issues or feedback.
 
 # Character AI Node Client
 
@@ -12,10 +14,12 @@ Unofficial TypeScript Node.js client for [Character AI API](https://character.ai
 
 * 👋 [Intro](#intro)
 * 💡 [Features](#features)
-* 🔨 [Installation and usage](#installation-and-usage)
+* 🔨 [Installation](#installation)
 * 🔑 [Using an Access Token](#using-an-access-token)
 * 🆔 [Finding your character's ID](#finding-your-characters-id)
 * 🆔 [Finding your conversation's ID](#finding-your-conversations-id)
+* 🗣️ [Talking to characters](#talking-to-characters)
+* 🤖 [Getting voice messages](#getting-voice-messages)
 * 📞 [Calling characters](#calling-characters)
 * 🖼️ [Manipulating images](#manipulating-images)
 * 👤 [Personas](#personas)
@@ -61,11 +65,12 @@ If you like this project, please check their [website](https://character.ai/).
 * 👥 ~~Group chat support~~ (Soon)
 * 🔁 Active development
 
-## Installation and usage
+## Installation
 
 ```bash
-npm install node_characterai
+npm install node_characterai@beta
 ```
+***Note: This is temporary until the stable version is out.***
 
 ### Importing the package
 
@@ -150,6 +155,44 @@ Or, if you want to fetch a previous conversation you had on your browser or phon
 
 What comes after `hist=` is the external/conversation ID.
 ![Conversation ID](https://github.com/user-attachments/assets/91c76b41-ea17-496b-8189-0b6abac943e0)
+
+## Talking to characters
+
+Talking to characters is an integral part of `character.ai`.
+
+### Basic usage
+
+Chatting with `node_characterai` is pretty straightforward and is inspired by how you would actually do it on the app or the website.
+
+```typescript
+// get your character
+const character = await characterAI.fetchCharacter("aI_74AVi9JzuXGnUURRIePw4zvKT2dyvnaANcug2TJc");
+
+// dm it
+// use `await character.DM(chatId);` instead if you got a specific conversation in mind you wish to use.
+const dm = await character.DM(); 
+
+// send it a message
+const message = await dm.sendMessage("test");
+
+// get the text content
+const content = message.content;
+
+console.log(content);
+```
+
+### Candidates
+
+
+### Getting other messages in the conversation
+
+
+#### Cache
+
+
+## Getting voice messages
+
+
 
 ## Calling characters
 
