@@ -158,6 +158,8 @@ What comes after `hist=` is the external/conversation ID.
 
 ## Talking to characters
 
+// this part is not finished //
+
 Talking to characters is an integral part of `character.ai`.
 
 ### Basic usage
