@@ -168,7 +168,7 @@ Chatting with `node_characterai` is pretty straightforward and is inspired by ho
 
 ```typescript
 // get your character
-const character = await characterAI.fetchCharacter("aI_74AVi9JzuXGnUURRIePw4zvKT2dyvnaANcug2TJc");
+const character = await characterAI.fetchCharacter(characterId);
 
 // dm it
 // use `await character.DM(chatId);` instead if you got a specific conversation in mind you wish to use.
