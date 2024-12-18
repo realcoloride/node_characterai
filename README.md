@@ -213,6 +213,9 @@ await message.getTTSUrlWithQuery("voice name");
 
 ## Calling characters
 
+> [!WARNING]
+> This feature is currently broken due to some dependency issues. I am working to get them solved, please do not use it yet. [Click here to get more details.](https://github.com/realcoloride/node_characterai/issues/180#issuecomment-2537500480)
+
 Calling characters is a pretty awesome feature Character.AI incorporates. Luckily, `node_characterai` also has support for calling characters at your ease with flexibility in mind.
 
 ### Finding voices, or setting a default one
