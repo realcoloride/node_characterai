@@ -74,6 +74,9 @@ npm install node_characterai@beta
 
 ### Importing the package
 
+> [!TIP]
+> Type safety bindings is bundled with the package, so you do not need to worry about installed `@types`.
+
 Typescript (Recommended):
 ```typescript
 import { CharacterAI } from "node_characterai";
