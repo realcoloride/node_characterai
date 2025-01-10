@@ -44,6 +44,50 @@ class OutgoingMessage {
     }
 };
 
+class CharacterOutgoingMessage {
+    constructor(chat, options, characterId = null, externalId = null, internalId = null) {
+        function getValueOrDefault(value, fallback) {
+            if (typeof(options) == "string") return fallback;
+            else return options[value] || fallback
+        }
+
+        const payload = {
+            history_external_id: externalId,
+            character_external_id: characterId,
+            text: getValueOrDefault("text", options),
+            tgt: internalId,
+            ranking_method: getValueOrDefault("ranking_method", "random"),
+            faux_chat: getValueOrDefault("faux_chat", false),
+            staging: getValueOrDefault("staging", false),
+            model_server_address: getValueOrDefault("model_server_address", null),
+            override_prefix: getValueOrDefault("override_prefix", null),
+            override_rank: getValueOrDefault("override_rank", null),
+            rank_candidates: getValueOrDefault("rank_candidates", null),
+            filter_candidates: getValueOrDefault("filter_candidates", null),
+            prefix_limit: getValueOrDefault("prefix_limit", null),
+            prefix_token_limit: getValueOrDefault("prefix_token_limit", null),
+            livetune_coeff: getValueOrDefault("livetune_coeff", null),
+            parent_msg_id: getValueOrDefault("parent_msg_id", null),
+            stream_params: getValueOrDefault("stream_params", null),
+            enable_tti: getValueOrDefault("initial_timeout", true),
+            initial_timeout: getValueOrDefault("initial_timeout", null),
+            insert_beginning: getValueOrDefault("insert_beginning", null),
+            translate_candidates: getValueOrDefault("translate_candidates", null),
+            stream_every_n_steps: getValueOrDefault("stream_every_n_steps", 16),
+            chunks_to_pad: getValueOrDefault("chunks_to_pad", 8),
+            is_proactive: getValueOrDefault("is_proactive", true),
+            // Image generation
+            image_rel_path: getValueOrDefault("image_rel_path", ""),
+            image_description: getValueOrDefault("image_description", ""),
+            image_description_type: getValueOrDefault("image_description_type", "AUTO_IMAGE_CAPTIONING"),
+            image_origin_type: getValueOrDefault("image_origin_type", "UPLOADED"),
+        }
+
+        this.payload = payload;
+        return this.payload;
+    }
+};
+
 class Message {
     constructor(chat, options) {
         this.chat = chat;
@@ -150,4 +194,4 @@ class MessageHistory {
     }
 };
 
-module.exports = { OutgoingMessage, Reply, Message, MessageHistory };
+module.exports = { OutgoingMessage, Reply, Message, MessageHistory, CharacterOutgoingMessage };

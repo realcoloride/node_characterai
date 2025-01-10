@@ -1,4 +1,5 @@
 const Chat = require("./chat");
+const { CharacterOutgoingMessage, Reply } = require("./message");
 const uuidv4 = require("uuid").v4;
 const Parser = require("./parser");
 const Requester = require("./requester");
@@ -170,6 +171,36 @@ class Client {
         } else Error("Could not create or resume a chat.");
     }
 
+    async sendAndAwaitResponseCharacter(optionsOrMessage, singleReply, characterId, externalId, internalId) {
+        if (!this.isAuthenticated()) throw Error("You must be authenticated to do this.");
+
+        const payload = new CharacterOutgoingMessage(this, optionsOrMessage, characterId, externalId, internalId)
+
+        const request = await this.requester.request("https://beta.character.ai/chat/streaming/", {
+            body:Parser.stringify(payload),
+            method:"POST",
+            headers:this.getHeaders(),
+            client: this
+        }, true)
+
+        if (request.status() === 200) {
+            const response = await Parser.parseJSON(request);
+
+            // guests restricted/abort message
+            if (response["force_login"] == true ||
+                response["abort"]       == true) 
+                return new Reply(this, response);
+
+            const replies = response.replies;
+            const messages = [];
+
+            for (let i = 0; i < replies.length; i++)
+                messages.push(new Reply(this, response, i));
+            
+            if (!singleReply) return messages;
+            else return messages.pop();
+        } else throw Error("Failed sending message.");
+    }
     // Fetch speech from text using provided voice id
     async fetchTTS(voiceId, toSpeak) {
         if (!this.isAuthenticated()) throw Error("You must be authenticated to do this.");
