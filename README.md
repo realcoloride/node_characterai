@@ -188,6 +188,64 @@ console.log(content);
 
 ### Candidates
 
+<illustration soon>
+
+**Candidates** represent the sub messages created by a reply from your character. It allows you regenerate, pick, choose and review which candidate of a messaage you like best. The final candidate is called the **primary** candidate.
+
+```
+Message -> Candidate
+```
+
+>[!TIP]
+>In order to avoid confusion, by default, `message.content` returns the primary candidate's content.
+
+If you are not satisfied with the message and you want to regenerate it (similar to how you do it on the website), you can use `message.regenrate()`.
+
+```typescript
+// creates and generates a new candidate
+await message.regenerate();
+```
+
+#### Managing candidates
+
+In order to manage your candidates in a message, here's how you can do it:
+
+```typescript
+// gets all the currently stored candidates
+// since they are cached locally, if you need to refetch them
+// to be up to date, use `conversation.refreshMessages()`
+message.getCandidates();
+
+// this gets the current and primary candidate 
+message.primaryCandidate
+
+// this switches to the next available candidate (does not generate a new one!)
+await message.switchToNextCandidate();
+
+// this switches to the previously available candidate (does not generate a new one!)
+await message.switchToPreviousCandidate();
+
+// this switches the primary candidate to a specific candidate id
+await message.switchPrimaryCandidateTo(candidateId);
+```
+
+### Using a candidate
+
+Now, from there, you can choose to evaluate the candidate (the 4 stars option on the app) or get the TTS file.
+
+```
+// example candidate
+const candidate = message.primaryCandidate;
+
+// rate the candidate 4 stars
+await candidate.createAnnotation(AnnotationStars.Four);
+
+// remove the stars
+await candidate.createAnnotation(AnnotationStars.Remove);
+
+// evaluate the candidate (example value)
+await candidate.createAnnotation(AnnotationValue.Boring);   
+```
 
 ### Getting other messages in the conversation
 
