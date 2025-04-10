@@ -199,7 +199,7 @@ Message -> Candidate
 >[!TIP]
 >In order to avoid confusion, by default, `message.content` returns the primary candidate's content.
 
-If you are not satisfied with the message and you want to regenerate it (similar to how you do it on the website), you can use `message.regenrate()`.
+If you are not satisfied with the message and you want to regenerate it (similar to how you do it on the website), you can use `message.regenerate()`.
 
 ```typescript
 // creates and generates a new candidate
