@@ -233,7 +233,7 @@ await message.switchPrimaryCandidateTo(candidateId);
 
 Now, from there, you can choose to evaluate the candidate (the 4 stars option on the app) or get the TTS file.
 
-```
+```typescript
 // example candidate
 const candidate = message.primaryCandidate;
 
