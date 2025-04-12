@@ -354,7 +354,7 @@ export class CharacterAI {
         let personasOverrides = settings.personaOverridesIds;
         personasOverrides[characterId] = personaId;
 
-        const request = await this.requester.request("https://plus.character.ai/chat/user/settings/", {
+        const request = await this.requester.request("https://plus.character.ai/chat/user/update_settings/", {
             method: 'POST',
             includeAuthorization: true,
             contentType: 'application/json',
