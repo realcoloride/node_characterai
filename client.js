@@ -215,9 +215,8 @@ WARNING: CharacterAI has changed its authentication methods again.
          See: https://github.com/realcoloride/node_characterai/issues/146
 ===============================================================================`
 );
-        const request = await this.requester.request("https://neo.character.ai/recommendation/v1/user", {
-            method: "POST",
-            body: Parser.stringify({}),
+        const request = await this.requester.request("https://beta.character.ai/chat/character/voices/", {
+            method: "GET",
             headers: {
                 "Content-Type": "application/json",
                 "Authorization": `Token ${sessionToken}`
