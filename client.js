@@ -208,6 +208,13 @@ class Client {
 
         await this.requester.initialize();
 
+        console.warn(
+            `===============================================================================
+            WARNING: This version will be deprecated soon.
+                     See: https://github.com/realcoloride/node_characterai/tree/2.0
+            ===============================================================================`
+        );
+
 if (sessionToken.length != 40) console.warn(
 `===============================================================================
 WARNING: CharacterAI has changed its authentication methods again.
