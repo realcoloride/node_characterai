@@ -101,16 +101,17 @@ You have two ways of getting your access token. One via network inspection and t
 To get it, you can open your browser, go to the [Character.AI website](https://character.ai) in `localStorage`.
 
 1. Open the Character.AI website in your browser on the front page.
-2. Open the developer tools (<kbd>F12</kbd>, <kbd>Ctrl+Shift+I</kbd>, or <kbd>Cmd+J</kbd>).
-3. Go to the `Application` tab.
-4. Go to the `Storage` section and click on `Local Storage`.
-5. Look for the `HTTP_AUTHORIZATION` key.
-6. Open the object, right click on value and copy your access token.
+2. Open any conversation with any character. (**Important**)
+3. Open the developer tools (<kbd>F12</kbd>, <kbd>Ctrl+Shift+I</kbd>, or <kbd>Cmd+J</kbd>).
+4. Go to the `Application` tab.
+5. Go to the `Storage` section and click on `Local Storage`.
+6. Look for the `HTTP_AUTHORIZATION` key.
+7. Open the object, right click on value and copy your access token.
 
 ![Instructions](https://github.com/user-attachments/assets/98e64019-dc8a-4340-b386-51a8f8636954)
 
 > [!TIP]
-> Sometimes the `HTTP_AUTHORIZATION` key doesn't show up directly. Try refreshing the page until you see it.
+> Sometimes the `HTTP_AUTHORIZATION` key doesn't show up directly. You will need to be in a conversation with a chatbot first. Try refreshing the page until you see it.
 
 ### Authenticating
 
