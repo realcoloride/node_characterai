@@ -128,6 +128,7 @@ export class PrivateProfile extends PublicProfile {
                 categories: [],
                 visbility,
                 copyable: options?.keepCharacterDefintionPrivate ?? false,
+                allow_dynamic_greeting: options?.allowDynamicGreeting ?? false,
                 description: options?.description ?? "",
                 greeting,
                 definition: options?.definition ?? "",

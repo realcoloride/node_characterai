@@ -85,11 +85,39 @@ export class Conversation extends Specable {
     // currently not available use creatorId instead
     async getCreator() { return await this.client.fetchProfileByUsername(this.creator_id); }
 
+    
+    // preferred_model_type
+    @hiddenProperty
+    private preferred_model_type = "";
+    @getterProperty
+    public get preferredModelType() { return this.preferred_model_type; }
+    protected set preferredModelType(value) { this.preferred_model_type = value; }
+
+    // https://neo.character.ai/chat/${id}/preferred-model-type
+    /**
+     * Sets the model for this character. 
+     * **CAREFUL**: use `characterAI.getAvailableModels()` for the id
+     */
+    async setPreferredModelType(modelId: string) {
+        this.client.checkAndThrow(CheckAndThrow.RequiresAuthentication);
+
+        const request = await this.client.requester.request(`https://neo.character.ai/chat/${this.chatId}/preferred-model-type`, {
+            method: 'PATCH',
+            includeAuthorization: true,
+            body: Parser.stringify({ preferred_model_type: modelId })
+        });
+
+        const response = await Parser.parseJSON(request);
+        if (!request.ok) throw new Error(String(response));
+        
+        this.preferredModelType = modelId;
+    }
+
     // (in cache)
     public getLastMessage() {
         return this.messages.length > 0 ? this.messages[this.messages.length - 1] : null;
     }
-    
+
     protected frozen = false; // <- if refreshing, operations will be frozen
     private async getTurnsBatch(nextToken?: string, pinnedOnly?: boolean) {
         let query = "";

@@ -79,6 +79,18 @@ export class Character extends Specable {
     public get imageGenerationEnabled() { return this.img_gen_enabled; }
     public set imageGenerationEnabled(value) { this.img_gen_enabled = value; }
 
+    // dynamic_greeting_enabled
+    @hiddenProperty
+    private dynamic_greeting_enabled?: boolean = undefined;
+    @hiddenProperty
+    private allow_dynamic_greeting?: boolean = undefined;
+    @getterProperty
+    public get dynamicGreetingEnabled() { return this.dynamic_greeting_enabled ?? this.allow_dynamic_greeting; }
+    public set dynamicGreetingEnabled(value) { 
+        if (this.dynamic_greeting_enabled) this.dynamic_greeting_enabled = value;
+        if (this.allow_dynamic_greeting) this.allow_dynamic_greeting = value;
+    }
+
     // base_image_prompt
     @hiddenProperty
     private base_img_prompt = "";
@@ -393,6 +405,7 @@ export class Character extends Specable {
                 definition: options?.newDefinition ?? this.definition,
                 avatar_rel_path: image?.endpointUrl ?? this.avatar.endpointUrl,
                 img_gen_enabled: prompt != undefined,
+                dynamic_greeting_enabled: options?.enableDynamicGreeting ?? this.dynamicGreetingEnabled,
                 base_img_prompt: prompt ?? '',
                 strip_img_prompt_from_msg: false,
                 voice_id: "",
@@ -422,7 +435,7 @@ export class Character extends Specable {
     constructor(client: CharacterAI, information: any) {
         super();
         this.client = client;
-
+        console.log(information)
         // can edit profile picture
         this.avatar = new CAIImage(client, () => 
             this.creator_id != this.client.myProfile.userId &&

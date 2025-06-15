@@ -20,6 +20,8 @@ export interface ICharacterCreationExtraOptions {
     definition?: string,
     keepCharacterDefintionPrivate?: boolean,
 
+    allowDynamicGreeting?: boolean,
+
     voiceOrId?: CAIVoice | string,
     avatar?: CAIImage
 }
@@ -34,6 +36,7 @@ export interface ICharacterModificationOptions {
 
     newDefinition?: string,
     keepCharacterDefintionPrivate?: boolean,
+    enableDynamicGreeting?: boolean,
 
     voiceOrId?: CAIVoice | string,
     editAvatar: boolean

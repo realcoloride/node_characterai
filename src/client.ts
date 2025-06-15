@@ -137,9 +137,10 @@ export class CharacterAI {
     // character fetching
     async searchCharacter(query: string): Promise<SearchCharacter[]> {
         this.checkAndThrow(CheckAndThrow.RequiresAuthentication);
+        this.throwBecauseNotAvailableYet('Endpoint is currently broken, and no replacement has currently been found. Sorry!');
 
         if (query.trim() == "") throw new Error("The query must not be empty");
-        const encodedQuery = encodeURIComponent(query);
+        const encodedQuery = this.encodeQuery(query);
         const request = await this.requester.request(`https://beta.character.ai/chat/characters/search/?query=${encodedQuery}`, {
             method: 'GET',
             includeAuthorization: true,
@@ -171,11 +172,31 @@ export class CharacterAI {
         return new Character(this, response.character);
     }
 
+    // search queries
+    private async getSearchStringQuery(endpoint: string, suffix = "_search_queries", useKey?: string): Promise<string[]> {
+        this.checkAndThrow(CheckAndThrow.RequiresAuthentication);
+
+        const request = await this.requester.request(`https://neo.character.ai/search/v1/query/${endpoint}`, {
+            method: 'GET',
+            includeAuthorization: true
+        });
+        const response = await Parser.parseJSON(request);
+        if (!request.ok) throw new Error(String(response));
+        
+        return response[`${useKey ?? endpoint}${suffix}`];
+    }
+    async getPopularSearches() { return await this.getSearchStringQuery("popular"); }
+    async getTrendingSearches() { return await this.getSearchStringQuery("trending"); }
+    async getSearchAutocomplete(query: string) {
+        const encodedQuery = this.encodeQuery(query);
+        return await this.getSearchStringQuery(`autocomplete?query_prefix=${encodedQuery}`, "_autocomplete", "search"); 
+    }
+
     // voice
     private async internalFetchCharacterVoices(endpoint: string, query?: string) {
         this.checkAndThrow(CheckAndThrow.RequiresAuthentication);
 
-        const encodedQuery = encodeURIComponent(query ?? "");
+        const encodedQuery = this.encodeQuery(query ?? "");
         const request = await this.requester.request(`https://neo.character.ai/multimodal/api/v1/voices/${endpoint}${encodedQuery}`, {
             method: 'GET',
             includeAuthorization: true
@@ -201,6 +222,8 @@ export class CharacterAI {
     async fetchMyVoices() { return await this.internalFetchCharacterVoices("user"); }
     // v1/voices/search?creatorInfo.username=
     async fetchVoicesFromUser(username: string) { return await this.internalFetchCharacterVoices("search?creatorInfo.username=", username); }
+    // v1/voices/featured
+    async getFeaturedVoices() { return await this.internalFetchCharacterVoices("featured"); }
 
     // v1/voices/voiceId
     async fetchVoice(voiceId: string): Promise<CAIVoice> {
@@ -215,6 +238,25 @@ export class CharacterAI {
         if (!request.ok) throw new Error(String(response));
         
         return new CAIVoice(this, response.voice);
+    }
+
+    // models
+    // https://neo.character.ai/get-available-models
+    async getAvailableModels() {
+        this.checkAndThrow(CheckAndThrow.RequiresAuthentication);
+
+        const request = await this.requester.request("https://neo.character.ai/get-available-models", {
+            method: 'GET',
+            includeAuthorization: true
+        });
+
+        const response = await Parser.parseJSON(request);
+        if (!request.ok) throw new Error(String(response));
+        
+        return {
+            availableModels: response.available_models as string[],
+            defaultModelType: response.default_model_type as string
+        }
     }
 
     // https://neo.character.ai/recommendation/v1/
@@ -420,6 +462,13 @@ WARNING: CharacterAI has changed its authentication methods again.
 
     throwBecauseNotAvailableYet(additionalDetails: string) {
         throw Error("This feature is not available yet due to some restrictions from CharacterAI. Sorry!\nDetails: " + additionalDetails);
+    }
+
+    private encodeQuery(query: string) {
+        const encodedQuery = encodeURIComponent(query);
+        if (encodedQuery.trim() == "") throw new Error("The query must not be empty");
+        
+        return encodedQuery;
     }
 
     // allows for quick auth errors
