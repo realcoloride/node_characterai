@@ -435,7 +435,7 @@ export class Character extends Specable {
     constructor(client: CharacterAI, information: any) {
         super();
         this.client = client;
-        console.log(information)
+        
         // can edit profile picture
         this.avatar = new CAIImage(client, () => 
             this.creator_id != this.client.myProfile.userId &&
