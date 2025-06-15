@@ -403,14 +403,14 @@ export class CharacterAI {
         let personasOverrides = settings.personaOverridesIds;
         personasOverrides[characterId] = personaId;
 
-        const request = await this.requester.request("https://plus.character.ai/chat/user/settings/", {
+        const request = await this.requester.request("https://plus.character.ai/chat/user/update_settings/", {
             method: 'POST',
             includeAuthorization: true,
             contentType: 'application/json',
             body: Parser.stringify({ personasOverrides })
         });
         const response = await Parser.parseJSON(request);
-        if (!request.ok) throw new Error(response);
+        if (!request.ok) throw new Error(String(response));
     }
     async getPersonaOverrideFor(characterId: string): Promise<Persona | undefined> {
         this.checkAndThrow(CheckAndThrow.RequiresAuthentication);
