@@ -15,7 +15,7 @@ import { SearchCharacter } from './character/searchCharacter';
 import { Specable } from './utils/specable';
 import { Persona } from './profile/persona';
 
-const fallbackEdgeRollout = 60;
+const fallbackEdgeRollout = '60';
 
 export enum CheckAndThrow {
     RequiresAuthentication = 0,
@@ -81,12 +81,14 @@ export class CharacterAI {
                 includeAuthorization: false
             });
             const { headers } = request;
-            let edgeRollout = headers.get("set-cookie")?.match(/edge_rollout=(\d+)/)?.at(1);
+
+            let edgeRollout = headers.get("set-cookie")?.match(/edge_rollout=([^;]+)/)?.at(1);
             if (!edgeRollout) {
                 if (!request.ok) throw Error("Could not get edge rollout");
                 edgeRollout = fallbackEdgeRollout;
             }
-    
+
+            edgeRollout = edgeRollout as string;
             this.groupChatWebsocket = await new CAIWebsocket({
                 url: "wss://neo.character.ai/connection/websocket",
                 authorization: this.token,
