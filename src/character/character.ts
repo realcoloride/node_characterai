@@ -182,6 +182,27 @@ export class Character extends Specable {
         if (this.num_interactions) this.num_interactions = value;
     }
 
+    // num_likes
+    @hiddenProperty
+    private num_likes: number = 0;
+    @getterProperty
+    public get likeCount() { return this.num_likes; }
+
+    // num_interactions_last_day
+    @hiddenProperty
+    private num_interactions_last_day: number = 0;
+    @getterProperty
+    public get interactionCountLastDay() { return this.num_interactions_last_day; }
+
+    // has_definition
+    @hiddenProperty
+    private has_definition: boolean = false;
+    @getterProperty
+    public get hasDefinition() { return this.has_definition; }
+
+    // safety
+    public safety: string = 'SAFE';
+
     // user_id / creator_id
     @hiddenProperty
     private user__id = 0;

@@ -1,6 +1,6 @@
 {
   "name": "node_characterai",
-  "version": "2.0.0-beta.10",
+  "version": "2.0.0-beta.11",
   "description": "Unofficial Character AI wrapper for node.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

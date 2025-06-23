@@ -11,7 +11,7 @@ import { RecentCharacter } from './character/recentCharacter';
 import { CAICall, ICharacterCallOptions } from './character/call';
 import { CAIVoice } from './voice';
 import { GroupChatConversation } from './groupchat/groupChatConversation';
-import { SearchCharacter } from './character/searchCharacter';
+import { CharacterTags, SearchCharacter } from './character/searchCharacter';
 import { Specable } from './utils/specable';
 import { Persona } from './profile/persona';
 
@@ -135,13 +135,12 @@ export class CharacterAI {
         return profile;
     }
     // character fetching
-    async searchCharacter(query: string): Promise<SearchCharacter[]> {
+    async searchCharacter(query: string) {
         this.checkAndThrow(CheckAndThrow.RequiresAuthentication);
-        this.throwBecauseNotAvailableYet('Endpoint is currently broken, and no replacement has currently been found. Sorry!');
 
         if (query.trim() == "") throw new Error("The query must not be empty");
         const encodedQuery = this.encodeQuery(query);
-        const request = await this.requester.request(`https://beta.character.ai/chat/characters/search/?query=${encodedQuery}`, {
+        const request = await this.requester.request(`https://neo.character.ai/search/v1/character?query=${encodedQuery}`, {
             method: 'GET',
             includeAuthorization: true,
             contentType: 'application/json'
@@ -149,13 +148,39 @@ export class CharacterAI {
 
         const response = await Parser.parseJSON(request);
         if (!request.ok) throw new Error(response);
-
+        
         let characters: SearchCharacter[] = [];
         const { characters: rawCharacters } = response;
         for (let i = 0; i < rawCharacters.length; i++)
             characters.push(new SearchCharacter(this, rawCharacters[i]));
 
-        return characters;
+        const { uuid, safety_filtered: safetyFiltered , tags } = response;
+        
+        return {
+            characters,
+            safetyFiltered,
+            tags,
+            uuid
+        };
+    }
+    async searchCharacterByTags(query: string, ...tags: CharacterTags[]) {
+        this.checkAndThrow(CheckAndThrow.RequiresAuthentication);
+
+        if (tags.length == 0) throw new Error("You must provide atleast one tag");
+        const search = await this.searchCharacter(query);
+
+        let { characters, safetyFiltered, tags: rawTags, uuid } = search;
+        
+        // filter characters by tag
+        characters = characters.filter(
+            character => tags.includes(character.tagId as CharacterTags));
+
+        return {
+            characters,
+            safetyFiltered,
+            rawTags,
+            uuid
+        };
     }
     async fetchCharacter(characterId: string) {
         this.checkAndThrow(CheckAndThrow.RequiresAuthentication);
@@ -170,6 +195,20 @@ export class CharacterAI {
         if (!request.ok) throw new Error("Failed to fetch character");
 
         return new Character(this, response.character);
+    }
+
+    async getCharacterTagOptions() {
+        this.checkAndThrow(CheckAndThrow.RequiresAuthentication);
+
+        const request = await this.requester.request("https://neo.character.ai/character/v1/character_tag_options", {
+            method: 'GET',
+            includeAuthorization: true,
+            contentType: 'application/json'
+        });
+        const response = await Parser.parseJSON(request);
+        if (!request.ok) throw new Error("Failed to fetch character");
+
+        return response.tags;
     }
 
     // search queries
