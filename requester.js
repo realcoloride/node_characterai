@@ -191,8 +191,8 @@ class Requester {
                 page.once("request", request => {
                     var data = {
                         "method": method,
-                        "postData": body,
-                        "headers": headers
+                        "headers": headers,
+                        ...(method === "GET" ? {} : { "postData": body } )
                     };
 
                     if (request.isNavigationRequest() && !initialRequest) {
