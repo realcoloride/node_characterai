@@ -185,9 +185,9 @@ export class CharacterAI {
     async fetchCharacter(characterId: string) {
         this.checkAndThrow(CheckAndThrow.RequiresAuthentication);
 
-        const request = await this.requester.request("https://plus.character.ai/chat/character/info/", {
+        const request = await this.requester.request("https://neo.character.ai/character/v1/get_character_info", {
             method: 'POST',
-            body: Parser.stringify({ external_id: characterId }),
+            body: Parser.stringify({ external_id: characterId, lang: "en" }),
             includeAuthorization: true,
             contentType: 'application/json'
         });
