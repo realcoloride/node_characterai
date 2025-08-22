@@ -138,32 +138,51 @@ export default class DMConversation extends Conversation {
         return await this.client.connectToCall(call, options);
     }
 
-    async sendMessage(content: string, options?: ICAIMessageSending): Promise<CAIMessage> {
-        this.client.checkAndThrow(CheckAndThrow.RequiresAuthentication);
+    async sendMessage(
+    content: string,
+    options?: ICAIMessageSending & { stream?: { onText?: (full: string, delta: string, done: boolean) => void; onPacket?: (pkt: any) => void; } }
+    ): Promise<CAIMessage> {
+    this.client.checkAndThrow(CheckAndThrow.RequiresAuthentication);
+    if (this.frozen) Warnings.show("sendingFrozen");
 
-        if (this.frozen)
-            Warnings.show("sendingFrozen");
-        
-        // manual turn is FALSE by default
-        const request = await this.client.sendDMWebsocketCommandAsync({
-            command: (options?.manualTurn ?? false) ? "create_chat" : "create_and_generate_turn",
-            originId: "Android",
-            
-            streaming: false,
-            payload: generateBaseSendingPayload(
-                content,
-                this.characterId,
-                this.client.myProfile.username,
-                uuidv4(),
-                this.chatId,
-                this.client.myProfile.userId,
-                options?.image?.endpointUrl ?? ""
-            )
-        });
-        
-        // here we should receive OUR message not theirs if selected. im not sure how to do this but i will see
-        return this.addMessage(new CAIMessage(this.client, this, request.turn));
-    }
+    // manual turn is FALSE by default
+
+    const streaming = !!options?.stream;
+    const turnId = uuidv4();
+
+    const payload = generateBaseSendingPayload(
+    content,
+    this.characterId,
+    this.client.myProfile.username,
+    turnId,
+    this.chatId,
+    this.client.myProfile.userId,
+    options?.image?.endpointUrl ?? ""
+  );
+
+  const isManual = (options?.manualTurn ?? false);
+ const request = await this.client.sendDMWebsocketCommandAsync({
+     command: isManual ? "create_chat" : "create_and_generate_turn",
+     originId: "Android",
+     streaming: isManual ? false : streaming,
+     waitForAIResponse: isManual ? false : true,
+     expectedReturnCommand: isManual ? "create_chat" : undefined,
+    onStream: (evt) => {
+      options?.stream?.onPacket?.(evt.raw);
+      if (typeof evt.text === "string") {
+        options?.stream?.onText?.(evt.text, evt.deltaText ?? "", evt.isFinal);
+      }
+    },
+    expectedTurnId: turnId,
+    expectedChatId: this.chatId,
+    payload
+  });
+
+  // here we should receive OUR message not theirs if selected. im not sure how to do this but i will see
+  const finalPacket = Array.isArray(request) ? request[request.length - 1] : request;
+  return this.addMessage(new CAIMessage(this.client, this, finalPacket.turn));
+}
+
 
     async regenerateMessage(message: CAIMessage) {
         this.client.checkAndThrow(CheckAndThrow.RequiresAuthentication);

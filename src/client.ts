@@ -36,23 +36,26 @@ export class CharacterAI {
     async sendDMWebsocketAsync(options: ICAIWebsocketMessage) { 
         return await this.dmChatWebsocket?.sendAsync(options); 
     }
-    async sendDMWebsocketCommandAsync(options: ICAIWebsocketCommand) {
-        const requestId = uuidv4();
-        return await this.sendDMWebsocketAsync({
-            parseJSON: true,
-            expectedReturnCommand: options.expectedReturnCommand,
-            messageType: CAIWebsocketConnectionType.DM,
-            waitForAIResponse: options.waitForAIResponse ?? true,
-            expectedRequestId: requestId,
-            streaming: options.streaming,
-            data: Parser.stringify({
-                command: options.command,
-                origin_id: options.originId,
-                payload: options.payload,
-                request_id: requestId
-            })
-        });
-    }
+async sendDMWebsocketCommandAsync(options: ICAIWebsocketCommand) {
+  const requestId = uuidv4();
+  return await this.sendDMWebsocketAsync({
+    parseJSON: true,
+    expectedReturnCommand: options.expectedReturnCommand,
+    messageType: CAIWebsocketConnectionType.DM,
+    waitForAIResponse: options.waitForAIResponse ?? true,
+    expectedRequestId: requestId,
+    streaming: options.streaming,
+    onStream: options.onStream,
+    expectedTurnId: options.expectedTurnId,
+    expectedChatId: options.expectedChatId,
+    data: Parser.stringify({
+      command: options.command,
+      origin_id: options.originId,
+      payload: options.payload,
+      request_id: requestId
+    })
+  });
+}
 
     private groupChatWebsocket: CAIWebsocket | null = null;
     async sendGroupChatWebsocketAsync(options: ICAIWebsocketMessage) { this.groupChatWebsocket?.sendAsync(options); }

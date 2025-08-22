@@ -22,14 +22,25 @@ export interface ICAIWebsocketMessage {
     messageType: CAIWebsocketConnectionType,
     waitForAIResponse: boolean,
     streaming: boolean, // streams give an output of an array instead of the message straight up
-    expectedRequestId?: string
+    expectedRequestId?: string,
+      expectedTurnId?: string,
+  expectedChatId?: string,
+  onStream?: (evt: {
+    raw: any,
+    isFinal: boolean,
+    text?: string,
+    deltaText?: string,
+  }) => void
 }
 export interface ICAIWebsocketCommand {
     command: string,
+    expectedTurnId?: string,
+    expectedChatId?: string,
     expectedReturnCommand?: string,
     originId: 'Android' | 'web-next',
     waitForAIResponse?: boolean,
-    streaming: boolean
+    streaming: boolean,
+    onStream?: ICAIWebsocketMessage['onStream'],
     payload: any,
 }
 
@@ -82,60 +93,68 @@ export class CAIWebsocket extends EventEmitter {
             });
         });
     }
-    async sendAsync(options: ICAIWebsocketMessage): Promise<string | any> {
-        return new Promise(resolve => {
-            let streamedMessage: any[] | undefined = options.streaming ? [] : undefined;
-            let turn: any;
+async sendAsync(options: ICAIWebsocketMessage): Promise<string | any> {
+  return new Promise(resolve => {
+    let streamedMessage: any[] | undefined = options.streaming ? [] : undefined;
+    let turn: any;
+    let lastText = ""; 
 
-            this.on("rawMessage", async function handler(this: CAIWebsocket, message: string | any) {
-                if (options.parseJSON)
-                    message = await Parser.parseJSON(message, false);
-                else {
-                    this.off("rawMessage", handler);
-                    resolve(message);
-                    return;
-                }
+    this.on("rawMessage", async function handler(this: CAIWebsocket, message: string | any) {
+      if (options.parseJSON)
+        message = await Parser.parseJSON(message, false);
+      else {
+        this.off("rawMessage", handler);
+        resolve(message);
+        return;
+      }
 
-                const disconnectHandlerAndResolve = () => {
-                    this.websocket?.removeListener("rawMessage", handler);
-                    resolve(options.streaming ? streamedMessage?.concat(message) : message);
-                }
+      const disconnectHandlerAndResolve = () => {
+        this.websocket?.removeListener("rawMessage", handler);
+        resolve(options.streaming ? streamedMessage! : message);
+      }
 
-                // the way it works is you have an accumulation of packets tied to your request id
-                // the returnal will only happen if you wait for turn
-                // turns will allow you to know the end for streaming (is final)
-                // ws requests are turn based
-                const { request_id: requestId, command } = message;
-                const { expectedReturnCommand } = options;
+      const { request_id: requestId, command } = message;
+      const { expectedReturnCommand } = options;
+      if (requestId && requestId != options.expectedRequestId) return;
 
-                // check for requestId (if specified)
-                if (requestId && requestId != options.expectedRequestId) return;
+      let isFinal: boolean | undefined = undefined;
+      try {
+        switch (options.messageType) {
+          case CAIWebsocketConnectionType.DM:       turn = message.turn; break;
+          case CAIWebsocketConnectionType.GroupChat:turn = message.push?.data?.turn; break;
+        }
+        if (turn) isFinal = !!turn.candidates?.[0]?.is_final;
+      } finally {
+        streamedMessage?.push(message);
+        if (options.onStream) {
+          const text = turn?.candidates?.[0]?.raw_content;
+          let delta: string | undefined = undefined;
+          if (typeof text === "string") {
+            if (text.startsWith(lastText)) {
+              delta = text.slice(lastText.length);
+            }
+            lastText = text;
+          }
+          options.onStream({
+            raw: message,
+            isFinal: !!isFinal,
+            text,
+            deltaText: delta
+          });
+        }
 
-                let isFinal = undefined;
-                try {
-                    // get turn
-                    switch (options.messageType) {
-                        case CAIWebsocketConnectionType.DM: turn = message.turn; break;
-                        case CAIWebsocketConnectionType.GroupChat: turn = message.push?.data?.turn; break;
-                    }
-                    
-                    if (turn)
-                        isFinal = turn.candidates[0].is_final;
-                } finally {
-                    // if turn is NOT present, push to queue
-                    streamedMessage?.push(message);
+        const condition = options.waitForAIResponse
+          ? !turn?.author?.is_human && isFinal
+          : isFinal;
 
-                    const condition = options.waitForAIResponse ? !turn?.author?.is_human && isFinal : isFinal;
-                    
-                    // if expectedReturnCommand or condition is met
-                    if ((expectedReturnCommand && command == expectedReturnCommand) || condition)
-                        disconnectHandlerAndResolve();
-                }
-            });
-            
-            this.websocket?.send(options.data);
-        })
-    }
+        if ((expectedReturnCommand && command == expectedReturnCommand) || condition)
+          disconnectHandlerAndResolve();
+      }
+    });
+
+    this.websocket?.send(options.data);
+  })
+}
     close() {
         this.removeAllListeners();
         this.websocket?.removeAllListeners();
