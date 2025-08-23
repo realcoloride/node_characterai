@@ -5,6 +5,10 @@ import Warnings from "../warnings";
 import { Conversation, ICAIMessageSending } from "./conversation";
 import { CAIMessage } from "./message";
 import { v4 as uuidv4 } from 'uuid';
+import { CAIStreamEvent } from "../websocket";
+import { EventEmitter } from "events";
+import type { Turn } from "../websocket";
+import { Candidate } from "./candidate";
 
 const generateBaseMessagePayload = (
     characterId: string,
@@ -71,7 +75,39 @@ const generateBaseRegeneratingPayload = (
     turn_key: { turn_id: turnId, chat_id: chatId },
 }};
 
+interface DMConversationEvents {
+  "message:delta": (full: string, delta: string) => void;
+  "message:final": (full: string) => void;
+}
+
+
 export default class DMConversation extends Conversation {
+    private readonly _events = new EventEmitter();
+
+    public on<K extends keyof DMConversationEvents>(
+        event: K,
+        listener: DMConversationEvents[K]
+    ): this {
+        this._events.on(event, listener);
+        return this;
+    }
+
+    public off<K extends keyof DMConversationEvents>(
+        event: K,
+        listener: DMConversationEvents[K]
+    ): this {
+        this._events.off(event, listener);
+        return this;
+    }
+
+    public once<K extends keyof DMConversationEvents>(
+        event: K,
+        listener: DMConversationEvents[K]
+    ): this {
+        this._events.once(event, listener);
+        return this;
+    }
+
     async resurrect() {
         const resurectionRequest = await this.client.requester.request(`https://neo.character.ai/chats/recent/${this.chatId}`, {
             method: 'GET',
@@ -139,49 +175,68 @@ export default class DMConversation extends Conversation {
     }
 
     async sendMessage(
-    content: string,
-    options?: ICAIMessageSending & { stream?: { onText?: (full: string, delta: string, done: boolean) => void; onPacket?: (pkt: any) => void; } }
+        content: string,
+        options?: Partial<ICAIMessageSending> & { streamMessage?: boolean }
     ): Promise<CAIMessage> {
-    this.client.checkAndThrow(CheckAndThrow.RequiresAuthentication);
-    if (this.frozen) Warnings.show("sendingFrozen");
+        this.client.checkAndThrow(CheckAndThrow.RequiresAuthentication);
+        if (this.frozen) Warnings.show("sendingFrozen");
 
-    // manual turn is FALSE by default
+        // manual turn is FALSE by default
 
-    const streaming = !!options?.stream;
-    const turnId = uuidv4();
+        const streaming = options?.streamMessage === true;
+        const turnId = uuidv4();
+        const requestId = uuidv4();
 
-    const payload = generateBaseSendingPayload(
-    content,
-    this.characterId,
-    this.client.myProfile.username,
-    turnId,
-    this.chatId,
-    this.client.myProfile.userId,
-    options?.image?.endpointUrl ?? ""
-  );
+        const payload = generateBaseSendingPayload(
+            content,
+            this.characterId,
+            this.client.myProfile.username,
+            turnId,
+            this.chatId,
+            this.client.myProfile.userId,
+            options?.image?.endpointUrl ?? ""
+        );
 
-  const isManual = (options?.manualTurn ?? false);
- const request = await this.client.sendDMWebsocketCommandAsync({
-     command: isManual ? "create_chat" : "create_and_generate_turn",
-     originId: "Android",
-     streaming: isManual ? false : streaming,
-     waitForAIResponse: isManual ? false : true,
-     expectedReturnCommand: isManual ? "create_chat" : undefined,
-    onStream: (evt) => {
-      options?.stream?.onPacket?.(evt.raw);
-      if (typeof evt.text === "string") {
-        options?.stream?.onText?.(evt.text, evt.deltaText ?? "", evt.isFinal);
-      }
-    },
-    expectedTurnId: turnId,
-    expectedChatId: this.chatId,
-    payload
-  });
+        let detach: (() => void) | undefined;
+        if (streaming) {
+            const onDelta = (evt: CAIStreamEvent) => {
+                if (evt.requestId !== requestId) return;
+                this._events.emit("message:delta", evt.text ?? "", evt.deltaText ?? "");
+            };
+            const onFinal = (evt: CAIStreamEvent) => {
+                if (evt.requestId !== requestId) return;
+                this._events.emit("message:final", evt.text ?? "");
+            };
+            this.client.onDMStreamDelta(onDelta);
+            this.client.onDMStreamFinal(onFinal);
+            detach = () => {
+                this.client.offDMStreamDelta(onDelta);
+                this.client.offDMStreamFinal(onFinal);
+            };
+        }
 
-  // here we should receive OUR message not theirs if selected. im not sure how to do this but i will see
-  const finalPacket = Array.isArray(request) ? request[request.length - 1] : request;
-  return this.addMessage(new CAIMessage(this.client, this, finalPacket.turn));
-}
+        const isManual = (options?.manualTurn ?? false);
+        const request = await this.client.sendDMWebsocketCommandAsync({
+            command: isManual ? "create_chat" : "create_and_generate_turn",
+            originId: "Android",
+            streaming: isManual ? false : streaming,
+            waitForAIResponse: isManual ? false : true,
+            expectedReturnCommand: isManual ? "create_chat" : undefined,
+            payload,
+            requestId
+        });
+
+        if (detach) {
+            detach();
+        }
+
+        // here we should receive OUR message not theirs if selected. im not sure how to do this but i will see
+type WSFinal = { turn: Turn };
+const finalPacket: WSFinal = Array.isArray(request)
+  ? request[request.length - 1] as WSFinal
+  : request as WSFinal;
+return this.addMessage(new CAIMessage(this.client, this, finalPacket.turn));
+    }
 
 
     async regenerateMessage(message: CAIMessage) {
@@ -200,7 +255,21 @@ export default class DMConversation extends Conversation {
             )
         });
         
-        message.indexTurn(request.turn);
+        message.indexTurn((request as { turn: {
+              turn_key: {
+    chat_id: string;
+    turn_id: string;
+  };
+  create_time: string;         
+  last_update_time: string;    
+  state: "STATE_OK" | string;  
+  author: {
+    author_id: string;
+    name: string;
+  };
+  candidates: Candidate[];     
+  primary_candidate_id: string;
+        } }).turn);
         return message;
     }
 };

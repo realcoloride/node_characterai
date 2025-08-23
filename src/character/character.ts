@@ -151,7 +151,7 @@ export class Character extends Specable {
     @hiddenProperty
     private participant__name?: string = undefined;
     @hiddenProperty
-    private name?: string = undefined;
+    public name?: string = undefined;
     @hiddenProperty
     private participant__user__username?: string = undefined;
     @hiddenProperty
@@ -279,7 +279,11 @@ export class Character extends Specable {
                 }
             })
 
-            conversation = new DMConversation(this.client, request[0].chat);
+            {
+                const r = request as { chat: unknown } | Array<{ chat: unknown }>;
+                const chatObj = Array.isArray(r) ? r[0].chat : r.chat;
+                conversation = new DMConversation(this.client, chatObj);
+            }
         }
 
         // if no chat id after allat, lets fetch the most recent one

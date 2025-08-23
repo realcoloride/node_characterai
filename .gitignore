@@ -1,7 +1,7 @@
 # Node related
 /old/
 /dist/
-/node_modules/
+node_modules/
 
 # Testing script
 example.ts
@@ -14,3 +14,4 @@ test.pcm
 
 # Crash dump
 crash.log
+

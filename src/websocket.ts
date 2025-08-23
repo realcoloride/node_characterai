@@ -16,33 +16,39 @@ export interface ICAIWebsocketCreation {
 }
 
 export interface ICAIWebsocketMessage {
-    data: any,
+    data: string,
     parseJSON: boolean,
     expectedReturnCommand?: string,
     messageType: CAIWebsocketConnectionType,
     waitForAIResponse: boolean,
     streaming: boolean, // streams give an output of an array instead of the message straight up
-    expectedRequestId?: string,
-      expectedTurnId?: string,
-  expectedChatId?: string,
-  onStream?: (evt: {
-    raw: any,
-    isFinal: boolean,
-    text?: string,
-    deltaText?: string,
-  }) => void
+    expectedRequestId?: string
 }
 export interface ICAIWebsocketCommand {
     command: string,
-    expectedTurnId?: string,
-    expectedChatId?: string,
     expectedReturnCommand?: string,
     originId: 'Android' | 'web-next',
     waitForAIResponse?: boolean,
     streaming: boolean,
-    onStream?: ICAIWebsocketMessage['onStream'],
-    payload: any,
+    payload: unknown,
 }
+
+export interface CAIStreamEvent {
+    requestId: string;
+    isFinal: boolean;
+    text?: string;
+    deltaText?: string;
+}
+
+type Candidate = { raw_content?: string; is_final?: boolean };
+type Author = { is_human?: boolean };
+export type Turn = { candidates?: Candidate[]; author?: Author };
+type WSMessage = {
+    request_id?: string;
+    command?: string;
+    turn?: Turn;
+    push?: { data?: { turn?: Turn } };
+};
 
 export class CAIWebsocket extends EventEmitter {
     private address = "";
@@ -93,68 +99,63 @@ export class CAIWebsocket extends EventEmitter {
             });
         });
     }
-async sendAsync(options: ICAIWebsocketMessage): Promise<string | any> {
-  return new Promise(resolve => {
-    let streamedMessage: any[] | undefined = options.streaming ? [] : undefined;
-    let turn: any;
-    let lastText = ""; 
+    async sendAsync(options: ICAIWebsocketMessage): Promise<string | unknown> {
+        return new Promise(resolve => {
+            let lastText = "";
+            this.on("rawMessage", async function handler(this: CAIWebsocket, incoming: string | WSMessage) {
+                const parsed: WSMessage = options.parseJSON ? await Parser.parseJSON(incoming as string, false) : (incoming as WSMessage);
+                if (!options.parseJSON) {
+                    this.off("rawMessage", handler);
+                    resolve(incoming as string);
+                    return;
+                }
 
-    this.on("rawMessage", async function handler(this: CAIWebsocket, message: string | any) {
-      if (options.parseJSON)
-        message = await Parser.parseJSON(message, false);
-      else {
-        this.off("rawMessage", handler);
-        resolve(message);
-        return;
-      }
+                const { request_id: requestId, command } = parsed;
+                const { expectedReturnCommand } = options;
+                if (requestId && options.expectedRequestId && requestId !== options.expectedRequestId) {
+                    return;
+                }
 
-      const disconnectHandlerAndResolve = () => {
-        this.websocket?.removeListener("rawMessage", handler);
-        resolve(options.streaming ? streamedMessage! : message);
-      }
+                let turn: Turn | undefined;
+                if (options.messageType === CAIWebsocketConnectionType.DM) {
+                    turn = parsed.turn;
+                } else if (options.messageType === CAIWebsocketConnectionType.GroupChat) {
+                    turn = parsed.push?.data?.turn;
+                }
 
-      const { request_id: requestId, command } = message;
-      const { expectedReturnCommand } = options;
-      if (requestId && requestId != options.expectedRequestId) return;
+                const text = turn?.candidates?.[0]?.raw_content;
+                const isFinal = !!turn?.candidates?.[0]?.is_final;
+                let delta: string | undefined = undefined;
+                if (typeof text === "string") {
+                    if (text.startsWith(lastText)) {
+                        delta = text.slice(lastText.length);
+                    }
+                    lastText = text;
+                }
 
-      let isFinal: boolean | undefined = undefined;
-      try {
-        switch (options.messageType) {
-          case CAIWebsocketConnectionType.DM:       turn = message.turn; break;
-          case CAIWebsocketConnectionType.GroupChat:turn = message.push?.data?.turn; break;
-        }
-        if (turn) isFinal = !!turn.candidates?.[0]?.is_final;
-      } finally {
-        streamedMessage?.push(message);
-        if (options.onStream) {
-          const text = turn?.candidates?.[0]?.raw_content;
-          let delta: string | undefined = undefined;
-          if (typeof text === "string") {
-            if (text.startsWith(lastText)) {
-              delta = text.slice(lastText.length);
-            }
-            lastText = text;
-          }
-          options.onStream({
-            raw: message,
-            isFinal: !!isFinal,
-            text,
-            deltaText: delta
-          });
-        }
+                if (options.streaming) {
+                    const evt: CAIStreamEvent = {
+                        requestId: options.expectedRequestId ?? "",
+                        isFinal,
+                        text,
+                        deltaText: delta
+                    };
+                    this.emit(isFinal ? "stream:final" : "stream:delta", evt);
+                }
 
-        const condition = options.waitForAIResponse
-          ? !turn?.author?.is_human && isFinal
-          : isFinal;
+                const condition = options.waitForAIResponse
+                    ? !turn?.author?.is_human && isFinal
+                    : isFinal;
 
-        if ((expectedReturnCommand && command == expectedReturnCommand) || condition)
-          disconnectHandlerAndResolve();
-      }
-    });
+                if ((expectedReturnCommand && command == expectedReturnCommand) || condition) {
+                    this.websocket?.removeListener("rawMessage", handler);
+                    resolve(parsed);
+                }
+            });
 
-    this.websocket?.send(options.data);
-  })
-}
+            this.websocket?.send(options.data);
+        })
+    }
     close() {
         this.removeAllListeners();
         this.websocket?.removeAllListeners();

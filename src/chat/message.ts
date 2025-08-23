@@ -171,7 +171,12 @@ export class CAIMessage extends Specable {
 
         }
 
-        this.candidates = request.pop().turn.candidates;
+        type Turn = { candidates: Candidate[] };
+
+        const r = request as { turn: Turn } | Array<{ turn: Turn }>;
+        const pkt = Array.isArray(r) ? r[r.length - 1] : r;
+        this.candidates = pkt.turn.candidates;
+
         this.indexCandidates();
     }
     // next/previous/candidate_id
