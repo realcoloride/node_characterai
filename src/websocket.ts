@@ -86,8 +86,9 @@ export class CAIWebsocket extends EventEmitter {
         return new Promise(resolve => {
             let streamedMessage: any[] | undefined = options.streaming ? [] : undefined;
             let turn: any;
-
-            this.on("rawMessage", async function handler(this: CAIWebsocket, message: string | any) {
+            
+            const eventMethod = options.streaming ? "on" : "once";
+            (this as any)[eventMethod]("rawMessage", async function handler(this: CAIWebsocket, message: string | any) {
                 if (options.parseJSON)
                     message = await Parser.parseJSON(message, false);
                 else {
