@@ -1,11 +1,11 @@
 > [!WARNING]
-> 🔧 **This version will be deprecated soon.**
+> 🔧 **This version is deprecated.**
 >
-> ⭐ I am transitioning to the `2.0` version, currently in beta. Whenever the stable version of `2.0` comes out, it will be actively merged and the previous `1.x` will be deprecated.
+> ⭐ I am transitioning to the `2.0` version, currently in beta. Whenever the stable version of `2.0` comes out, it will be actively merged and the previous `1.x` will be merged over.
 >
-> ℹ️ **So please be ready to update your code and migrate as soon as you can**, or if you wish to get used to the changes to avoid a code rewrite soon, **please consider using the `beta`**, but make sure to give me your feedback and report back on your problems. **Your feedback matters.**
+> ℹ️ **Consider using the `beta` version**, but make sure to give me your feedback and report back on your problems. **Your feedback matters.**
 > 
-> 👍 If you just want to see the branch, [click here](https://github.com/realcoloride/node_characterai/tree/2.0).
+> 👍 [Click here to view the branch](https://github.com/realcoloride/node_characterai/tree/2.0).
 > 
 > ❓ If you want to let me know your feedback or report issues, [click here to open the related issue](https://github.com/realcoloride/node_characterai/issues/180).
 
@@ -220,3 +220,4 @@ $ which chromium-browser # or whatever command you use to launch chrome
 📜 If you use this API, you also bound to the terms of usage of their website.
 
 *(real)coloride - 2023-2024, Licensed MIT.*
+
