@@ -38,6 +38,9 @@ export class CAIWebsocket extends EventEmitter {
     private cookie = "";
     private userId = 0;
     private websocket?: WebSocket = undefined;
+    
+    private _connected = false;
+    public get connected() { return this._connected; }
 
     async open(withCheck: boolean): Promise<CAIWebsocket> {
         return new Promise((resolve, reject) => {
@@ -47,17 +50,23 @@ export class CAIWebsocket extends EventEmitter {
             websocket.once('open', () => {
                 if (!withCheck) {
                     this.emit("connected");
+                    this._connected = true;
                     resolve(this);
                     return;
                 }
 
                 const payload = 
-                    Parser.stringify({ connect: { name: 'js'}, id: 1 }) +
+                    Parser.stringify({ connect: { name: 'js' }, id: 1 }) +
                     Parser.stringify({ subscribe: { channel: `user#${this.userId}` }, id: 1 });
                 websocket.send(payload);
             })
-            websocket.on('close', (code: number, reason: Buffer) => reject(`Websocket connection failed (${code}): ${reason}`));
-            websocket.on('error', error => reject(error.message));
+            websocket.once('close', (code: number, reason: Buffer) => reject(`Websocket connection failed (${code}): ${reason}`));
+            websocket.once('error', error => reject(error.message));
+            websocket.on('close', () => {
+                this.emit("disconnected");
+                this._connected = false;
+            });
+
             websocket.on('message', async data => {
                 const message = data.toString('utf-8');
                 

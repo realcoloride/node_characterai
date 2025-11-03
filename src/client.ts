@@ -14,6 +14,8 @@ import { GroupChatConversation } from './groupchat/groupChatConversation';
 import { CharacterTags, SearchCharacter } from './character/searchCharacter';
 import { Specable } from './utils/specable';
 import { Persona } from './profile/persona';
+import NodeCache from 'node-cache';
+import { Conversation } from './chat/conversation';
 
 const fallbackEdgeRollout = '60';
 
@@ -32,11 +34,32 @@ export class CharacterAI {
     public requester: Requester;
     public groupChats: GroupChats;
 
+    public automaticallyReconnectWebsockets: boolean = true;
+    public activeConversationTTL = 600;
+    private conversations = new NodeCache({ stdTTL: this.activeConversationTTL, checkperiod: 60 });
+    
+    public markChatAsActive(conversation: Conversation) {
+        this.conversations.set(conversation.chatId, conversation);
+    }
+    private async resurrectActiveConversations() {
+        const keys = this.conversations.keys();
+        await Promise.all(keys.map(async id => {
+            const conversation = this.conversations.get<Conversation>(id);
+            await conversation?.refreshMessages();
+        }));
+    }
+    public getCachedConversations(): Conversation[] {
+        return this.conversations.keys()
+            .map(id => this.conversations.get<Conversation>(id))
+            .filter((x): x is Conversation => !!x);
+    }
+
     private dmChatWebsocket: CAIWebsocket | null = null;
-    async sendDMWebsocketAsync(options: ICAIWebsocketMessage) { 
+    async sendDMWebsocketAsync(options: ICAIWebsocketMessage, conversation?: Conversation) { 
+        if (conversation) this.markChatAsActive(conversation);
         return await this.dmChatWebsocket?.sendAsync(options); 
     }
-    async sendDMWebsocketCommandAsync(options: ICAIWebsocketCommand) {
+    async sendDMWebsocketCommandAsync(options: ICAIWebsocketCommand, conversation?: Conversation) {
         const requestId = uuidv4();
         return await this.sendDMWebsocketAsync({
             parseJSON: true,
@@ -51,13 +74,15 @@ export class CharacterAI {
                 payload: options.payload,
                 request_id: requestId
             })
-        });
+        }, conversation);
     }
 
     private groupChatWebsocket: CAIWebsocket | null = null;
     async sendGroupChatWebsocketAsync(options: ICAIWebsocketMessage) { this.groupChatWebsocket?.sendAsync(options); }
-    async sendGroupChatWebsocketCommandAsync(options: ICAIWebsocketCommand) {
+    async sendGroupChatWebsocketCommandAsync(options: ICAIWebsocketCommand, conversation?: Conversation) {
         const requestId = uuidv4();
+        if (conversation) this.markChatAsActive(conversation);
+
         return await this.sendDMWebsocketAsync({
             parseJSON: true,
             expectedReturnCommand: options.expectedReturnCommand,
@@ -71,7 +96,7 @@ export class CharacterAI {
                 payload: options.payload,
                 request_id: requestId
             })
-        });
+        }, conversation);
     }
 
     private async openWebsockets() {
@@ -102,6 +127,18 @@ export class CharacterAI {
                 edgeRollout,
                 userId: this.myProfile.userId
             }).open(false);
+
+            this.dmChatWebsocket.on("disconnected", async () => {
+                if (this.automaticallyReconnectWebsockets)
+                    await this.openWebsockets();
+            });
+            this.groupChatWebsocket.on("disconnected", async () => {
+                if (this.automaticallyReconnectWebsockets)
+                    await this.openWebsockets();
+            });
+
+            this.dmChatWebsocket.once("connected", () => this.resurrectActiveConversations());
+            this.groupChatWebsocket.once("connected", () => this.resurrectActiveConversations());
         } catch (error) {
             throw Error("Failed opening websocket." + error);
         }
@@ -366,9 +403,14 @@ export class CharacterAI {
     async fetchDMConversation(chatId: string): Promise<DMConversation> {
         this.checkAndThrow(CheckAndThrow.RequiresAuthentication);
 
-        const conversation = new DMConversation(this, await this.fetchRawConversation(chatId));
+        const cached = this.conversations.get<DMConversation>(chatId);
+        if (cached) return cached;
+
+        const raw = await this.fetchRawConversation(chatId);
+        const conversation = new DMConversation(this, raw);
         await conversation.refreshMessages();
 
+        this.conversations.set(chatId, conversation);
         return conversation;
     }
     async fetchGroupChatConversation(): Promise<any> {

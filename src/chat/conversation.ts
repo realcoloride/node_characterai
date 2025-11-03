@@ -188,6 +188,8 @@ export class Conversation extends Specable {
         this.processingMessages = [];
         this.messageIds = [];
 
+        this.client.markChatAsActive(this);
+
         const messages = await this.fetchMessagesViaQuery(false);
         for (let i = 0; i < messages.length; i++)
             this.addMessage(messages[i]);
@@ -195,7 +197,7 @@ export class Conversation extends Specable {
         const pinnedMessages = await this.getPinnedMessages();
         for (let i = 0; i < pinnedMessages.length; i++)
             this.processingMessages[i].isPinned = true;
-        
+
         this.cachedMessages = this.processingMessages;
         this.frozen = false;
     }

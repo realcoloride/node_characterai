@@ -1,6 +1,6 @@
 {
   "name": "node_characterai",
-  "version": "2.0.0-beta.12",
+  "version": "2.0.0-beta.13",
   "description": "Unofficial Character AI wrapper for node.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -38,6 +38,7 @@
     "@types/uuid": "^10.0.0",
     "json-bigint": "^1.0.0",
     "naudiodon": "^2.3.6",
+    "node-cache": "^5.1.2",
     "sharp": "^0.34.4",
     "uuid": "^13.0.0",
     "ws": "^8.18.0"
